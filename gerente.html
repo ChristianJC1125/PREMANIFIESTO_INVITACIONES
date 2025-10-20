@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel del Gerente</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0a0f2b, #152347, #1e3a8a);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+      color: #e2e8f0;
+      line-height: 1.6;
+      padding: 20px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: auto;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+      animation: slideUp 0.8s ease-out;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 35px;
+      padding-bottom: 25px;
+      border-bottom: 3px solid #38bdf8;
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, #38bdf8, #3b82f6, #6366f1);
+      animation: headerLine 3s ease infinite;
+    }
+
+    @keyframes headerLine {
+      0% { transform: translateX(-100%); }
+      50% { transform: translateX(0); }
+      100% { transform: translateX(100%); }
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 25px;
+    }
+
+    .logo-img-container {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+      border: 4px solid #38bdf8;
+      animation: pulse 3s infinite;
+      position: relative;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(56, 189, 248, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+    }
+
+    .logo-img-container img {
+      max-width: 85%;
+      max-height: 85%;
+      object-fit: contain;
+      border-radius: 50%;
+    }
+
+    .logo-text h1 {
+      color: #f1f5f9;
+      font-size: 2.4rem;
+      margin-bottom: 8px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #38bdf8, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-text p {
+      color: #94a3b8;
+      font-size: 1.2rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 15px;
+    }
+
+    h2 {
+      color: #f1f5f9;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #38bdf8;
+      font-size: 1.9rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, #38bdf8, #60a5fa);
+      border-radius: 3px;
+    }
+
+    /* Resumen general mejorado */
+    .resumen-general {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 25px;
+      margin-bottom: 35px;
+    }
+
+    .resumen-item {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      transition: all 0.4s ease;
+      border-left: 5px solid #38bdf8;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .resumen-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(96, 165, 250, 0.1));
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .resumen-item:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .resumen-item:hover::before {
+      opacity: 1;
+    }
+
+    .resumen-item .icono {
+      font-size: 2.8rem;
+      margin-bottom: 15px;
+      color: #38bdf8;
+      transition: transform 0.3s ease;
+    }
+
+    .resumen-item:hover .icono {
+      transform: scale(1.2);
+    }
+
+    .resumen-item .valor {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+      transition: color 0.3s ease;
+    }
+
+    .resumen-item:hover .valor {
+      color: #38bdf8;
+    }
+
+    .resumen-item .etiqueta {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* Panel del Gerente mejorado */
+    .gerente-panel {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      padding: 30px;
+      border-radius: 15px;
+      margin-top: 30px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gerente-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, rgba(56, 189, 248, 0) 70%);
+      border-radius: 50%;
+    }
+
+    .gerente-panel h2 {
+      color: #f1f5f9;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stats-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 25px;
+      margin-bottom: 35px;
+    }
+
+    .stat-card {
+      flex: 1;
+      min-width: 240px;
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      transition: all 0.4s ease;
+      border-top: 5px solid #38bdf8;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, #38bdf8, #60a5fa);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+
+    .stat-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .stat-card.leader {
+      background: linear-gradient(145deg, #1e40af, #1d4ed8);
+      color: #f1f5f9;
+      border-top: 5px solid #60a5fa;
+    }
+
+    .stat-card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 18px;
+      color: inherit;
+      font-weight: 600;
+    }
+
+    .stat-card .count {
+      font-size: 2.8rem;
+      font-weight: bold;
+      margin-bottom: 12px;
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover .count {
+      transform: scale(1.1);
+    }
+
+    .stat-card .supervisora {
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+
+    .supervisora-detalle {
+      margin-top: 35px;
+    }
+
+    .supervisora-detalle h3 {
+      margin-bottom: 20px;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.5rem;
+    }
+
+    .supervisora-citas {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .cita-item {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+      border-left: 4px solid #38bdf8;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cita-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to bottom, #38bdf8, #60a5fa);
+      transition: width 0.3s ease;
+    }
+
+    .cita-item:hover {
+      transform: translateX(8px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+    }
+
+    .cita-item:hover::before {
+      width: 8px;
+    }
+
+    .cita-item .cita-numero {
+      font-weight: bold;
+      color: #60a5fa;
+      font-size: 1.1rem;
+    }
+
+    .cita-item .cita-cliente {
+      margin: 10px 0;
+      font-weight: 500;
+      color: #e2e8f0;
+    }
+
+    .cita-item .cita-hora {
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+
+    /* Controles para el panel del gerente mejorados */
+    .panel-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 25px;
+      margin-bottom: 30px;
+      align-items: center;
+      padding: 25px;
+      background: rgba(30, 41, 59, 0.7);
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    .filtro-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px;
+      background: rgba(30, 41, 59, 0.8);
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      min-width: 240px;
+      border: 1px solid #334155;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .filtro-group::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, #38bdf8, #60a5fa);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .filtro-group:hover::before {
+      transform: scaleX(1);
+    }
+
+    .filtro-group:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+      background: rgba(30, 41, 59, 0.9);
+    }
+
+    .filtro-group label {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filtro-group input, .filtro-group select {
+      margin: 0;
+      padding: 12px;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+
+    .filtro-group input:focus, .filtro-group select:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+      outline: none;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-filtro {
+      background: linear-gradient(145deg, #38bdf8, #0ea5e9);
+      color: #0f172a;
+      border: none;
+      padding: 14px 22px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-filtro::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn-filtro:hover::before {
+      left: 100%;
+    }
+
+    .btn-filtro:hover {
+      background: linear-gradient(145deg, #0ea5e9, #0284c7);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn-filtro:active {
+      transform: translateY(0);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-filtro i {
+      font-size: 1.1rem;
+    }
+
+    .btn-limpiar {
+      background: linear-gradient(145deg, #ef4444, #dc2626);
+    }
+
+    .btn-limpiar:hover {
+      background: linear-gradient(145deg, #dc2626, #b91c1c);
+    }
+
+    .btn-exportar {
+      background: linear-gradient(145deg, #10b981, #059669);
+    }
+
+    .btn-exportar:hover {
+      background: linear-gradient(145deg, #059669, #047857);
+    }
+
+    .btn-volver {
+      background: linear-gradient(145deg, #8b5cf6, #7c3aed);
+    }
+
+    .btn-volver:hover {
+      background: linear-gradient(145deg, #7c3aed, #6d28d9);
+    }
+
+    .sin-datos {
+      text-align: center;
+      padding: 50px;
+      color: #94a3b8;
+      font-style: italic;
+      font-size: 1.2rem;
+      background: rgba(30, 41, 59, 0.7);
+      border-radius: 12px;
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .notificacion {
+      position: fixed;
+      top: 25px;
+      right: 25px;
+      background: linear-gradient(145deg, #10b981, #059669);
+      color: #0f172a;
+      padding: 18px 25px;
+      border-radius: 10px;
+      z-index: 1000;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      animation: slideInRight 0.5s ease-out;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 500;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .actualizando {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Gráfico mejorado */
+    .grafico-container {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+      margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .grafico-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, #38bdf8, #60a5fa, #8b5cf6);
+    }
+
+    .barra {
+      display: flex;
+      align-items: center;
+      margin-bottom: 18px;
+      position: relative;
+    }
+
+    .barra-label {
+      width: 160px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .barra-progreso {
+      flex: 1;
+      height: 28px;
+      background: #334155;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .barra-relleno {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #60a5fa);
+      border-radius: 14px;
+      transition: width 1.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 12px;
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 0.85rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .barra-relleno::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transform: translateX(-100%);
+      animation: shine 2s infinite;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Sección de Estadísticas por Supervisora */
+    .estadisticas-supervisoras {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      padding: 30px;
+      border-radius: 15px;
+      margin-top: 30px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .estadisticas-supervisoras::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, #38bdf8, #60a5fa, #8b5cf6);
+    }
+
+    .estadisticas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      margin-top: 20px;
+    }
+
+    .estadistica-item {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      transition: all 0.3s ease;
+      border-left: 4px solid #38bdf8;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .estadistica-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .estadistica-item h4 {
+      color: #e2e8f0;
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .estadistica-item .grafico-circular {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 20px;
+      position: relative;
+    }
+
+    .estadistica-item .circulo-exterior {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #334155;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .estadistica-item .circulo-progreso {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%);
+      background: conic-gradient(#38bdf8 var(--porcentaje, 0%), #334155 0%);
+      transition: all 1.5s ease;
+    }
+
+    .estadistica-item .circulo-interior {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: calc(100% - 20px);
+      height: calc(100% - 20px);
+      border-radius: 50%;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #38bdf8;
+    }
+
+    .estadistica-item .meta-info {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      margin-top: 10px;
+    }
+
+    .estadistica-item .meta-info .meta {
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    /* Responsive mejorado */
+    @media (max-width: 1200px) {
+      .container {
+        max-width: 95%;
+        padding: 25px;
+      }
+      
+      .resumen-general {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+      
+      .estadisticas-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
+    }
+
+    @media (max-width: 992px) {
+      .container {
+        padding: 20px;
+      }
+      
+      header {
+        flex-direction: column;
+        gap: 25px;
+        text-align: center;
+      }
+      
+      .logo-text h1 {
+        font-size: 2.2rem;
+      }
+      
+      .header-controls {
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 100%;
+      }
+      
+      .stats-container {
+        flex-direction: column;
+      }
+      
+      .supervisora-citas {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      }
+      
+      .panel-controls {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .filtro-group {
+        min-width: 100%;
+      }
+      
+      .btn-group {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+      
+      .container {
+        padding: 15px;
+        border-radius: 15px;
+      }
+      
+      header {
+        padding: 20px;
+      }
+      
+      .logo-container {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .logo-text h1 {
+        font-size: 2rem;
+      }
+      
+      .logo-text p {
+        font-size: 1.1rem;
+      }
+      
+      .resumen-general {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .gerente-panel {
+        padding: 20px;
+      }
+      
+      .supervisora-citas {
+        grid-template-columns: 1fr;
+      }
+      
+      .panel-controls {
+        padding: 20px;
+      }
+      
+      h2 {
+        font-size: 1.7rem;
+      }
+      
+      .notificacion {
+        top: 15px;
+        right: 15px;
+        left: 15px;
+        text-align: center;
+        justify-content: center;
+      }
+      
+      .estadisticas-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 576px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        padding: 15px;
+      }
+      
+      .logo-img-container {
+        width: 80px;
+        height: 80px;
+      }
+      
+      .logo-text h1 {
+        font-size: 1.8rem;
+      }
+      
+      .resumen-item {
+        padding: 20px;
+      }
+      
+      .resumen-item .valor {
+        font-size: 2.2rem;
+      }
+      
+      .btn-filtro {
+        padding: 12px 18px;
+        font-size: 0.9rem;
+      }
+      
+      .barra {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      
+      .barra-label {
+        width: 100%;
+      }
+      
+      .barra-progreso {
+        width: 100%;
+      }
+      
+      .estadistica-item .grafico-circular {
+        width: 100px;
+        height: 100px;
+      }
+      
+      .estadistica-item .circulo-interior {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-container">
+        <div class="logo-img-container">
+          <img src="Imagenes/logo.png" alt="Logo Travel Life Club">
+        </div>
+        <div class="logo-text">
+          <h1></h1>
+          <p>Panel de Control - Gerente</p>
+        </div>
+      </div>
+      <div class="header-controls">
+        <button class="btn-filtro" id="actualizarBtn">
+          <i class="fas fa-sync-alt"></i> Actualizar
+        </button>
+        <button class="btn-filtro btn-exportar" id="exportarExcel">
+          <i class="fas fa-file-excel"></i> Exportar Excel
+        </button>
+        <button class="btn-filtro btn-volver" onclick="window.location.href='index.html'">
+          <i class="fas fa-arrow-left"></i> Volver al Sistema
+        </button>
+      </div>
+    </header>
+
+    <!-- Resumen General -->
+    <section class="resumen-general" id="resumenGeneral">
+      <!-- Los datos del resumen se generarán dinámicamente -->
+    </section>
+
+    <!-- Gráfico de distribución -->
+    <div class="grafico-container">
+      <h2><i class="fas fa-chart-bar"></i> Distribución de Citas por Supervisora</h2>
+      <div id="graficoBarras">
+        <!-- Gráfico se generará dinámicamente -->
+      </div>
+    </div>
+
+    <!-- Sección de Estadísticas por Supervisora -->
+    <section class="estadisticas-supervisoras">
+      <h2><i class="fas fa-chart-pie"></i> Estadísticas por Supervisora</h2>
+      <div class="estadisticas-grid" id="estadisticasGrid">
+        <!-- Las estadísticas se generarán dinámicamente aquí -->
+      </div>
+    </section>
+
+    <!-- Panel del Gerente -->
+    <section class="gerente-panel">
+      <h2><i class="fas fa-chart-line"></i> Estadísticas por Supervisora</h2>
+      
+      <!-- Controles para el panel del gerente -->
+      <div class="panel-controls">
+        <div class="filtro-group">
+          <label for="filtroFecha"><i class="fas fa-calendar-alt"></i> Filtrar por fecha:</label>
+          <input type="date" id="filtroFecha">
+        </div>
+        
+        <div class="filtro-group">
+          <label for="filtroSupervisora"><i class="fas fa-user-tie"></i> Filtrar por supervisora:</label>
+          <select id="filtroSupervisora">
+            <option value="">Todas las supervisoras</option>
+            <option>LUIS COLULA</option>
+            <option>MACARENA ZAMORA</option>
+            <option>THALIA PINEDA</option>
+            <option>YARET NAJERA</option>
+          </select>
+        </div>
+        
+        <div class="btn-group">
+          <button type="button" id="aplicarFiltro" class="btn-filtro">
+            <i class="fas fa-filter"></i> Aplicar Filtros
+          </button>
+          <button type="button" id="limpiarFiltro" class="btn-filtro btn-limpiar">
+            <i class="fas fa-broom"></i> Limpiar
+          </button>
+        </div>
+      </div>
+      
+      <div class="stats-container" id="statsContainer">
+        <!-- Las estadísticas se generarán dinámicamente aquí -->
+      </div>
+      
+      <div class="supervisora-detalle" id="supervisoraDetalle">
+        <!-- Los detalles de cada supervisora se generarán aquí -->
+      </div>
+    </section>
+  </div>
+
+  <!-- Librerías necesarias -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- ExcelJS para estilos en Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+  <!-- FileSaver para guardar archivos -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      let registrosPremanifiesto = [];
+      let actualizando = false;
+      
+      // Configurar sincronización entre pestañas
+      configurarSincronizacion();
+      
+      // Cargar registros desde localStorage al iniciar
+      cargarRegistrosDesdeLocalStorage();
+
+      // CONFIGURAR SINCRONIZACIÓN ENTRE PESTAÑAS 
+      function configurarSincronizacion() {
+        // Escuchar cambios en el localStorage desde otras pestañas
+        window.addEventListener('storage', function(e) {
+          if (e.key === 'registrosPremanifiestoCompartido') {
+            console.log("Datos actualizados desde otra pestaña, recargando...");
+            cargarRegistrosDesdeLocalStorage();
+            actualizarPanelGerente();
+            mostrarNotificacion("Datos actualizados desde otra supervisora");
+          }
+        });
+        
+        // También verificar periódicamente si hay cambios
+        setInterval(function() {
+          const registrosActuales = localStorage.getItem('registrosPremanifiestoCompartido');
+          const registrosEnMemoria = JSON.stringify(registrosPremanifiesto);
+          
+          if (registrosActuales !== registrosEnMemoria) {
+            console.log("Cambios detectados en localStorage, recargando...");
+            cargarRegistrosDesdeLocalStorage();
+            actualizarPanelGerente();
+          }
+        }, 3000); // Verificar cada 3 segundos
+      }
+      
+      function mostrarNotificacion(mensaje) {
+        // Crear elemento de notificación
+        const notificacion = document.createElement('div');
+        notificacion.innerHTML = `<i class="fas fa-info-circle"></i> ${mensaje}`;
+        notificacion.className = 'notificacion';
+        
+        document.body.appendChild(notificacion);
+        
+        // Eliminar después de 4 segundos
+        setTimeout(() => {
+          if (notificacion.parentNode) {
+            document.body.removeChild(notificacion);
+          }
+        }, 4000);
+      }
+
+      // --- CARGAR REGISTROS DESDE LOCALSTORAGE (VERSIÓN COMPARTIDA) ---
+      function cargarRegistrosDesdeLocalStorage() {
+        try {
+          const registrosGuardados = localStorage.getItem('registrosPremanifiestoCompartido');
+          
+          if (registrosGuardados) {
+            registrosPremanifiesto = JSON.parse(registrosGuardados);
+            console.log("Registros cargados:", registrosPremanifiesto.length);
+          } else {
+            console.log("No se encontraron registros en localStorage");
+            registrosPremanifiesto = [];
+          }
+        } catch (e) {
+          console.error("Error al cargar registros desde localStorage:", e);
+          registrosPremanifiesto = [];
+        }
+      }
+
+      // --- ACTUALIZAR RESUMEN GENERAL ---
+      function actualizarResumenGeneral() {
+        const resumenGeneral = document.getElementById("resumenGeneral");
+        
+        if (registrosPremanifiesto.length === 0) {
+          resumenGeneral.innerHTML = `
+            <div class="resumen-item">
+              <div class="icono"><i class="fas fa-calendar-check"></i></div>
+              <div class="valor">0</div>
+              <div class="etiqueta">Total de Citas</div>
+            </div>
+            <div class="resumen-item">
+              <div class="icono"><i class="fas fa-users"></i></div>
+              <div class="valor">0</div>
+              <div class="etiqueta">Supervisoras Activas</div>
+            </div>
+            <div class="resumen-item">
+              <div class="icono"><i class="fas fa-calendar-day"></i></div>
+              <div class="valor">0</div>
+              <div class="etiqueta">Citas Hoy</div>
+            </div>
+            <div class="resumen-item">
+              <div class="icono"><i class="fas fa-trophy"></i></div>
+              <div class="valor">-</div>
+              <div class="etiqueta">Supervisora Líder</div>
+            </div>
+          `;
+          return;
+        }
+        
+        // Calcular estadísticas generales
+        const totalCitas = registrosPremanifiesto.length;
+        
+        // Calcular supervisoras activas (con al menos 1 cita)
+        const supervisorasActivas = new Set(registrosPremanifiesto.map(r => r.supervisora)).size;
+        
+        // Calcular citas de hoy
+        const hoy = new Date().toISOString().split('T')[0];
+        const citasHoy = registrosPremanifiesto.filter(r => r.fechaRegistro === hoy).length;
+        
+        // Encontrar supervisora líder
+        const estadisticas = calcularEstadisticas();
+        let supervisoraLider = "-";
+        let maxCitas = 0;
+        
+        Object.keys(estadisticas).forEach(supervisora => {
+          if (estadisticas[supervisora].count > maxCitas) {
+            maxCitas = estadisticas[supervisora].count;
+            supervisoraLider = supervisora;
+          }
+        });
+        
+        resumenGeneral.innerHTML = `
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-calendar-check"></i></div>
+            <div class="valor">${totalCitas}</div>
+            <div class="etiqueta">Total de Citas</div>
+          </div>
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-users"></i></div>
+            <div class="valor">${supervisorasActivas}</div>
+            <div class="etiqueta">Supervisoras Activas</div>
+          </div>
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-calendar-day"></i></div>
+            <div class="valor">${citasHoy}</div>
+            <div class="etiqueta">Citas Hoy</div>
+          </div>
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-trophy"></i></div>
+            <div class="valor">${supervisoraLider.split(' ')[0]}</div>
+            <div class="etiqueta">Supervisora Líder</div>
+          </div>
+        `;
+      }
+
+      // --- CALCULAR ESTADÍSTICAS POR SUPERVISORA ---
+      function calcularEstadisticas(fechaFiltro = null, supervisoraFiltro = null) {
+        const estadisticas = {};
+        const supervisoras = ["LUIS COLULA", "MACARENA ZAMORA", "THALIA PINEDA", "YARET NAJERA"];
+        
+        // Inicializar estadísticas para cada supervisora
+        supervisoras.forEach(supervisora => {
+          estadisticas[supervisora] = {
+            count: 0,
+            citas: []
+          };
+        });
+        
+        // Filtrar registros si es necesario
+        let registrosFiltrados = registrosPremanifiesto;
+        
+        if (fechaFiltro) {
+          registrosFiltrados = registrosFiltrados.filter(registro => {
+            return registro.fechaRegistro === fechaFiltro;
+          });
+        }
+        
+        if (supervisoraFiltro) {
+          registrosFiltrados = registrosFiltrados.filter(registro => {
+            return registro.supervisora === supervisoraFiltro;
+          });
+        }
+        
+        // Contar citas por supervisora
+        registrosFiltrados.forEach(registro => {
+          if (estadisticas[registro.supervisora]) {
+            estadisticas[registro.supervisora].count++;
+            estadisticas[registro.supervisora].citas.push(registro);
+          }
+        });
+        
+        return estadisticas;
+      }
+
+      // --- ACTUALIZAR ESTADÍSTICAS POR SUPERVISORA ---
+      function actualizarEstadisticasSupervisoras() {
+        const estadisticasGrid = document.getElementById("estadisticasGrid");
+        
+        if (registrosPremanifiesto.length === 0) {
+          estadisticasGrid.innerHTML = '<div class="sin-datos">No hay citas registradas para mostrar estadísticas</div>';
+          return;
+        }
+
+        // Calcular estadísticas actuales
+        const estadisticas = calcularEstadisticas();
+        const totalCitas = registrosPremanifiesto.length;
+        
+        // Definir metas por supervisora
+        const metas = {
+          "LUIS COLULA": 90,
+          "MACARENA ZAMORA": 85,
+          "THALIA PINEDA": 80,
+          "YARET NAJERA": 85
+        };
+
+        let estadisticasHTML = '';
+
+        // Generar HTML para cada supervisora
+        Object.keys(estadisticas).forEach(supervisora => {
+          const count = estadisticas[supervisora].count;
+          const porcentaje = totalCitas > 0 ? (count / totalCitas * 100) : 0;
+          const meta = metas[supervisora] || 80;
+          const porcentajeFormateado = porcentaje.toFixed(1);
+          
+          estadisticasHTML += `
+            <div class="estadistica-item">
+              <h4>${supervisora}</h4>
+              <div class="grafico-circular">
+                <div class="circulo-exterior">
+                  <div class="circulo-progreso" style="--porcentaje: ${porcentaje}%"></div>
+                  <div class="circulo-interior">${porcentajeFormateado}%</div>
+                </div>
+              </div>
+              <div class="meta-info">
+                Citas: <span class="meta">${count}</span> | 
+                Eficiencia: <span class="meta">${porcentajeFormateado}%</span> | 
+                Meta: ${meta}%
+              </div>
+            </div>
+          `;
+        });
+
+        estadisticasGrid.innerHTML = estadisticasHTML;
+        
+        // Animar los gráficos después de actualizar
+        setTimeout(() => {
+          document.querySelectorAll('.circulo-progreso').forEach(circulo => {
+            circulo.style.transition = 'all 1.5s ease';
+          });
+        }, 100);
+      }
+      
+      // --- CREAR GRÁFICO DE BARRAS ---
+      function crearGraficoBarras() {
+        const graficoBarras = document.getElementById("graficoBarras");
+        const estadisticas = calcularEstadisticas();
+        const totalCitas = registrosPremanifiesto.length;
+        
+        if (totalCitas === 0) {
+          graficoBarras.innerHTML = '<div class="sin-datos">No hay datos para mostrar el gráfico</div>';
+          return;
+        }
+        
+        let graficoHTML = '';
+        
+        Object.keys(estadisticas).forEach(supervisora => {
+          const count = estadisticas[supervisora].count;
+          const porcentaje = totalCitas > 0 ? (count / totalCitas * 100).toFixed(1) : 0;
+          
+          graficoHTML += `
+            <div class="barra">
+              <div class="barra-label">${supervisora}</div>
+              <div class="barra-progreso">
+                <div class="barra-relleno" style="width: ${porcentaje}%">
+                  ${count} citas (${porcentaje}%)
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        graficoBarras.innerHTML = graficoHTML;
+      }
+
+      // --- ACTUALIZAR PANEL DEL GERENTE ---
+      function actualizarPanelGerente() {
+        const statsContainer = document.getElementById("statsContainer");
+        const supervisoraDetalle = document.getElementById("supervisoraDetalle");
+        
+        // Obtener filtros actuales
+        const fechaFiltro = document.getElementById("filtroFecha").value || null;
+        const supervisoraFiltro = document.getElementById("filtroSupervisora").value || null;
+        
+        // Calcular estadísticas
+        const estadisticas = calcularEstadisticas(fechaFiltro, supervisoraFiltro);
+        
+        // Actualizar todas las secciones
+        actualizarResumenGeneral();
+        actualizarEstadisticasSupervisoras();
+        crearGraficoBarras();
+        
+        if (registrosPremanifiesto.length === 0) {
+          statsContainer.innerHTML = '<div class="sin-datos">No hay registros para mostrar estadísticas.</div>';
+          supervisoraDetalle.innerHTML = '';
+          return;
+        }
+        
+        // Ordenar supervisoras por cantidad de citas (de mayor a menor)
+        const supervisoras = Object.keys(estadisticas);
+        const supervisorasOrdenadas = supervisoras.sort((a, b) => {
+          return estadisticas[b].count - estadisticas[a].count;
+        });
+        
+        // Generar HTML para las tarjetas de estadísticas
+        let statsHTML = '';
+        let supervisoraLider = null;
+        let maxCitas = 0;
+        
+        supervisorasOrdenadas.forEach(supervisora => {
+          const count = estadisticas[supervisora].count;
+          const esLider = count > maxCitas && count > 0;
+          
+          if (esLider) {
+            maxCitas = count;
+            supervisoraLider = supervisora;
+          }
+          
+          statsHTML += `
+            <div class="stat-card ${esLider ? 'leader' : ''}">
+              <h3>${supervisora}</h3>
+              <div class="count">${count}</div>
+              <div class="supervisora">Citas</div>
+            </div>
+          `;
+        });
+        
+        statsContainer.innerHTML = statsHTML;
+        
+        // Generar HTML para los detalles de cada supervisora
+        let detallesHTML = '';
+        let hayCitas = false;
+        
+        supervisorasOrdenadas.forEach(supervisora => {
+          const citas = estadisticas[supervisora].citas;
+          
+          if (citas.length > 0) {
+            hayCitas = true;
+            let citasHTML = '';
+            
+            citas.forEach(cita => {
+              citasHTML += `
+                <div class="cita-item">
+                  <div class="cita-numero">Cita #${cita.cita}</div>
+                  <div class="cita-cliente">${cita.nombre}</div>
+                  <div class="cita-hora">${cita.hora} - ${cita.hotel}</div>
+                </div>
+              `;
+            });
+            
+            detallesHTML += `
+              <div class="supervisora-detalle">
+                <h3><i class="fas fa-user-tie"></i> ${supervisora} - ${citas.length} citas</h3>
+                <div class="supervisora-citas">
+                  ${citasHTML}
+                </div>
+              </div>
+            `;
+          }
+        });
+        
+        if (!hayCitas) {
+          detallesHTML = '<div class="sin-datos">No hay citas que coincidan con los filtros aplicados.</div>';
+        }
+        
+        supervisoraDetalle.innerHTML = detallesHTML;
+      }
+
+      // --- BOTÓN ACTUALIZAR ---
+      document.getElementById("actualizarBtn").addEventListener("click", function() {
+        if (actualizando) return;
+        
+        actualizando = true;
+        const boton = this;
+        const icono = boton.querySelector('i');
+        const textoOriginal = boton.innerHTML;
+        
+        boton.innerHTML = '<i class="fas fa-sync-alt actualizando"></i> Actualizando...';
+        boton.disabled = true;
+        
+        cargarRegistrosDesdeLocalStorage();
+        actualizarPanelGerente();
+        
+        setTimeout(() => {
+          boton.innerHTML = textoOriginal;
+          boton.disabled = false;
+          actualizando = false;
+          mostrarNotificacion("Datos actualizados correctamente");
+        }, 1000);
+      });
+      
+      // --- APLICAR FILTROS ---
+      document.getElementById("aplicarFiltro").addEventListener("click", function() {
+        actualizarPanelGerente();
+      });
+      
+      // --- LIMPIAR FILTRO ---
+      document.getElementById("limpiarFiltro").addEventListener("click", function() {
+        document.getElementById("filtroFecha").value = "";
+        document.getElementById("filtroSupervisora").value = "";
+        actualizarPanelGerente();
+      });
+
+      // --- EXPORTAR EXCEL ---
+      document.getElementById("exportarExcel").addEventListener("click", async () => {
+          if (registrosPremanifiesto.length === 0) {
+              alert("No hay registros para exportar.");
+              return;
+          }
+
+          try {
+              // Crear un nuevo libro de Excel
+              const workbook = new ExcelJS.Workbook();
+              const worksheet = workbook.addWorksheet('Estadísticas Gerente');
+              
+              // Obtener la fecha actual para el título
+              const fechaHoy = new Date();
+              const opciones = { day: '2-digit', month: 'long', year: 'numeric' };
+              const titulo = "ESTADÍSTICAS GERENTE " + fechaHoy.toLocaleDateString('es-MX', opciones).toUpperCase();
+              
+              // Añadir título
+              const tituloRow = worksheet.addRow([titulo]);
+              tituloRow.font = { size: 16, bold: true };
+              tituloRow.alignment = { horizontal: 'center' };
+              worksheet.mergeCells('A1:G1');
+              
+              // Saltar una línea
+              worksheet.addRow([]);
+              
+              // Calcular estadísticas
+              const estadisticas = calcularEstadisticas();
+              
+              // Añadir encabezados para estadísticas
+              const headerRow = worksheet.addRow(['Supervisora', 'Total de Citas', 'Porcentaje']);
+              
+              // Aplicar estilo a los encabezados
+              headerRow.eachCell((cell) => {
+                  cell.fill = {
+                      type: 'pattern',
+                      pattern: 'solid',
+                      fgColor: { argb: 'FF3498DB' }
+                  };
+                  cell.font = {
+                      bold: true,
+                      color: { argb: 'FFFFFFFF' }
+                  };
+                  cell.alignment = { horizontal: 'center' };
+                  cell.border = {
+                      top: { style: 'thin' },
+                      left: { style: 'thin' },
+                      bottom: { style: 'thin' },
+                      right: { style: 'thin' }
+                  };
+              });
+              
+              // Añadir datos de estadísticas
+              const totalCitas = registrosPremanifiesto.length;
+              
+              Object.keys(estadisticas).forEach(supervisora => {
+                  const count = estadisticas[supervisora].count;
+                  const porcentaje = totalCitas > 0 ? (count / totalCitas * 100).toFixed(1) : 0;
+                  
+                  const row = worksheet.addRow([
+                      supervisora,
+                      count,
+                      `${porcentaje}%`
+                  ]);
+                  
+                  // Aplicar bordes a todas las celdas
+                  row.eachCell((cell) => {
+                      cell.border = {
+                          top: { style: 'thin' },
+                          left: { style: 'thin' },
+                          bottom: { style: 'thin' },
+                          right: { style: 'thin' }
+                      };
+                  });
+              });
+              
+              // Saltar una línea
+              worksheet.addRow([]);
+              
+              // Añadir encabezados para el detalle de citas (AHORA CON TELÉFONO)
+              const detalleHeaderRow = worksheet.addRow([
+                  'Número Cita', 'Cliente', 'Teléfono', 'Supervisora', 'Hotel', 'Hora', 'Fecha'
+              ]);
+              
+              // Aplicar estilo a los encabezados de detalle
+              detalleHeaderRow.eachCell((cell) => {
+                  cell.fill = {
+                      type: 'pattern',
+                      pattern: 'solid',
+                      fgColor: { argb: 'FF2ECC71' }
+                  };
+                  cell.font = {
+                      bold: true,
+                      color: { argb: 'FFFFFFFF' }
+                  };
+                  cell.alignment = { horizontal: 'center' };
+                  cell.border = {
+                      top: { style: 'thin' },
+                      left: { style: 'thin' },
+                      bottom: { style: 'thin' },
+                      right: { style: 'thin' }
+                  };
+              });
+              
+              // Añadir datos de citas (AHORA CON TELÉFONO)
+              registrosPremanifiesto.forEach(registro => {
+                  const row = worksheet.addRow([
+                      registro.cita,
+                      registro.nombre,
+                      registro.telefono || 'N/A',
+                      registro.supervisora,
+                      registro.hotel,
+                      registro.hora,
+                      registro.fechaRegistro
+                  ]);
+                  
+                  // Aplicar bordes a todas las celdas
+                  row.eachCell((cell) => {
+                      cell.border = {
+                          top: { style: 'thin' },
+                          left: { style: 'thin' },
+                          bottom: { style: 'thin' },
+                          right: { style: 'thin' }
+                      };
+                  });
+              });
+              
+              // Ajustar anchos de columnas (AHORA CON TELÉFONO)
+              worksheet.columns = [
+                  { width: 12 },  // Número Cita
+                  { width: 25 },  // Cliente
+                  { width: 15 },  // Teléfono
+                  { width: 18 },  // Supervisora
+                  { width: 22 },  // Hotel
+                  { width: 10 },  // Hora
+                  { width: 12 }   // Fecha
+              ];
+              
+              // Añadir espacios entre celdas (padding)
+              worksheet.eachRow((row) => {
+                  row.eachCell((cell) => {
+                      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                  });
+                  row.height = 20;
+              });
+              
+              // Generar el archivo Excel
+              const buffer = await workbook.xlsx.writeBuffer();
+              const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+              
+              // Descargar el archivo
+              saveAs(blob, `Estadisticas_Gerente_${fechaHoy.toISOString().split('T')[0]}.xlsx`);
+              mostrarNotificacion("Archivo Excel exportado correctamente");
+              
+          } catch (error) {
+              console.error('Error al generar el Excel:', error);
+              alert('Ocurrió un error al generar el archivo Excel.');
+          }
+      });
+
+      // Inicializar el panel al cargar la página
+      actualizarPanelGerente();
+      
+      // Establecer la fecha actual como valor por defecto en el filtro
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById('filtroFecha').value = hoy;
+      
+      // Animación para los gráficos circulares
+      setTimeout(() => {
+        document.querySelectorAll('.circulo-progreso').forEach(circulo => {
+          circulo.style.transition = 'all 1.5s ease';
+        });
+      }, 500);
+    });
+  </script>
+</body>
+</html>
