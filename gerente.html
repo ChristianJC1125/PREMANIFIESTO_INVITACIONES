@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Panel del Gerente</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -973,7 +978,7 @@
           <img src="Imagenes/logo.png" alt="Logo Travel Life Club">
         </div>
         <div class="logo-text">
-          <h1></h1>
+          <h1>Travel Life Club</h1>
           <p>Panel de Control - Gerente</p>
         </div>
       </div>
@@ -1061,41 +1066,52 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
   <script>
+    // Configuración de Firebase - DEBE SER LA MISMA QUE EN TU SISTEMA PRINCIPAL
+    const firebaseConfig = {
+      apiKey: "AIzaSyASUJrQNMW80DDMV8gFzjTYPUd8x3B5YDk",
+      authDomain: "invitacionpremanfiesto.firebaseapp.com",
+      databaseURL: "https://invitacionpremanfiesto-default-rtdb.firebaseio.com",
+      projectId: "invitacionpremanfiesto",
+      storageBucket: "invitacionpremanfiesto.firebasestorage.app",
+      messagingSenderId: "362764197269",
+      appId: "1:362764197269:web:058b028dcc53d299df6a9c",
+      measurementId: "G-JYTW87S1MP"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+
     document.addEventListener("DOMContentLoaded", function () {
       let registrosPremanifiesto = [];
       let actualizando = false;
       
-      // Configurar sincronización entre pestañas
-      configurarSincronizacion();
-      
-      // Cargar registros desde localStorage al iniciar
-      cargarRegistrosDesdeLocalStorage();
-
-      // CONFIGURAR SINCRONIZACIÓN ENTRE PESTAÑAS 
-      function configurarSincronizacion() {
-        // Escuchar cambios en el localStorage desde otras pestañas
-        window.addEventListener('storage', function(e) {
-          if (e.key === 'registrosPremanifiestoCompartido') {
-            console.log("Datos actualizados desde otra pestaña, recargando...");
-            cargarRegistrosDesdeLocalStorage();
-            actualizarPanelGerente();
-            mostrarNotificacion("Datos actualizados desde otra supervisora");
-          }
-        });
-        
-        // También verificar periódicamente si hay cambios
-        setInterval(function() {
-          const registrosActuales = localStorage.getItem('registrosPremanifiestoCompartido');
-          const registrosEnMemoria = JSON.stringify(registrosPremanifiesto);
+      // CONFIGURAR FIREBASE REALTIME DATABASE
+      function configurarFirebase() {
+          const database = firebase.database();
+          const registrosRef = database.ref('registrosPremanifiesto');
           
-          if (registrosActuales !== registrosEnMemoria) {
-            console.log("Cambios detectados en localStorage, recargando...");
-            cargarRegistrosDesdeLocalStorage();
-            actualizarPanelGerente();
-          }
-        }, 3000); // Verificar cada 3 segundos
+          console.log("Conectando a Firebase desde el Panel del Gerente...");
+          
+          // Escuchar cambios en tiempo real desde Firebase
+          registrosRef.on('value', (snapshot) => {
+              const data = snapshot.val();
+              if (data) {
+                  // Convertir objeto de Firebase a array
+                  registrosPremanifiesto = Object.values(data);
+                  console.log("Datos sincronizados desde Firebase:", registrosPremanifiesto.length);
+                  
+                  // Actualizar el panel del gerente
+                  actualizarPanelGerente();
+                  
+                  mostrarNotificacion("Datos actualizados en tiempo real desde Firebase");
+              } else {
+                  console.log("No hay datos en Firebase");
+                  registrosPremanifiesto = [];
+                  actualizarPanelGerente();
+              }
+          });
       }
-      
+
       function mostrarNotificacion(mensaje) {
         // Crear elemento de notificación
         const notificacion = document.createElement('div');
@@ -1110,24 +1126,6 @@
             document.body.removeChild(notificacion);
           }
         }, 4000);
-      }
-
-      // --- CARGAR REGISTROS DESDE LOCALSTORAGE (VERSIÓN COMPARTIDA) ---
-      function cargarRegistrosDesdeLocalStorage() {
-        try {
-          const registrosGuardados = localStorage.getItem('registrosPremanifiestoCompartido');
-          
-          if (registrosGuardados) {
-            registrosPremanifiesto = JSON.parse(registrosGuardados);
-            console.log("Registros cargados:", registrosPremanifiesto.length);
-          } else {
-            console.log("No se encontraron registros en localStorage");
-            registrosPremanifiesto = [];
-          }
-        } catch (e) {
-          console.error("Error al cargar registros desde localStorage:", e);
-          registrosPremanifiesto = [];
-        }
       }
 
       // --- ACTUALIZAR RESUMEN GENERAL ---
@@ -1440,8 +1438,8 @@
         boton.innerHTML = '<i class="fas fa-sync-alt actualizando"></i> Actualizando...';
         boton.disabled = true;
         
-        cargarRegistrosDesdeLocalStorage();
-        actualizarPanelGerente();
+        // Forzar recarga de datos desde Firebase
+        configurarFirebase();
         
         setTimeout(() => {
           boton.innerHTML = textoOriginal;
@@ -1623,8 +1621,8 @@
           }
       });
 
-      // Inicializar el panel al cargar la página
-      actualizarPanelGerente();
+      // INICIALIZAR FIREBASE Y EL PANEL
+      configurarFirebase();
       
       // Establecer la fecha actual como valor por defecto en el filtro
       const hoy = new Date().toISOString().split('T')[0];
