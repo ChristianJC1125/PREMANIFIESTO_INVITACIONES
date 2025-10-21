@@ -907,6 +907,17 @@
       background: linear-gradient(135deg, #FFA726 0%, #FF6B35 100%);
       box-shadow: 0 8px 25px rgba(255, 107, 53, 0.5);
     }
+
+    /* Nuevo botón para importar Excel */
+    #importarExcelBtn {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      animation: gradientShift 3s ease infinite;
+    }
+
+    #importarExcelBtn:hover {
+      background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+      box-shadow: 0 8px 25px rgba(52, 152, 219, 0.5);
+    }
   </style>
   
   <!-- Librerías necesarias -->
@@ -997,6 +1008,10 @@
           <div>
             <label for="editarTelefono">Teléfono:</label>
             <input type="tel" id="editarTelefono" required pattern="[0-9]{10}">
+          </div>
+          <div>
+            <label for="editarDiaEvento">Día del Evento:</label>
+            <input type="date" id="editarDiaEvento" required>
           </div>
         </div>
         <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
@@ -1103,6 +1118,9 @@
       <button type="submit">Generar Invitación</button>
       <button type="button" id="reagendadosBtn">Generar Invitación Reagendados</button>
       <button type="button" id="verPremafiesto">Ver Premanifiesto</button>
+      <button type="button" id="importarExcelBtn">
+        <i class="fas fa-file-import"></i> Importar Excel
+      </button>
       <button type="button" id="solicitarAccesoGerente">
         <i class="fas fa-lock"></i> Acceso Gerente
       </button>
@@ -1158,6 +1176,7 @@
               <th>Num Persona</th>
               <th>ESTADO CIVIL</th>
               <th>HORA</th>
+              <th>DÍA EVENTO</th>
               <th>SALON</th>
               <th>EDAD</th>
               <th>TARJETA</th>
@@ -1450,6 +1469,7 @@
           document.getElementById('editarCalificacion').value = registroEditando.calificacionOrigen;
           document.getElementById('editarSupervisora').value = registroEditando.supervisora;
           document.getElementById('editarTelefono').value = registroEditando.telefono;
+          document.getElementById('editarDiaEvento').value = registroEditando.diaEvento || '';
           
           // Mostrar el modal de edición
           modalEdicion.style.display = 'block';
@@ -1498,7 +1518,7 @@
           if (registrosFiltrados.length === 0) {
               const tr = document.createElement("tr");
               const td = document.createElement("td");
-              td.colSpan = 16;
+              td.colSpan = 17; // Actualizado a 17 por la nueva columna
               td.textContent = "No hay registros para mostrar";
               td.style.textAlign = "center";
               td.style.padding = "20px";
@@ -1518,6 +1538,8 @@
                   registro.numPersonas,
                   registro.estadoCivil,
                   registro.hora,
+                  // ✅ NUEVO: DÍA DEL EVENTO
+                  registro.diaEvento || '-',
                   registro.hotel,
                   registro.edad,
                   registro.tarjeta,
@@ -1537,10 +1559,10 @@
                   if (index === 1 && valor && valor.length > 20) {
                       td.textContent = valor.substring(0, 20) + "...";
                       td.title = valor;
-                  } else if (index === 7 && valor && valor.length > 15) {
+                  } else if (index === 8 && valor && valor.length > 15) {
                       td.textContent = valor.substring(0, 15) + "...";
                       td.title = valor;
-                  } else if (index === 5 && valor && valor.length > 15) {
+                  } else if (index === 7 && valor && valor.length > 15) {
                       td.textContent = valor.substring(0, 15) + "...";
                       td.title = valor;
                   } else {
@@ -1605,6 +1627,7 @@
           registroEditando.calificacionOrigen = document.getElementById('editarCalificacion').value;
           registroEditando.supervisora = document.getElementById('editarSupervisora').value;
           registroEditando.telefono = document.getElementById('editarTelefono').value;
+          registroEditando.diaEvento = document.getElementById('editarDiaEvento').value;
           
           // Guardar los cambios en FIREBASE
           guardarRegistrosEnFirebase();
@@ -1636,7 +1659,9 @@
           const gerente = document.getElementById("gerente").value;
           const calificacionOrigen = document.getElementById("calificacionOrigen").value;
           const telefono = document.getElementById("celular").value;
-          const fechaRegistro = new Date().toISOString().split('T')[0];
+          // ✅ MODIFICADO: Usar el DÍA DEL EVENTO como fecha de registro
+          const diaEvento = document.getElementById("diaEvento").value;
+          const fechaRegistro = diaEvento; // Usar la fecha del evento, no la de hoy
 
           if (!nombre || !hotelSeleccionado || !supervisora) {
               console.error("Faltan datos esenciales:", {nombre, hotelSeleccionado, supervisora});
@@ -1666,6 +1691,8 @@
               numPersonas: numPersonas,
               estadoCivil,
               hora: convertirHoraAMPM(hora),
+              // ✅ NUEVO: AGREGAR DÍA DEL EVENTO AL REGISTRO
+              diaEvento: diaEvento,
               hotel: hotelSeleccionado,
               edad: edad,
               tarjeta,
@@ -1677,7 +1704,8 @@
               gerente,
               calificacionOrigen,
               telefono,
-              fechaRegistro,
+              // ✅ MODIFICADO: Usar la fecha del evento para el registro
+              fechaRegistro: fechaRegistro,
               timestamp: new Date().getTime(),
               id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
               esReagendado: esReagendados
@@ -1700,6 +1728,65 @@
           contadorCitas++;
           
           return true;
+      }
+
+      // --- FUNCIÓN PARA IMPORTAR EXCEL ---
+      function importarExcel(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+          
+          const reader = new FileReader();
+          reader.onload = function(e) {
+              try {
+                  const data = new Uint8Array(e.target.result);
+                  const workbook = XLSX.read(data, { type: 'array' });
+                  const firstSheetName = workbook.SheetNames[0];
+                  const worksheet = workbook.Sheets[firstSheetName];
+                  const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                  
+                  // Saltar la primera fila (encabezados)
+                  for (let i = 1; i < jsonData.length; i++) {
+                      const row = jsonData[i];
+                      if (row.length >= 10) { // Verificar que tenga datos mínimos
+                          const registro = {
+                              cita: contadorCitas,
+                              nombre: row[0] || '',
+                              numPersonas: row[1] || '',
+                              estadoCivil: row[2] || '',
+                              hora: row[3] || '',
+                              diaEvento: row[4] || '',
+                              hotel: row[5] || '',
+                              edad: row[6] || '',
+                              tarjeta: row[7] || '',
+                              calificacionOrigen: row[8] || '',
+                              gerente: row[9] || 'SANTIAGO',
+                              operador: row[10] || '',
+                              vendedor: row[11] || 'TMK/SF',
+                              baseDatos: row[12] || '',
+                              supervisora: row[13] || '',
+                              telefono: row[14] || '',
+                              // ✅ MODIFICADO: Usar la fecha del evento para el registro
+                              fechaRegistro: row[4] || new Date().toISOString().split('T')[0],
+                              timestamp: new Date().getTime(),
+                              id: Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '-imported',
+                              esReagendado: false
+                          };
+                          
+                          registrosPremanifiesto.push(registro);
+                          contadorCitas++;
+                      }
+                  }
+                  
+                  guardarRegistrosEnFirebase();
+                  actualizarTablaPremanifiesto(ultimaFechaFiltro);
+                  mostrarNotificacion(`Se importaron ${jsonData.length - 1} registros desde Excel`);
+                  
+              } catch (error) {
+                  console.error('Error al importar Excel:', error);
+                  alert('Error al importar el archivo Excel. Verifique el formato.');
+              }
+          };
+          reader.readAsArrayBuffer(file);
       }
 
       // --- FUNCIÓN PARA GENERAR PDF (NORMAL Y REAGENDADOS) ---
@@ -1851,7 +1938,6 @@
           y += 6;
           doc.setFont("helvetica", "bold");
           doc.setFontSize(fondoClave === "fogo" ? 9 : 10);
-          // ELIMINADA LA LÍNEA DEL SALUDO QUE MENCIONASTE
           y += 6;
 
           if (fondoClave === "marquis") {
@@ -2020,6 +2106,15 @@
           
           premanifiestoVisible = !premanifiestoVisible;
       });
+
+      // --- BOTÓN PARA IMPORTAR EXCEL ---
+      document.getElementById("importarExcelBtn").addEventListener("click", function() {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.xlsx, .xls';
+          input.onchange = importarExcel;
+          input.click();
+      });
       
       // --- APLICAR FILTROS ---
       document.getElementById("aplicarFiltro").addEventListener("click", function() {
@@ -2092,15 +2187,15 @@
               const tituloRow = worksheet.addRow([titulo]);
               tituloRow.font = { size: 16, bold: true };
               tituloRow.alignment = { horizontal: 'center' };
-              worksheet.mergeCells('A1:O1');
+              worksheet.mergeCells('A1:P1'); // Actualizado a P1 por la nueva columna
               
               // Saltar una línea
               worksheet.addRow([]);
               
               // Definir encabezados
               const headers = [
-                  'NUM CITAS', 'CLIENTE Y NOMBREACOMPAÑANTE', 'NUM PERSONAS', 'ESTADO CIVIL', 'HORA', 'SALON', 
-                  'EDAD', 'TAQUETA', 'CALIF DE ORIGEN', 'GERENTE', 
+                  'NUM CITAS', 'CLIENTE Y NOMBREACOMPAÑANTE', 'NUM PERSONAS', 'ESTADO CIVIL', 'HORA', 
+                  'DÍA EVENTO', 'SALON', 'EDAD', 'TAQUETA', 'CALIF DE ORIGEN', 'GERENTE', 
                   'OPERADOR', 'VENDEDOR', 'BASE DE DATOS', 'SUPERVISORA', 'TELEFONO'
               ];
               
@@ -2161,6 +2256,8 @@
                       registro.numPersonas,
                       registro.estadoCivil,
                       registro.hora,
+                      // ✅ NUEVO: DÍA DEL EVENTO EN EXCEL
+                      registro.diaEvento || '',
                       registro.hotel,
                       registro.edad,
                       registro.tarjeta,
@@ -2204,6 +2301,7 @@
                   { width: 12 },  // NUM PERSONAS
                   { width: 12 },  // ESTADO CIVIL
                   { width: 10 },  // HORA
+                  { width: 12 },  // ✅ NUEVO: DÍA EVENTO
                   { width: 22 },  // SALON
                   { width: 8 },   // EDAD
                   { width: 18 },  // TAQUETA
@@ -2227,7 +2325,7 @@
               // Activar filtros
               worksheet.autoFilter = {
                   from: 'A3',
-                  to: 'O' + (worksheet.rowCount)
+                  to: 'P' + (worksheet.rowCount) // Actualizado a P por la nueva columna
               };
               
               // Congelar paneles (fijar encabezados)
