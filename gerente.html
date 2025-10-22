@@ -337,6 +337,28 @@
       opacity: 0.9;
     }
 
+    /* NUEVO: Estilo para mostrar el conteo por día */
+    .conteo-dia {
+      margin-top: 15px;
+      padding: 12px;
+      background: rgba(30, 41, 59, 0.7);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      border-left: 3px solid #38bdf8;
+    }
+
+    .conteo-dia .titulo {
+      font-weight: 600;
+      color: #60a5fa;
+      margin-bottom: 5px;
+    }
+
+    .conteo-dia .valor-dia {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #f1f5f9;
+    }
+
     .supervisora-detalle {
       margin-top: 35px;
     }
@@ -912,6 +934,16 @@
       .estadisticas-grid {
         grid-template-columns: 1fr;
       }
+      
+      /* Ajustes para móviles en el conteo por día */
+      .conteo-dia {
+        padding: 10px;
+        font-size: 0.85rem;
+      }
+      
+      .conteo-dia .valor-dia {
+        font-size: 1.1rem;
+      }
     }
 
     @media (max-width: 576px) {
@@ -966,6 +998,24 @@
       
       .estadistica-item .circulo-interior {
         font-size: 1.5rem;
+      }
+      
+      /* Ajustes adicionales para móviles */
+      .stat-card {
+        padding: 20px;
+      }
+      
+      .stat-card .count {
+        font-size: 2.2rem;
+      }
+      
+      .conteo-dia {
+        padding: 8px;
+        font-size: 0.8rem;
+      }
+      
+      .conteo-dia .valor-dia {
+        font-size: 1rem;
       }
     }
   </style>
@@ -1213,7 +1263,9 @@
         supervisoras.forEach(supervisora => {
           estadisticas[supervisora] = {
             count: 0,
-            citas: []
+            citas: [],
+            // ✅ NUEVO: Agregar conteo por día
+            conteoPorDia: {}
           };
         });
         
@@ -1232,11 +1284,18 @@
           });
         }
         
-        // Contar citas por supervisora
+        // Contar citas por supervisora y por día
         registrosFiltrados.forEach(registro => {
           if (estadisticas[registro.supervisora]) {
             estadisticas[registro.supervisora].count++;
             estadisticas[registro.supervisora].citas.push(registro);
+            
+            // ✅ NUEVO: Contar por día
+            const dia = registro.fechaRegistro;
+            if (!estadisticas[registro.supervisora].conteoPorDia[dia]) {
+              estadisticas[registro.supervisora].conteoPorDia[dia] = 0;
+            }
+            estadisticas[registro.supervisora].conteoPorDia[dia]++;
           }
         });
         
@@ -1273,6 +1332,10 @@
           const meta = metas[supervisora] || 80;
           const porcentajeFormateado = porcentaje.toFixed(1);
           
+          // ✅ NUEVO: Obtener el conteo por día para hoy
+          const hoy = new Date().toISOString().split('T')[0];
+          const conteoHoy = estadisticas[supervisora].conteoPorDia[hoy] || 0;
+          
           estadisticasHTML += `
             <div class="estadistica-item">
               <h4>${supervisora}</h4>
@@ -1286,6 +1349,11 @@
                 Citas: <span class="meta">${count}</span> | 
                 Eficiencia: <span class="meta">${porcentajeFormateado}%</span> | 
                 Meta: ${meta}%
+              </div>
+              <!-- ✅ NUEVO: Mostrar conteo por día -->
+              <div class="conteo-dia">
+                <div class="titulo">Citas Hoy (${hoy})</div>
+                <div class="valor-dia">${conteoHoy}</div>
               </div>
             </div>
           `;
@@ -1318,9 +1386,18 @@
           const count = estadisticas[supervisora].count;
           const porcentaje = totalCitas > 0 ? (count / totalCitas * 100).toFixed(1) : 0;
           
+          // ✅ NUEVO: Obtener el conteo por día para hoy
+          const hoy = new Date().toISOString().split('T')[0];
+          const conteoHoy = estadisticas[supervisora].conteoPorDia[hoy] || 0;
+          
           graficoHTML += `
             <div class="barra">
-              <div class="barra-label">${supervisora}</div>
+              <div class="barra-label">
+                ${supervisora}
+                <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">
+                  Hoy: ${conteoHoy}
+                </div>
+              </div>
               <div class="barra-progreso">
                 <div class="barra-relleno" style="width: ${porcentaje}%">
                   ${count} citas (${porcentaje}%)
@@ -1376,11 +1453,20 @@
             supervisoraLider = supervisora;
           }
           
+          // ✅ NUEVO: Obtener el conteo por día para hoy
+          const hoy = new Date().toISOString().split('T')[0];
+          const conteoHoy = estadisticas[supervisora].conteoPorDia[hoy] || 0;
+          
           statsHTML += `
             <div class="stat-card ${esLider ? 'leader' : ''}">
               <h3>${supervisora}</h3>
               <div class="count">${count}</div>
-              <div class="supervisora">Citas</div>
+              <div class="supervisora">Citas Totales</div>
+              <!-- ✅ NUEVO: Mostrar conteo por día -->
+              <div class="conteo-dia">
+                <div class="titulo">Citas Hoy (${hoy})</div>
+                <div class="valor-dia">${conteoHoy}</div>
+              </div>
             </div>
           `;
         });
@@ -1398,19 +1484,24 @@
             hayCitas = true;
             let citasHTML = '';
             
+            // ✅ NUEVO: Obtener el conteo por día para hoy
+            const hoy = new Date().toISOString().split('T')[0];
+            const conteoHoy = estadisticas[supervisora].conteoPorDia[hoy] || 0;
+            
             citas.forEach(cita => {
               citasHTML += `
                 <div class="cita-item">
                   <div class="cita-numero">Cita #${cita.cita}</div>
                   <div class="cita-cliente">${cita.nombre}</div>
                   <div class="cita-hora">${cita.hora} - ${cita.hotel}</div>
+                  <div class="cita-hora">Fecha: ${cita.fechaRegistro}</div>
                 </div>
               `;
             });
             
             detallesHTML += `
               <div class="supervisora-detalle">
-                <h3><i class="fas fa-user-tie"></i> ${supervisora} - ${citas.length} citas</h3>
+                <h3><i class="fas fa-user-tie"></i> ${supervisora} - ${citas.length} citas totales - ${conteoHoy} citas hoy</h3>
                 <div class="supervisora-citas">
                   ${citasHTML}
                 </div>
@@ -1491,7 +1582,7 @@
               const estadisticas = calcularEstadisticas();
               
               // Añadir encabezados para estadísticas
-              const headerRow = worksheet.addRow(['Supervisora', 'Total de Citas', 'Porcentaje']);
+              const headerRow = worksheet.addRow(['Supervisora', 'Total de Citas', 'Porcentaje', 'Citas Hoy']);
               
               // Aplicar estilo a los encabezados
               headerRow.eachCell((cell) => {
@@ -1515,15 +1606,18 @@
               
               // Añadir datos de estadísticas
               const totalCitas = registrosPremanifiesto.length;
+              const hoy = new Date().toISOString().split('T')[0];
               
               Object.keys(estadisticas).forEach(supervisora => {
                   const count = estadisticas[supervisora].count;
                   const porcentaje = totalCitas > 0 ? (count / totalCitas * 100).toFixed(1) : 0;
+                  const conteoHoy = estadisticas[supervisora].conteoPorDia[hoy] || 0;
                   
                   const row = worksheet.addRow([
                       supervisora,
                       count,
-                      `${porcentaje}%`
+                      `${porcentaje}%`,
+                      conteoHoy
                   ]);
                   
                   // Aplicar bordes a todas las celdas
