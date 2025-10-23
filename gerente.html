@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Panel del Gerente</title>
+  <meta name="description" content="Panel de control gerencial para Travel Life Club">
+  <meta name="theme-color" content="#38bdf8">
+  <link rel="icon" type="image/x-icon" href="Imagenes/logo.png">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com/ajax/libs">
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+  <link rel="preload" href="Imagenes/logo.png" as="image">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Firebase SDK -->
@@ -16,6 +22,13 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      perspective: 1000px;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
@@ -182,6 +195,7 @@
       border-left: 5px solid #38bdf8;
       position: relative;
       overflow: hidden;
+      will-change: transform;
     }
 
     .resumen-item::before {
@@ -284,6 +298,7 @@
       border-top: 5px solid #38bdf8;
       position: relative;
       overflow: hidden;
+      will-change: transform;
     }
 
     .stat-card::before {
@@ -530,6 +545,7 @@
       gap: 10px;
       position: relative;
       overflow: hidden;
+      will-change: transform;
     }
 
     .btn-filtro::before {
@@ -614,6 +630,10 @@
       font-weight: 500;
       backdrop-filter: blur(5px);
       border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .notificacion.error {
+      background: linear-gradient(145deg, #ef4444, #dc2626);
     }
 
     @keyframes slideInRight {
@@ -815,6 +835,42 @@
       color: #60a5fa;
     }
 
+    /* Métricas avanzadas */
+    .metrica-tendencia {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+
+    .tendencia-positiva {
+      color: #2ecc71;
+    }
+
+    .tendencia-negativa {
+      color: #e74c3c;
+    }
+
+    .tooltip {
+      position: relative;
+    }
+
+    .tooltip:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      z-index: 1000;
+    }
+
     /* Responsive mejorado */
     @media (max-width: 1200px) {
       .container {
@@ -943,6 +999,15 @@
       
       .conteo-dia .valor-dia {
         font-size: 1.1rem;
+      }
+
+      .btn-filtro {
+        padding: 12px 18px;
+        min-height: 44px;
+      }
+
+      .filtro-group input, .filtro-group select {
+        font-size: 16px;
       }
     }
 
@@ -1131,6 +1196,26 @@
     // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
 
+    // Cache inteligente para datos
+    const cache = {
+      datos: null,
+      timestamp: null,
+      validez: 5 * 60 * 1000 // 5 minutos
+    };
+
+    // Función debounce para optimizar eventos
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
       let registrosPremanifiesto = [];
       let actualizando = false;
@@ -1148,6 +1233,11 @@
               if (data) {
                   // Convertir objeto de Firebase a array
                   registrosPremanifiesto = Object.values(data);
+                  
+                  // Actualizar cache
+                  cache.datos = registrosPremanifiesto;
+                  cache.timestamp = Date.now();
+                  
                   console.log("Datos sincronizados desde Firebase:", registrosPremanifiesto.length);
                   
                   // Actualizar el panel del gerente
@@ -1159,14 +1249,43 @@
                   registrosPremanifiesto = [];
                   actualizarPanelGerente();
               }
-          });
+          }, manejarErrorFirebase);
       }
 
-      function mostrarNotificacion(mensaje) {
+      function manejarErrorFirebase(error) {
+        console.error('Error Firebase:', error);
+        mostrarNotificacion('Error de conexión con Firebase', 'error');
+      }
+
+      function obtenerDatosConCache() {
+        const ahora = Date.now();
+        if (cache.datos && cache.timestamp && (ahora - cache.timestamp) < cache.validez) {
+          return Promise.resolve(cache.datos);
+        }
+        
+        return new Promise((resolve) => {
+          const database = firebase.database();
+          const registrosRef = database.ref('registrosPremanifiesto');
+          
+          registrosRef.once('value').then((snapshot) => {
+            const data = snapshot.val();
+            const registros = data ? Object.values(data) : [];
+            
+            cache.datos = registros;
+            cache.timestamp = ahora;
+            
+            resolve(registros);
+          }).catch(() => {
+            resolve(cache.datos || []);
+          });
+        });
+      }
+
+      function mostrarNotificacion(mensaje, tipo = 'success') {
         // Crear elemento de notificación
         const notificacion = document.createElement('div');
-        notificacion.innerHTML = `<i class="fas fa-info-circle"></i> ${mensaje}`;
-        notificacion.className = 'notificacion';
+        notificacion.innerHTML = `<i class="fas fa-${tipo === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${mensaje}`;
+        notificacion.className = `notificacion ${tipo === 'error' ? 'error' : ''}`;
         
         document.body.appendChild(notificacion);
         
@@ -1230,11 +1349,24 @@
           }
         });
         
+        // Calcular tendencia (comparar con ayer)
+        const ayer = new Date();
+        ayer.setDate(ayer.getDate() - 1);
+        const ayerStr = ayer.toISOString().split('T')[0];
+        const citasAyer = registrosPremanifiesto.filter(r => r.fechaRegistro === ayerStr).length;
+        const tendencia = citasHoy - citasAyer;
+        const tendenciaIcono = tendencia > 0 ? 'fa-arrow-up' : tendencia < 0 ? 'fa-arrow-down' : 'fa-minus';
+        const tendenciaClase = tendencia > 0 ? 'tendencia-positiva' : tendencia < 0 ? 'tendencia-negativa' : '';
+        
         resumenGeneral.innerHTML = `
           <div class="resumen-item">
             <div class="icono"><i class="fas fa-calendar-check"></i></div>
             <div class="valor">${totalCitas}</div>
             <div class="etiqueta">Total de Citas</div>
+            <div class="metrica-tendencia ${tendenciaClase}">
+              <i class="fas ${tendenciaIcono}"></i>
+              ${Math.abs(tendencia)} vs ayer
+            </div>
           </div>
           <div class="resumen-item">
             <div class="icono"><i class="fas fa-users"></i></div>
@@ -1250,6 +1382,9 @@
             <div class="icono"><i class="fas fa-trophy"></i></div>
             <div class="valor">${supervisoraLider.split(' ')[0]}</div>
             <div class="etiqueta">Supervisora Líder</div>
+            <div class="metrica-tendencia">
+              ${maxCitas} citas
+            </div>
           </div>
         `;
       }
@@ -1331,24 +1466,35 @@
           const porcentaje = totalCitas > 0 ? (count / totalCitas * 100) : 0;
           const meta = metas[supervisora] || 80;
           const porcentajeFormateado = porcentaje.toFixed(1);
+          const progresoMeta = Math.min((count / meta) * 100, 100);
           
           // ✅ NUEVO: Obtener el conteo por día para hoy
           const hoy = new Date().toISOString().split('T')[0];
           const conteoHoy = estadisticas[supervisora].conteoPorDia[hoy] || 0;
+          
+          // Calcular eficiencia (citas hoy vs promedio)
+          const promedioDiario = count / 30; // Asumiendo 30 días
+          const eficiencia = promedioDiario > 0 ? (conteoHoy / promedioDiario * 100) : 0;
+          const eficienciaFormateada = eficiencia.toFixed(0);
+          const eficienciaIcono = eficiencia > 100 ? 'fa-arrow-up' : eficiencia < 100 ? 'fa-arrow-down' : 'fa-minus';
+          const eficienciaClase = eficiencia > 100 ? 'tendencia-positiva' : eficiencia < 100 ? 'tendencia-negativa' : '';
           
           estadisticasHTML += `
             <div class="estadistica-item">
               <h4>${supervisora}</h4>
               <div class="grafico-circular">
                 <div class="circulo-exterior">
-                  <div class="circulo-progreso" style="--porcentaje: ${porcentaje}%"></div>
-                  <div class="circulo-interior">${porcentajeFormateado}%</div>
+                  <div class="circulo-progreso" style="--porcentaje: ${progresoMeta}%"></div>
+                  <div class="circulo-interior">${count}</div>
                 </div>
               </div>
               <div class="meta-info">
-                Citas: <span class="meta">${count}</span> | 
-                Eficiencia: <span class="meta">${porcentajeFormateado}%</span> | 
-                Meta: ${meta}%
+                <div>Meta: <span class="meta">${meta}</span></div>
+                <div>Progreso: <span class="meta">${progresoMeta.toFixed(1)}%</span></div>
+                <div class="metrica-tendencia ${eficienciaClase}">
+                  <i class="fas ${eficienciaIcono}"></i>
+                  Eficiencia: ${eficienciaFormateada}%
+                </div>
               </div>
               <!-- ✅ NUEVO: Mostrar conteo por día -->
               <div class="conteo-dia">
@@ -1457,11 +1603,28 @@
           const hoy = new Date().toISOString().split('T')[0];
           const conteoHoy = estadisticas[supervisora].conteoPorDia[hoy] || 0;
           
+          // Calcular tendencia (comparar con promedio de últimos 7 días)
+          const ultimos7Dias = [];
+          for (let i = 0; i < 7; i++) {
+            const fecha = new Date();
+            fecha.setDate(fecha.getDate() - i);
+            const fechaStr = fecha.toISOString().split('T')[0];
+            ultimos7Dias.push(estadisticas[supervisora].conteoPorDia[fechaStr] || 0);
+          }
+          const promedio7Dias = ultimos7Dias.reduce((a, b) => a + b, 0) / 7;
+          const tendencia = promedio7Dias > 0 ? ((conteoHoy - promedio7Dias) / promedio7Dias * 100) : 0;
+          const tendenciaIcono = tendencia > 0 ? 'fa-arrow-up' : tendencia < 0 ? 'fa-arrow-down' : 'fa-minus';
+          const tendenciaClase = tendencia > 0 ? 'tendencia-positiva' : tendencia < 0 ? 'tendencia-negativa' : '';
+          
           statsHTML += `
             <div class="stat-card ${esLider ? 'leader' : ''}">
               <h3>${supervisora}</h3>
               <div class="count">${count}</div>
               <div class="supervisora">Citas Totales</div>
+              <div class="metrica-tendencia ${tendenciaClase}">
+                <i class="fas ${tendenciaIcono}"></i>
+                ${Math.abs(tendencia).toFixed(1)}% vs promedio
+              </div>
               <!-- ✅ NUEVO: Mostrar conteo por día -->
               <div class="conteo-dia">
                 <div class="titulo">Citas Hoy (${hoy})</div>
@@ -1488,10 +1651,13 @@
             const hoy = new Date().toISOString().split('T')[0];
             const conteoHoy = estadisticas[supervisora].conteoPorDia[hoy] || 0;
             
-            citas.forEach(cita => {
+            // Ordenar citas por fecha más reciente
+            const citasOrdenadas = citas.sort((a, b) => new Date(b.fechaRegistro) - new Date(a.fechaRegistro));
+            
+            citasOrdenadas.slice(0, 10).forEach(cita => { // Mostrar solo las 10 más recientes
               citasHTML += `
                 <div class="cita-item">
-                  <div class="cita-numero">Cita #${cita.cita}</div>
+                  <div class="cita-numero">Cita #${cita.citaPorDia || cita.cita}</div>
                   <div class="cita-cliente">${cita.nombre}</div>
                   <div class="cita-hora">${cita.hora} - ${cita.hotel}</div>
                   <div class="cita-hora">Fecha: ${cita.fechaRegistro}</div>
@@ -1530,20 +1696,32 @@
         boton.disabled = true;
         
         // Forzar recarga de datos desde Firebase
-        configurarFirebase();
-        
-        setTimeout(() => {
-          boton.innerHTML = textoOriginal;
-          boton.disabled = false;
-          actualizando = false;
-          mostrarNotificacion("Datos actualizados correctamente");
-        }, 1000);
+        obtenerDatosConCache().then(datos => {
+          registrosPremanifiesto = datos;
+          actualizarPanelGerente();
+          
+          setTimeout(() => {
+            boton.innerHTML = textoOriginal;
+            boton.disabled = false;
+            actualizando = false;
+            mostrarNotificacion("Datos actualizados correctamente");
+          }, 1000);
+        });
       });
       
-      // --- APLICAR FILTROS ---
+      // --- APLICAR FILTROS CON DEBOUNCE ---
       document.getElementById("aplicarFiltro").addEventListener("click", function() {
         actualizarPanelGerente();
       });
+      
+      // Aplicar debounce a los filtros
+      document.getElementById("filtroFecha").addEventListener("input", 
+        debounce(() => actualizarPanelGerente(), 300)
+      );
+      
+      document.getElementById("filtroSupervisora").addEventListener("change", 
+        debounce(() => actualizarPanelGerente(), 300)
+      );
       
       // --- LIMPIAR FILTRO ---
       document.getElementById("limpiarFiltro").addEventListener("click", function() {
@@ -1662,7 +1840,7 @@
               // Añadir datos de citas (AHORA CON TELÉFONO)
               registrosPremanifiesto.forEach(registro => {
                   const row = worksheet.addRow([
-                      registro.cita,
+                      registro.citaPorDia || registro.cita,
                       registro.nombre,
                       registro.telefono || 'N/A',
                       registro.supervisora,
@@ -1713,6 +1891,18 @@
               console.error('Error al generar el Excel:', error);
               alert('Ocurrió un error al generar el archivo Excel.');
           }
+      });
+
+      // Manejo global de errores
+      window.addEventListener('error', (e) => {
+        console.error('Error global:', e);
+        mostrarNotificacion('Ocurrió un error inesperado', 'error');
+      });
+
+      window.addEventListener('unhandledrejection', (e) => {
+        console.error('Promise rechazada:', e.reason);
+        e.preventDefault();
+        mostrarNotificacion('Error en una operación', 'error');
       });
 
       // INICIALIZAR FIREBASE Y EL PANEL
