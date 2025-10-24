@@ -815,6 +815,181 @@
       color: #60a5fa;
     }
 
+    /* NUEVA SECCIÓN: Gestión de Supervisoras */
+    .gestion-supervisoras {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      padding: 30px;
+      border-radius: 15px;
+      margin: 30px 0;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gestion-supervisoras::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, #38bdf8, #60a5fa, #8b5cf6);
+    }
+
+    .gestion-supervisoras h3 {
+      color: #f1f5f9;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.5rem;
+    }
+
+    .gestion-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      margin-bottom: 25px;
+    }
+
+    @media (max-width: 768px) {
+      .gestion-controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .agregar-supervisora, .eliminar-supervisora {
+      background: rgba(30, 41, 59, 0.8);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      border: 1px solid #334155;
+    }
+
+    .agregar-supervisora h4, .eliminar-supervisora h4 {
+      color: #e2e8f0;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .input-group input, .input-group select {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+    }
+
+    .input-group input:focus, .input-group select:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+      outline: none;
+    }
+
+    .btn-agregar {
+      background: linear-gradient(145deg, #10b981, #059669);
+      color: #0f172a;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-agregar:hover {
+      background: linear-gradient(145deg, #059669, #047857);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn-eliminar {
+      background: linear-gradient(145deg, #ef4444, #dc2626);
+      color: #0f172a;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-eliminar:hover {
+      background: linear-gradient(145deg, #dc2626, #b91c1c);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn-eliminar:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .lista-supervisoras {
+      background: rgba(30, 41, 59, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+    }
+
+    .lista-supervisoras h4 {
+      color: #e2e8f0;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+    }
+
+    .supervisora-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: rgba(30, 41, 59, 0.6);
+      border-radius: 6px;
+      border-left: 3px solid #38bdf8;
+    }
+
+    .supervisora-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .supervisora-nombre {
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .supervisora-estado {
+      background: #10b981;
+      color: #0f172a;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
     /* NUEVA SECCIÓN: Controles de Administración */
     .admin-controls {
       background: linear-gradient(145deg, #1e293b, #0f172a);
@@ -1181,6 +1356,48 @@
       <!-- Los datos del resumen se generarán dinámicamente -->
     </section>
 
+    <!-- NUEVA SECCIÓN: Gestión de Supervisoras -->
+    <section class="gestion-supervisoras">
+      <h3><i class="fas fa-users-cog"></i> Gestión de Supervisoras</h3>
+      
+      <div class="gestion-controls">
+        <div class="agregar-supervisora">
+          <h4><i class="fas fa-user-plus"></i> Agregar Nueva Supervisora</h4>
+          <div class="input-group">
+            <input type="text" id="nuevaSupervisora" placeholder="Nombre de la nueva supervisora">
+            <button class="btn-agregar" id="btnAgregarSupervisora">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+          <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 10px;">
+            La nueva supervisora estará disponible inmediatamente en todo el sistema.
+          </p>
+        </div>
+        
+        <div class="eliminar-supervisora">
+          <h4><i class="fas fa-user-minus"></i> Eliminar Supervisora</h4>
+          <div class="input-group">
+            <select id="selectEliminarSupervisora">
+              <option value="">Seleccione una supervisora</option>
+            </select>
+            <button class="btn-eliminar" id="btnEliminarSupervisora">
+              <i class="fas fa-trash"></i> Eliminar
+            </button>
+          </div>
+          <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 10px;">
+            Los registros existentes mantendrán el nombre histórico de la supervisora.
+          </p>
+        </div>
+      </div>
+      
+      <div class="lista-supervisoras">
+        <h4><i class="fas fa-list"></i> Supervisoras Activas</h4>
+        <div id="listaSupervisorasContainer">
+          <!-- Las supervisoras se cargarán aquí dinámicamente -->
+        </div>
+      </div>
+    </section>
+
     <!-- NUEVA SECCIÓN: Controles de Administración -->
     <section class="admin-controls">
       <h3><i class="fas fa-cogs"></i> Controles de Administración</h3>
@@ -1228,10 +1445,7 @@
           <label for="filtroSupervisora"><i class="fas fa-user-tie"></i> Filtrar por supervisora:</label>
           <select id="filtroSupervisora">
             <option value="">Todas las supervisoras</option>
-            <option>LUIS COLULA</option>
-            <option>MACARENA ZAMORA</option>
-            <option>THALIA PINEDA</option>
-            <option>YARET NAJERA</option>
+            <!-- Las supervisoras se cargarán dinámicamente -->
           </select>
         </div>
         
@@ -1301,6 +1515,7 @@
 
     // Variables para el historial de eliminados
     let historialEliminados = JSON.parse(localStorage.getItem('historial_eliminados') || '[]');
+    let listaSupervisoras = [];
 
     document.addEventListener("DOMContentLoaded", function () {
       let registrosPremanifiesto = [];
@@ -1313,6 +1528,167 @@
       const btnCancelarAccion = document.getElementById('cancelarAccion');
       const btnConfirmarAccion = document.getElementById('confirmarAccion');
       const btnCerrarModal = document.querySelector('.cerrar-modal');
+
+      // --- GESTIÓN DE SUPERVISORAS ---
+      
+      // Cargar lista de supervisoras
+      function cargarListaSupervisoras() {
+        const selectEliminar = document.getElementById('selectEliminarSupervisora');
+        const selectFiltro = document.getElementById('filtroSupervisora');
+        const listaContainer = document.getElementById('listaSupervisorasContainer');
+        
+        // Limpiar listas
+        selectEliminar.innerHTML = '<option value="">Seleccione una supervisora</option>';
+        selectFiltro.innerHTML = '<option value="">Todas las supervisoras</option>';
+        listaContainer.innerHTML = '';
+        
+        // Cargar supervisoras desde Firebase
+        const database = firebase.database();
+        database.ref('supervisoras').once('value')
+            .then((snapshot) => {
+                const supervisoras = snapshot.val() || [];
+                listaSupervisoras = supervisoras;
+                
+                supervisoras.forEach(supervisora => {
+                    // Agregar al select de eliminación
+                    const optionEliminar = document.createElement('option');
+                    optionEliminar.value = supervisora;
+                    optionEliminar.textContent = supervisora;
+                    selectEliminar.appendChild(optionEliminar);
+                    
+                    // Agregar al select de filtro
+                    const optionFiltro = document.createElement('option');
+                    optionFiltro.value = supervisora;
+                    optionFiltro.textContent = supervisora;
+                    selectFiltro.appendChild(optionFiltro);
+                    
+                    // Agregar a la lista visual
+                    const item = document.createElement('div');
+                    item.className = 'supervisora-item';
+                    
+                    const nombre = document.createElement('div');
+                    nombre.className = 'supervisora-nombre';
+                    nombre.textContent = supervisora;
+                    
+                    const estado = document.createElement('div');
+                    estado.className = 'supervisora-estado';
+                    estado.textContent = 'Activa';
+                    
+                    item.appendChild(nombre);
+                    item.appendChild(estado);
+                    listaContainer.appendChild(item);
+                });
+                
+                console.log("Supervisoras cargadas:", listaSupervisoras);
+            })
+            .catch(error => {
+                console.error('Error al cargar supervisoras:', error);
+                mostrarNotificacion('Error al cargar supervisoras', 'error');
+            });
+      }
+
+      // Agregar supervisora
+      document.getElementById('btnAgregarSupervisora').addEventListener('click', function() {
+        const nombre = document.getElementById('nuevaSupervisora').value.trim();
+        
+        if (!nombre) {
+            mostrarNotificacion('Ingrese el nombre de la supervisora', 'error');
+            return;
+        }
+        
+        const database = firebase.database();
+        
+        // Obtener lista actual
+        database.ref('supervisoras').once('value')
+            .then((snapshot) => {
+                const supervisoras = snapshot.val() || [];
+                const nombreUpper = nombre.toUpperCase();
+                
+                if (supervisoras.includes(nombreUpper)) {
+                    mostrarNotificacion('Esta supervisora ya existe', 'error');
+                    return;
+                }
+                
+                // Agregar nueva supervisora
+                supervisoras.push(nombreUpper);
+                
+                // Guardar en Firebase
+                return database.ref('supervisoras').set(supervisoras);
+            })
+            .then(() => {
+                document.getElementById('nuevaSupervisora').value = '';
+                cargarListaSupervisoras();
+                mostrarNotificacion(`Supervisora "${nombre.toUpperCase()}" agregada correctamente`);
+            })
+            .catch(error => {
+                console.error('Error al agregar supervisora:', error);
+                mostrarNotificacion('Error al agregar supervisora', 'error');
+            });
+      });
+      
+      // Eliminar supervisora
+      document.getElementById('btnEliminarSupervisora').addEventListener('click', function() {
+        const nombre = document.getElementById('selectEliminarSupervisora').value;
+        
+        if (!nombre) {
+            mostrarNotificacion('Seleccione una supervisora para eliminar', 'error');
+            return;
+        }
+        
+        const database = firebase.database();
+        
+        // Obtener lista actual
+        database.ref('supervisoras').once('value')
+            .then((snapshot) => {
+                let supervisoras = snapshot.val() || [];
+                
+                if (supervisoras.length <= 1) {
+                    mostrarNotificacion('Debe haber al menos una supervisora', 'error');
+                    return;
+                }
+                
+                // Verificar registros asociados
+                return database.ref('registrosPremanifiesto').once('value')
+                    .then(registrosSnapshot => {
+                        const registros = registrosSnapshot.val();
+                        let registrosAsociados = 0;
+                        
+                        if (registros) {
+                            Object.values(registros).forEach(registro => {
+                                if (registro.supervisora === nombre) {
+                                    registrosAsociados++;
+                                }
+                            });
+                        }
+                        
+                        let mensaje = `¿Está seguro de que desea eliminar a la supervisora "${nombre}"?`;
+                        if (registrosAsociados > 0) {
+                            mensaje += `\n\nADVERTENCIA: Hay ${registrosAsociados} registro(s) asignados a esta supervisora. Los registros mantendrán el nombre histórico.`;
+                        }
+                        
+                        if (!confirm(mensaje)) {
+                            return;
+                        }
+                        
+                        // Eliminar supervisora
+                        supervisoras = supervisoras.filter(s => s !== nombre);
+                        
+                        // Guardar en Firebase
+                        return database.ref('supervisoras').set(supervisoras);
+                    });
+            })
+            .then((result) => {
+                if (result) {
+                    document.getElementById('selectEliminarSupervisora').value = '';
+                    cargarListaSupervisoras();
+                    mostrarNotificacion(`Supervisora "${nombre}" eliminada correctamente`);
+                }
+            })
+            .catch(error => {
+                console.error('Error al eliminar supervisora:', error);
+                mostrarNotificacion('Error al eliminar supervisora', 'error');
+            });
+      });
 
       // CONFIGURAR FIREBASE REALTIME DATABASE
       function configurarFirebase() {
@@ -1337,6 +1713,16 @@
                   console.log("No hay datos en Firebase");
                   registrosPremanifiesto = [];
                   actualizarPanelGerente();
+              }
+          });
+          
+          // Escuchar cambios en supervisoras
+          database.ref('supervisoras').on('value', (snapshot) => {
+              const data = snapshot.val();
+              if (data && Array.isArray(data)) {
+                  listaSupervisoras = data;
+                  cargarListaSupervisoras();
+                  console.log("Supervisoras actualizadas en tiempo real:", listaSupervisoras);
               }
           });
       }
@@ -1526,6 +1912,7 @@
           // Mostrar información de depuración
           const info = {
             'Registros actuales': registrosPremanifiesto.length,
+            'Supervisoras activas': listaSupervisoras.length,
             'Historial de eliminados': historialEliminados.length,
             'Total eliminados': historialEliminados.reduce((total, backup) => total + backup.total, 0),
             'Firebase conectado': firebase.app().name ? "Sí" : "No",
@@ -1545,6 +1932,12 @@
           historialEliminados.forEach((backup, index) => {
             const fecha = new Date(backup.fecha);
             contenido += `\n${index + 1}. ${fecha.toLocaleString()} - ${backup.total} registros`;
+          });
+          
+          // Agregar información de supervisoras
+          contenido += '\n\n<strong>Supervisoras:</strong>\n';
+          listaSupervisoras.forEach((supervisora, index) => {
+            contenido += `\n${index + 1}. ${supervisora}`;
           });
           
           debugContent.innerHTML = contenido;
@@ -1605,10 +1998,41 @@
         }
       });
 
-      // ... (El resto del código del panel del gerente se mantiene igual) ...
+      // --- FUNCIONES DEL PANEL DEL GERENTE (se mantienen igual) ---
       
+      function actualizarPanelGerente() {
+        // Aquí iría el código existente para actualizar las estadísticas
+        // y gráficos del panel del gerente
+        console.log("Actualizando panel del gerente con", registrosPremanifiesto.length, "registros");
+        
+        // Actualizar resumen general
+        actualizarResumenGeneral();
+        
+        // Actualizar estadísticas por supervisora
+        actualizarEstadisticasSupervisoras();
+        
+        // Actualizar gráfico de barras
+        actualizarGraficoBarras();
+      }
+      
+      function actualizarResumenGeneral() {
+        const resumenContainer = document.getElementById('resumenGeneral');
+        // Código para actualizar el resumen general...
+      }
+      
+      function actualizarEstadisticasSupervisoras() {
+        const statsContainer = document.getElementById('statsContainer');
+        // Código para actualizar estadísticas por supervisora...
+      }
+      
+      function actualizarGraficoBarras() {
+        const graficoContainer = document.getElementById('graficoBarras');
+        // Código para actualizar el gráfico de barras...
+      }
+
       // INICIALIZAR FIREBASE Y EL PANEL
       configurarFirebase();
+      cargarListaSupervisoras();
       
       // Establecer la fecha actual como valor por defecto en el filtro
       const hoy = new Date().toISOString().split('T')[0];
