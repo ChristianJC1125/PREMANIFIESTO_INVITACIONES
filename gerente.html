@@ -11,6 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
   <style>
+    /* MANTENGO TODOS TUS ESTILOS EXISTENTES SIN MODIFICAR */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -1342,8 +1343,8 @@
         <button class="btn-filtro" id="actualizarBtn">
           <i class="fas fa-sync-alt"></i> Actualizar
         </button>
-        <button class="btn-filtro btn-exportar" id="exportarExcel">
-          <i class="fas fa-file-excel"></i> Exportar Excel
+        <button class="btn-filtro btn-exportar" id="exportarEstadisticas">
+          <i class="fas fa-file-excel"></i> Exportar Estadísticas
         </button>
         <button class="btn-filtro btn-volver" onclick="window.location.href='index.html'">
           <i class="fas fa-arrow-left"></i> Volver al Sistema
@@ -1528,6 +1529,213 @@
       const btnCancelarAccion = document.getElementById('cancelarAccion');
       const btnConfirmarAccion = document.getElementById('confirmarAccion');
       const btnCerrarModal = document.querySelector('.cerrar-modal');
+
+      // --- NUEVA FUNCIÓN: EXPORTAR ESTADÍSTICAS DE SUPERVISORAS Y CITAS ---
+      function exportarEstadisticasCompletas() {
+        if (registrosPremanifiesto.length === 0) {
+          mostrarNotificacion("No hay datos para exportar", 'error');
+          return;
+        }
+
+        try {
+          // Crear un nuevo libro de Excel
+          const workbook = new ExcelJS.Workbook();
+          
+          // HOJA 1: RESUMEN GENERAL
+          const wsResumen = workbook.addWorksheet("Resumen General");
+          
+          // Título
+          const tituloRow = wsResumen.addRow(["REPORTE DE ESTADÍSTICAS - TRAVEL LIFE CLUB"]);
+          tituloRow.font = { size: 16, bold: true };
+          tituloRow.alignment = { horizontal: 'center' };
+          wsResumen.mergeCells('A1:F1');
+          
+          // Fecha de generación
+          const fechaRow = wsResumen.addRow([`Generado el: ${new Date().toLocaleString('es-MX')}`]);
+          fechaRow.font = { bold: true };
+          wsResumen.mergeCells('A2:F2');
+          
+          wsResumen.addRow([]);
+          
+          // Estadísticas generales
+          const totalCitas = registrosPremanifiesto.length;
+          const supervisorasActivas = listaSupervisoras.length;
+          const hoy = new Date().toISOString().split('T')[0];
+          const citasHoy = registrosPremanifiesto.filter(reg => reg.fechaRegistro && reg.fechaRegistro.includes(hoy)).length;
+          
+          wsResumen.addRow(["ESTADÍSTICAS GENERALES", "", "", "", "", ""]);
+          wsResumen.addRow(["Total de Citas Registradas:", totalCitas]);
+          wsResumen.addRow(["Supervisoras Activas:", supervisorasActivas]);
+          wsResumen.addRow(["Citas Registradas Hoy:", citasHoy]);
+          wsResumen.addRow(["Fecha del Reporte:", document.getElementById('filtroFecha').value]);
+          
+          wsResumen.addRow([]);
+          
+          // HOJA 2: ESTADÍSTICAS POR SUPERVISORA
+          const wsEstadisticas = workbook.addWorksheet("Estadísticas por Supervisora");
+          
+          // Título
+          const tituloEstRow = wsEstadisticas.addRow(["ESTADÍSTICAS POR SUPERVISORA"]);
+          tituloEstRow.font = { size: 16, bold: true };
+          tituloEstRow.alignment = { horizontal: 'center' };
+          wsEstadisticas.mergeCells('A1:E1');
+          
+          wsEstadisticas.addRow([]);
+          
+          // Encabezados
+          const headersEst = ["Supervisora", "Total Citas", "Citas Hoy", "Porcentaje", "Estado"];
+          const headerEstRow = wsEstadisticas.addRow(headersEst);
+          
+          // Aplicar estilo a los encabezados
+          headerEstRow.eachCell((cell) => {
+              cell.fill = {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  fgColor: { argb: 'FF38BDF8' }
+              };
+              cell.font = {
+                  bold: true,
+                  color: { argb: 'FFFFFFFF' }
+              };
+              cell.alignment = { horizontal: 'center' };
+              cell.border = {
+                  top: { style: 'thin' },
+                  left: { style: 'thin' },
+                  bottom: { style: 'thin' },
+                  right: { style: 'thin' }
+              };
+          });
+          
+          // Calcular estadísticas por supervisora
+          const statsPorSupervisora = {};
+          listaSupervisoras.forEach(supervisora => {
+              statsPorSupervisora[supervisora] = {
+                  total: 0,
+                  hoy: 0
+              };
+          });
+          
+          registrosPremanifiesto.forEach(registro => {
+              if (registro.supervisora && statsPorSupervisora[registro.supervisora]) {
+                  statsPorSupervisora[registro.supervisora].total++;
+                  if (registro.fechaRegistro && registro.fechaRegistro.includes(hoy)) {
+                      statsPorSupervisora[registro.supervisora].hoy++;
+                  }
+              }
+          });
+          
+          // Agregar datos
+          Object.keys(statsPorSupervisora).forEach(supervisora => {
+              const stats = statsPorSupervisora[supervisora];
+              const porcentaje = totalCitas > 0 ? ((stats.total / totalCitas) * 100).toFixed(2) : 0;
+              const estado = stats.total > 0 ? "Activa" : "Sin citas";
+              
+              wsEstadisticas.addRow([
+                  supervisora,
+                  stats.total,
+                  stats.hoy,
+                  `${porcentaje}%`,
+                  estado
+              ]);
+          });
+          
+          // Ajustar anchos de columnas
+          wsEstadisticas.columns = [
+              { width: 25 }, { width: 15 }, { width: 15 }, { width: 15 }, { width: 15 }
+          ];
+          
+          // HOJA 3: DETALLE DE CITAS
+          const wsDetalle = workbook.addWorksheet("Detalle de Citas");
+          
+          // Título
+          const tituloDetRow = wsDetalle.addRow(["DETALLE COMPLETO DE CITAS"]);
+          tituloDetRow.font = { size: 16, bold: true };
+          tituloDetRow.alignment = { horizontal: 'center' };
+          wsDetalle.mergeCells('A1:P1');
+          
+          wsDetalle.addRow([]);
+          
+          // Encabezados
+          const headersDet = [
+            'NUM CITAS', 'CLIENTE Y NOMBRE ACOMPAÑANTE', 'NUM PERSONAS', 'ESTADO CIVIL', 'HORA', 
+            'DÍA EVENTO', 'SALON', 'EDAD', 'TARJETA', 'CALIF DE ORIGEN', 'GERENTE', 
+            'OPERADOR', 'VENDEDOR', 'BASE DE DATOS', 'SUPERVISORA', 'TELEFONO'
+          ];
+          
+          const headerDetRow = wsDetalle.addRow(headersDet);
+          
+          // Aplicar estilo a los encabezados
+          headerDetRow.eachCell((cell) => {
+              cell.fill = {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  fgColor: { argb: 'FF10B981' }
+              };
+              cell.font = {
+                  bold: true,
+                  color: { argb: 'FFFFFFFF' }
+              };
+              cell.alignment = { horizontal: 'center' };
+              cell.border = {
+                  top: { style: 'thin' },
+                  left: { style: 'thin' },
+                  bottom: { style: 'thin' },
+                  right: { style: 'thin' }
+              };
+          });
+          
+          // Agregar datos de citas
+          registrosPremanifiesto.forEach(registro => {
+              const row = wsDetalle.addRow([
+                  registro.citaPorDia || registro.cita || '',
+                  registro.nombre || '',
+                  registro.numPersonas || '',
+                  registro.estadoCivil || '',
+                  registro.hora || '',
+                  registro.diaEvento || '',
+                  registro.hotel || '',
+                  registro.edad || '',
+                  registro.tarjeta || '',
+                  registro.calificacionOrigen || '',
+                  registro.gerente || '',
+                  registro.operador || '',
+                  registro.vendedor || '',
+                  registro.baseDatos || '',
+                  registro.supervisora || '',
+                  registro.telefono || ''
+              ]);
+              
+              // Aplicar bordes a todas las celdas
+              row.eachCell((cell) => {
+                  cell.border = {
+                      top: { style: 'thin' },
+                      left: { style: 'thin' },
+                      bottom: { style: 'thin' },
+                      right: { style: 'thin' }
+                  };
+              });
+          });
+          
+          // Ajustar anchos de columnas
+          wsDetalle.columns = [
+              { width: 10 }, { width: 35 }, { width: 15 }, { width: 15 }, { width: 12 },
+              { width: 15 }, { width: 25 }, { width: 10 }, { width: 22 }, { width: 18 },
+              { width: 15 }, { width: 15 }, { width: 12 }, { width: 15 }, { width: 15 }, { width: 18 }
+          ];
+          
+          // Generar el archivo Excel
+          workbook.xlsx.writeBuffer().then(buffer => {
+              const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+              const fecha = new Date().toISOString().split('T')[0];
+              saveAs(blob, `Reporte_Estadisticas_Completo_${fecha}.xlsx`);
+              mostrarNotificacion("Reporte de estadísticas descargado correctamente");
+          });
+          
+        } catch (error) {
+          console.error('Error al generar el reporte de estadísticas:', error);
+          mostrarNotificacion('Ocurrió un error al generar el reporte', 'error');
+        }
+      }
 
       // --- GESTIÓN DE SUPERVISORAS ---
       
@@ -1967,6 +2175,11 @@
       // Botón de depuración
       document.getElementById("debugBtn").addEventListener("click", function() {
         mostrarInformacionDepuracion();
+      });
+      
+      // Botón de exportar estadísticas
+      document.getElementById("exportarEstadisticas").addEventListener("click", function() {
+        exportarEstadisticasCompletas();
       });
       
       // Confirmar acción en modal
