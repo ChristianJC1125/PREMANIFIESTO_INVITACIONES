@@ -11,7 +11,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
   <style>
-    /* MANTENGO TODOS TUS ESTILOS EXISTENTES SIN MODIFICAR */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -1739,7 +1738,7 @@
 
       // --- GESTIÓN DE SUPERVISORAS ---
       
-      // Cargar lista de supervisoras
+      // Cargar lista de supervisoras SIN REPETICIONES
       function cargarListaSupervisoras() {
         const selectEliminar = document.getElementById('selectEliminarSupervisora');
         const selectFiltro = document.getElementById('filtroSupervisora');
@@ -1755,9 +1754,11 @@
         database.ref('supervisoras').once('value')
             .then((snapshot) => {
                 const supervisoras = snapshot.val() || [];
-                listaSupervisoras = supervisoras;
+                // ELIMINAR DUPLICADOS
+                const supervisorasUnicas = [...new Set(supervisoras)];
+                listaSupervisoras = supervisorasUnicas;
                 
-                supervisoras.forEach(supervisora => {
+                supervisorasUnicas.forEach(supervisora => {
                     // Agregar al select de eliminación
                     const optionEliminar = document.createElement('option');
                     optionEliminar.value = supervisora;
@@ -1787,7 +1788,7 @@
                     listaContainer.appendChild(item);
                 });
                 
-                console.log("Supervisoras cargadas:", listaSupervisoras);
+                console.log("Supervisoras cargadas (sin duplicados):", listaSupervisoras);
             })
             .catch(error => {
                 console.error('Error al cargar supervisoras:', error);
@@ -1928,9 +1929,11 @@
           database.ref('supervisoras').on('value', (snapshot) => {
               const data = snapshot.val();
               if (data && Array.isArray(data)) {
-                  listaSupervisoras = data;
+                  // ELIMINAR DUPLICADOS
+                  const supervisorasUnicas = [...new Set(data)];
+                  listaSupervisoras = supervisorasUnicas;
                   cargarListaSupervisoras();
-                  console.log("Supervisoras actualizadas en tiempo real:", listaSupervisoras);
+                  console.log("Supervisoras actualizadas en tiempo real (sin duplicados):", listaSupervisoras);
               }
           });
       }
