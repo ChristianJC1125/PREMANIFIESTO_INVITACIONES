@@ -1331,10 +1331,10 @@
     <header>
       <div class="logo-container">
         <div class="logo-img-container">
-          <img src="Imagenes/logo.png" alt="Logo Travel Life Club">
+          <img src="Imagenes/logo.png" alt="Logo Blue Elegance">
         </div>
         <div class="logo-text">
-          <h1>Travel Life Club</h1>
+          <h1>BLUE ELEGANCE</h1>
           <p>Panel de Control - Gerente</p>
         </div>
       </div>
@@ -1544,7 +1544,7 @@
           const wsResumen = workbook.addWorksheet("Resumen General");
           
           // Título
-          const tituloRow = wsResumen.addRow(["REPORTE DE ESTADÍSTICAS - TRAVEL LIFE CLUB"]);
+          const tituloRow = wsResumen.addRow(["REPORTE DE ESTADÍSTICAS - BLUE ELEGANCE"]);
           tituloRow.font = { size: 16, bold: true };
           tituloRow.alignment = { horizontal: 'center' };
           wsResumen.mergeCells('A1:F1');
@@ -1754,7 +1754,7 @@
         database.ref('supervisoras').once('value')
             .then((snapshot) => {
                 const supervisoras = snapshot.val() || [];
-                // ELIMINAR DUPLICADOS
+                // ELIMINAR DUPLICADOS usando Set
                 const supervisorasUnicas = [...new Set(supervisoras)];
                 listaSupervisoras = supervisorasUnicas;
                 
@@ -2214,11 +2214,9 @@
         }
       });
 
-      // --- FUNCIONES DEL PANEL DEL GERENTE (se mantienen igual) ---
+      // --- FUNCIONES DEL PANEL DEL GERENTE ---
       
       function actualizarPanelGerente() {
-        // Aquí iría el código existente para actualizar las estadísticas
-        // y gráficos del panel del gerente
         console.log("Actualizando panel del gerente con", registrosPremanifiesto.length, "registros");
         
         // Actualizar resumen general
@@ -2229,21 +2227,226 @@
         
         // Actualizar gráfico de barras
         actualizarGraficoBarras();
+        
+        // Actualizar detalles de citas por supervisora
+        actualizarDetallesCitas();
       }
       
       function actualizarResumenGeneral() {
         const resumenContainer = document.getElementById('resumenGeneral');
-        // Código para actualizar el resumen general...
+        
+        // Calcular estadísticas
+        const totalCitas = registrosPremanifiesto.length;
+        const hoy = new Date().toISOString().split('T')[0];
+        const citasHoy = registrosPremanifiesto.filter(reg => reg.fechaRegistro && reg.fechaRegistro.includes(hoy)).length;
+        const supervisorasActivas = listaSupervisoras.length;
+        
+        // Crear HTML del resumen
+        resumenContainer.innerHTML = `
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-calendar-check"></i></div>
+            <div class="valor">${totalCitas}</div>
+            <div class="etiqueta">Total de Citas</div>
+          </div>
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-calendar-day"></i></div>
+            <div class="valor">${citasHoy}</div>
+            <div class="etiqueta">Citas Hoy</div>
+          </div>
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-users"></i></div>
+            <div class="valor">${supervisorasActivas}</div>
+            <div class="etiqueta">Supervisoras Activas</div>
+          </div>
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-chart-line"></i></div>
+            <div class="valor">${totalCitas > 0 ? Math.round((citasHoy / totalCitas) * 100) : 0}%</div>
+            <div class="etiqueta">Eficiencia del Día</div>
+          </div>
+        `;
       }
       
       function actualizarEstadisticasSupervisoras() {
         const statsContainer = document.getElementById('statsContainer');
-        // Código para actualizar estadísticas por supervisora...
+        const filtroFecha = document.getElementById('filtroFecha').value;
+        const filtroSupervisora = document.getElementById('filtroSupervisora').value;
+        
+        // Filtrar registros según los filtros aplicados
+        let registrosFiltrados = [...registrosPremanifiesto];
+        
+        if (filtroFecha) {
+          registrosFiltrados = registrosFiltrados.filter(reg => 
+            reg.fechaRegistro && reg.fechaRegistro.includes(filtroFecha)
+          );
+        }
+        
+        if (filtroSupervisora) {
+          registrosFiltrados = registrosFiltrados.filter(reg => 
+            reg.supervisora === filtroSupervisora
+          );
+        }
+        
+        // Calcular estadísticas por supervisora
+        const statsPorSupervisora = {};
+        const hoy = new Date().toISOString().split('T')[0];
+        
+        listaSupervisoras.forEach(supervisora => {
+          const citasSupervisora = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
+          const citasHoy = citasSupervisora.filter(reg => reg.fechaRegistro && reg.fechaRegistro.includes(hoy)).length;
+          
+          statsPorSupervisora[supervisora] = {
+            total: citasSupervisora.length,
+            hoy: citasHoy
+          };
+        });
+        
+        // Ordenar supervisoras por número de citas (descendente)
+        const supervisorasOrdenadas = Object.keys(statsPorSupervisora).sort((a, b) => 
+          statsPorSupervisora[b].total - statsPorSupervisora[a].total
+        );
+        
+        // Crear HTML de las estadísticas
+        let html = '';
+        
+        supervisorasOrdenadas.forEach((supervisora, index) => {
+          const stats = statsPorSupervisora[supervisora];
+          const esLider = index === 0 && stats.total > 0;
+          
+          html += `
+            <div class="stat-card ${esLider ? 'leader' : ''}">
+              <h3>${supervisora}</h3>
+              <div class="count">${stats.total}</div>
+              <div class="supervisora">Total de Citas</div>
+              <div class="conteo-dia">
+                <div class="titulo">Citas Hoy</div>
+                <div class="valor-dia">${stats.hoy}</div>
+              </div>
+              ${esLider ? '<div class="supervisora">🏆 Líder del Día</div>' : ''}
+            </div>
+          `;
+        });
+        
+        statsContainer.innerHTML = html || '<div class="sin-datos">No hay datos disponibles</div>';
       }
       
       function actualizarGraficoBarras() {
         const graficoContainer = document.getElementById('graficoBarras');
-        // Código para actualizar el gráfico de barras...
+        const filtroFecha = document.getElementById('filtroFecha').value;
+        const filtroSupervisora = document.getElementById('filtroSupervisora').value;
+        
+        // Filtrar registros según los filtros aplicados
+        let registrosFiltrados = [...registrosPremanifiesto];
+        
+        if (filtroFecha) {
+          registrosFiltrados = registrosFiltrados.filter(reg => 
+            reg.fechaRegistro && reg.fechaRegistro.includes(filtroFecha)
+          );
+        }
+        
+        if (filtroSupervisora) {
+          registrosFiltrados = registrosFiltrados.filter(reg => 
+            reg.supervisora === filtroSupervisora
+          );
+        }
+        
+        // Calcular estadísticas por supervisora para el gráfico
+        const statsPorSupervisora = {};
+        const totalCitas = registrosFiltrados.length;
+        
+        listaSupervisoras.forEach(supervisora => {
+          const citasSupervisora = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
+          statsPorSupervisora[supervisora] = citasSupervisora.length;
+        });
+        
+        // Ordenar supervisoras por número de citas (descendente)
+        const supervisorasOrdenadas = Object.keys(statsPorSupervisora).sort((a, b) => 
+          statsPorSupervisora[b] - statsPorSupervisora[a]
+        );
+        
+        // Crear HTML del gráfico
+        let html = '';
+        
+        supervisorasOrdenadas.forEach(supervisora => {
+          const count = statsPorSupervisora[supervisora];
+          const porcentaje = totalCitas > 0 ? Math.round((count / totalCitas) * 100) : 0;
+          
+          html += `
+            <div class="barra">
+              <div class="barra-label">${supervisora}</div>
+              <div class="barra-progreso">
+                <div class="barra-relleno" style="width: ${porcentaje}%">
+                  ${count} (${porcentaje}%)
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        graficoContainer.innerHTML = html || '<div class="sin-datos">No hay datos para mostrar</div>';
+      }
+      
+      // NUEVA FUNCIÓN: Actualizar detalles de citas por supervisora
+      function actualizarDetallesCitas() {
+        const detalleContainer = document.getElementById('supervisoraDetalle');
+        const filtroFecha = document.getElementById('filtroFecha').value;
+        const filtroSupervisora = document.getElementById('filtroSupervisora').value;
+        
+        // Filtrar registros según los filtros aplicados
+        let registrosFiltrados = [...registrosPremanifiesto];
+        
+        if (filtroFecha) {
+          registrosFiltrados = registrosFiltrados.filter(reg => 
+            reg.fechaRegistro && reg.fechaRegistro.includes(filtroFecha)
+          );
+        }
+        
+        if (filtroSupervisora) {
+          registrosFiltrados = registrosFiltrados.filter(reg => 
+            reg.supervisora === filtroSupervisora
+          );
+        }
+        
+        // Agrupar citas por supervisora
+        const citasPorSupervisora = {};
+        
+        listaSupervisoras.forEach(supervisora => {
+          citasPorSupervisora[supervisora] = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
+        });
+        
+        // Crear HTML de los detalles
+        let html = '';
+        
+        Object.keys(citasPorSupervisora).forEach(supervisora => {
+          const citas = citasPorSupervisora[supervisora];
+          
+          if (citas.length > 0) {
+            html += `
+              <div class="supervisora-detalle">
+                <h3><i class="fas fa-user-tie"></i> ${supervisora} - ${citas.length} Citas</h3>
+                <div class="supervisora-citas">
+            `;
+            
+            citas.forEach((cita, index) => {
+              html += `
+                <div class="cita-item">
+                  <div class="cita-numero">Cita #${index + 1}</div>
+                  <div class="cita-cliente">${cita.nombre || 'Cliente no especificado'}</div>
+                  <div class="cita-hora">${cita.hora || 'Hora no especificada'} - ${cita.fechaRegistro || 'Fecha no especificada'}</div>
+                  <div class="cita-detalles">
+                    <small>Personas: ${cita.numPersonas || 'N/A'} | Edad: ${cita.edad || 'N/A'} | Hotel: ${cita.hotel || 'N/A'}</small>
+                  </div>
+                </div>
+              `;
+            });
+            
+            html += `
+                </div>
+              </div>
+            `;
+          }
+        });
+        
+        detalleContainer.innerHTML = html || '<div class="sin-datos">No hay citas para mostrar con los filtros actuales</div>';
       }
 
       // INICIALIZAR FIREBASE Y EL PANEL
@@ -2253,6 +2456,36 @@
       // Establecer la fecha actual como valor por defecto en el filtro
       const hoy = new Date().toISOString().split('T')[0];
       document.getElementById('filtroFecha').value = hoy;
+      
+      // Aplicar filtros cuando se haga clic en el botón
+      document.getElementById('aplicarFiltro').addEventListener('click', function() {
+        actualizarPanelGerente();
+      });
+      
+      // Limpiar filtros
+      document.getElementById('limpiarFiltro').addEventListener('click', function() {
+        document.getElementById('filtroFecha').value = hoy;
+        document.getElementById('filtroSupervisora').value = '';
+        actualizarPanelGerente();
+      });
+      
+      // Actualizar datos manualmente
+      document.getElementById('actualizarBtn').addEventListener('click', function() {
+        const btn = this;
+        const icono = btn.querySelector('i');
+        
+        // Mostrar animación de carga
+        icono.classList.add('actualizando');
+        btn.disabled = true;
+        
+        // Simular actualización
+        setTimeout(() => {
+          actualizarPanelGerente();
+          icono.classList.remove('actualizando');
+          btn.disabled = false;
+          mostrarNotificacion('Datos actualizados correctamente');
+        }, 1000);
+      });
     });
   </script>
 </body>
