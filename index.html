@@ -1516,47 +1516,29 @@
           }, 3000);
       }
 
-      // --- FUNCIÓN DEFINITIVA PARA NUMERACIÓN SECUENCIAL ---
+      // --- FUNCIÓN SIMPLIFICADA PARA NUMERACIÓN SECUENCIAL ---
       function obtenerProximoNumeroCita(diaEvento) {
           // Filtrar registros del mismo día
           const registrosDelDia = registrosPremanifiesto.filter(registro => {
               return registro.diaEvento && registro.diaEvento === diaEvento;
           });
           
-          console.log(`Registros del día ${diaEvento}:`, registrosDelDia.length);
-          
           if (registrosDelDia.length === 0) {
-              console.log(`Primer registro del día ${diaEvento}. Asignando número 1`);
+              return 1; // Primer registro del día
+          }
+          
+          // Obtener números existentes
+          const numerosExistentes = registrosDelDia.map(registro => {
+              return parseInt(registro.citaPorDia) || 0;
+          }).filter(num => num > 0);
+          
+          if (numerosExistentes.length === 0) {
               return 1;
           }
           
-          // Obtener todos los números de cita para este día
-          const numerosCita = registrosDelDia.map(registro => {
-              const num = parseInt(registro.citaPorDia || registro.cita);
-              return isNaN(num) ? 0 : num;
-          }).filter(num => num > 0); // Solo números válidos
-          
-          console.log('Números de cita encontrados:', numerosCita);
-          
-          if (numerosCita.length === 0) {
-              return 1;
-          }
-          
-          // ORDENAR los números de menor a mayor
-          numerosCita.sort((a, b) => a - b);
-          
-          // Buscar el primer hueco en la secuencia
-          for (let i = 0; i < numerosCita.length; i++) {
-              if (numerosCita[i] !== i + 1) {
-                  console.log(`Encontrado hueco: ${i + 1}`);
-                  return i + 1;
-              }
-          }
-          
-          // Si no hay huecos, usar el siguiente número
-          const siguiente = numerosCita.length + 1;
-          console.log(`Sin huecos. Siguiente número: ${siguiente}`);
-          return siguiente;
+          // Simplemente usar el máximo + 1
+          const maxNumero = Math.max(...numerosExistentes);
+          return maxNumero + 1;
       }
 
       // --- FUNCIÓN PARA RESETEAR NUMERACIÓN (SOLUCIÓN DEFINITIVA) ---
