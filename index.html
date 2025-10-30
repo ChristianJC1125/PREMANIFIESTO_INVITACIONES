@@ -2572,218 +2572,239 @@
           actualizarTablaPremanifiesto();
       });
 
-      // --- DESCARGAR EXCEL CON ESTILOS (USANDO EXCELJS) ---
-      document.getElementById("descargarExcel").addEventListener("click", async () => {
-          if (registrosPremanifiesto.length === 0) {
-              alert("No hay registros aún.");
-              return;
-          }
+// --- DESCARGAR EXCEL CON ESTILOS (USANDO EXCELJS) ---
+document.getElementById("descargarExcel").addEventListener("click", async () => {
+    if (registrosPremanifiesto.length === 0) {
+        alert("NO HAY REGISTROS AÚN.");
+        return;
+    }
 
-          try {
-              // Crear un nuevo libro de Excel
-              const workbook = new ExcelJS.Workbook();
-              const worksheet = workbook.addWorksheet('Premanifiesto');
-              
-              // Obtener la fecha del día del evento para el título
-              const fechaFiltro = document.getElementById("filtroFecha").value;
-              let fechaTitulo;
-              let titulo;
-              
-              if (fechaFiltro) {
-                  // Usar la fecha del filtro si existe
-                  fechaTitulo = new Date(fechaFiltro + 'T00:00:00'); // Agregar hora para evitar problemas de zona horaria
-                  const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
-                  const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
-                  const diaSemana = fechaFormateada.split(' ')[0];
-                  const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
-                  
-                  titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`;
-              } else {
-                  // Usar la fecha de hoy si no hay filtro
-                  fechaTitulo = new Date();
-                  const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
-                  const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
-                  const diaSemana = fechaFormateada.split(' ')[0];
-                  const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
-                  
-                  titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`;
-              }
-              
-              // Añadir título
-              const tituloRow = worksheet.addRow([titulo]);
-              tituloRow.font = { size: 16, bold: true };
-              tituloRow.alignment = { horizontal: 'center' };
-              worksheet.mergeCells('A1:R1'); // Actualizado a R1 por las columnas
-              
-              // Saltar una línea
-              worksheet.addRow([]);
-              
-              // Definir encabezados EN MAYÚSCULAS como solicitaste
-              const headers = [
-                  'NUM DE CITAS', 'FECHA', 'NUM PERSONAS', 'NOMBRE Y ACOMPAÑANTE', 'EDAD', 'ESTADO CIVIL', 
-                  'TARJETA', 'ID', 'INGRESOS', 'VENDOR', 'OPERADOR', 'GERENTE', 'SALA', 
-                  'HORA DE LLEGADA', 'BASE DE DATOS', 'SUPERVISOR', 'TELEFONO'
-              ];
-              
-              // Añadir encabezados
-              const headerRow = worksheet.addRow(headers);
-              
-              // Obtener el color según el mes actual
-              const meses = [
-                  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-              ];
-              const mesActual = fechaTitulo.getMonth();
-              const nombreMes = meses[mesActual];
-              
-              // Mapear meses a colores
-              const coloresPorMes = {
-                  'enero': 'FF3498DB',     // Azul
-                  'febrero': 'FF9B59B6',   // Púrpura
-                  'marzo': 'FF2ECC71',     // Verde
-                  'abril': 'FFE67E22',     // Naranja
-                  'mayo': 'FFE74C3C',      // Rojo
-                  'junio': 'FF1ABC9C',     // Turquesa
-                  'julio': 'FFF1C40F',     // Amarillo
-                  'agosto': 'FFD35400',    // Calabaza
-                  'septiembre': 'FF7F8C8D',// Gris
-                  'octubre': 'FF8E44AD',   // Morado
-                  'noviembre': 'FF2C3E50', // Azul oscuro
-                  'diciembre': 'FF16A085'  // Verde esmeralda
-              };
-              
-              const colorHeader = coloresPorMes[nombreMes] || 'FF3498DB';
-              
-              // Aplicar estilo a los encabezados
-              headerRow.eachCell((cell, colNumber) => {
-                  cell.fill = {
-                      type: 'pattern',
-                      pattern: 'solid',
-                      fgColor: { argb: colorHeader }
-                  };
-                  cell.font = {
-                      bold: true,
-                      color: { argb: 'FFFFFFFF' }
-                  };
-                  cell.alignment = { horizontal: 'center' };
-                  cell.border = {
-                      top: { style: 'thin' },
-                      left: { style: 'thin' },
-                      bottom: { style: 'thin' },
-                      right: { style: 'thin' }
-                  };
-              });
-              
-              // Filtrar registros si hay filtro de fecha
-              let registrosParaExcel = registrosPremanifiesto;
-              if (fechaFiltro) {
-                  registrosParaExcel = registrosPremanifiesto.filter(registro => {
-                      return registro.diaEvento === fechaFiltro;
-                  });
-              }
-              
-              // Añadir datos
-              registrosParaExcel.forEach(registro => {
-                  const row = worksheet.addRow([
-                      // ✅ MODIFICADO: Usar citaPorDia en lugar de cita
-                      registro.citaPorDia || registro.cita,
-                      // ✅ NUEVO: FECHA (usando diaEvento)
-                      registro.diaEvento || '',
-                      registro.numPersonas,
-                      registro.nombre,
-                      registro.edad,
-                      registro.estadoCivil,
-                      registro.tarjeta,
-                      // ID - DEJAR EN BLANCO como solicitaste
-                      '',
-                      // INGRESOS - mostrar como está en el visual
-                      registro.ingresos,
-                      registro.vendedor,
-                      registro.operador,
-                      registro.gerente,
-                      registro.hotel,
-                      registro.hora,
-                      registro.baseDatos,
-                      registro.supervisora,
-                      registro.telefono
-                  ]);
-                  
-                  // Aplicar estilo a la celda de número de cita
-                  const primeraCelda = row.getCell(1);
-                  primeraCelda.fill = {
-                      type: 'pattern',
-                      pattern: 'solid',
-                      fgColor: { argb: 'FF2ECC71' }
-                  };
-                  primeraCelda.font = {
-                      bold: true,
-                      color: { argb: 'FFFFFFFF' }
-                  };
-                  primeraCelda.alignment = { horizontal: 'center' };
-                  
-                  // Aplicar bordes a todas las celdas
-                  row.eachCell((cell) => {
-                      cell.border = {
-                          top: { style: 'thin' },
-                          left: { style: 'thin' },
-                          bottom: { style: 'thin' },
-                          right: { style: 'thin' }
-                      };
-                  });
-              });
-              
-              // Ajustar anchos de columnas - AUMENTADOS PARA MEJOR VISUALIZACIÓN
-              worksheet.columns = [
-                  { width: 12 },   // NUM DE CITAS
-                  { width: 12 },   // FECHA
-                  { width: 12 },   // NUM PERSONAS
-                  { width: 35 },   // NOMBRE Y ACOMPAÑANTE
-                  { width: 10 },   // EDAD
-                  { width: 12 },   // ESTADO CIVIL
-                  { width: 20 },   // TARJETA
-                  { width: 8 },    // ID (vacío)
-                  { width: 15 },   // INGRESOS
-                  { width: 12 },   // VENDOR
-                  { width: 15 },   // OPERADOR
-                  { width: 12 },   // GERENTE
-                  { width: 20 },   // SALA
-                  { width: 15 },   // HORA DE LLEGADA
-                  { width: 15 },   // BASE DE DATOS
-                  { width: 15 },   // SUPERVISOR
-                  { width: 15 }    // TELEFONO
-              ];
-              
-              // Añadir espacios entre celdas (padding)
-              worksheet.eachRow((row, rowNumber) => {
-                  row.eachCell((cell) => {
-                      cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                  });
-                  row.height = 25;
-              });
-              
-              // Activar filtros
-              worksheet.autoFilter = {
-                  from: 'A3',
-                  to: 'Q' + (worksheet.rowCount)
-              };
-              
-              // Congelar paneles (fijar encabezados)
-              worksheet.views = [
-                  { state: 'frozen', xSplit: 0, ySplit: 3, activeCell: 'A4' }
-              ];
-              
-              // Generar el archivo Excel
-              const buffer = await workbook.xlsx.writeBuffer();
-              const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-              
-              // Descargar el archivo con nombre específico
-              saveAs(blob, `${titulo}.xlsx`);
-              
-          } catch (error) {
-              console.error('Error al generar el Excel:', error);
-              alert('Ocurrió un error al generar el archivo Excel.');
-          }
-      });
+    try {
+        // CREAR UN NUEVO LIBRO DE EXCEL
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('PREMANIFIESTO');
+        
+        // OBTENER LA FECHA DEL DÍA DEL EVENTO PARA EL TÍTULO
+        const fechaFiltro = document.getElementById("filtroFecha").value;
+        let fechaTitulo;
+        let titulo;
+        
+        if (fechaFiltro) {
+            // USAR LA FECHA DEL FILTRO SI EXISTE
+            fechaTitulo = new Date(fechaFiltro + 'T00:00:00'); // AGREGAR HORA PARA EVITAR PROBLEMAS DE ZONA HORARIA
+            const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
+            const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
+            const diaSemana = fechaFormateada.split(' ')[0];
+            const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
+            
+            titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
+        } else {
+            // USAR LA FECHA DE HOY SI NO HAY FILTRO
+            fechaTitulo = new Date();
+            const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
+            const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
+            const diaSemana = fechaFormateada.split(' ')[0];
+            const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
+            
+            titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
+        }
+        
+        // AÑADIR TÍTULO
+        const tituloRow = worksheet.addRow([titulo]);
+        tituloRow.font = { size: 16, bold: true };
+        tituloRow.alignment = { horizontal: 'center' };
+        worksheet.mergeCells('A1:S1'); // ACTUALIZADO A S1 POR LAS NUEVAS COLUMNAS
+        
+        // SALTAR UNA LÍNEA
+        worksheet.addRow([]);
+        
+        // DEFINIR ENCABEZADOS EN MAYÚSCULAS
+        const headers = [
+            'NUM. CITA', 'NOMBRE DE INVITADOS', 'NUM PERSONA', 'ESTADO CIVIL', 'HORA', 
+            'DÍA EVENTO', 'SALON', 'EDAD', 'INGRESOS', 'TARJETA', 'CALIF ORIGEN', 
+            'GERENTE', 'ID OPERADOR', 'VENDEDOR', 'BASE DATOS', 'SUPERVISOR NOMBRE', 
+            'ACOMPAÑANTE SUPERVISOR', 'TELEFONO'
+        ].map(header => header.toUpperCase());
+        
+        // AÑADIR ENCABEZADOS
+        const headerRow = worksheet.addRow(headers);
+        
+        // OBTENER EL COLOR SEGÚN EL MES ACTUAL
+        const meses = [
+            'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+            'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+        ];
+        const mesActual = fechaTitulo.getMonth();
+        const nombreMes = meses[mesActual];
+        
+        // MAPEAR MESES A COLORES
+        const coloresPorMes = {
+            'enero': 'FF3498DB',     // AZUL
+            'febrero': 'FF9B59B6',   // PÚRPURA
+            'marzo': 'FF2ECC71',     // VERDE
+            'abril': 'FFE67E22',     // NARANJA
+            'mayo': 'FFE74C3C',      // ROJO
+            'junio': 'FF1ABC9C',     // TURQUESA
+            'julio': 'FFF1C40F',     // AMARILLO
+            'agosto': 'FFD35400',    // CALABAZA
+            'septiembre': 'FF7F8C8D',// GRIS
+            'octubre': 'FF8E44AD',   // MORADO
+            'noviembre': 'FF2C3E50', // AZUL OSCURO
+            'diciembre': 'FF16A085'  // VERDE ESMERALDA
+        };
+        
+        const colorHeader = coloresPorMes[nombreMes] || 'FF3498DB';
+        
+        // APLICAR ESTILO A LOS ENCABEZADOS
+        headerRow.eachCell((cell, colNumber) => {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: colorHeader }
+            };
+            cell.font = {
+                bold: true,
+                color: { argb: 'FFFFFFFF' }
+            };
+            cell.alignment = { horizontal: 'center' };
+            cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+        });
+        
+        // FILTRAR REGISTROS SI HAY FILTRO DE FECHA
+        let registrosParaExcel = registrosPremanifiesto;
+        if (fechaFiltro) {
+            registrosParaExcel = registrosPremanifiesto.filter(registro => {
+                return registro.diaEvento === fechaFiltro;
+            });
+        }
+        
+        // AÑADIR DATOS (TODO EN MAYÚSCULAS)
+        registrosParaExcel.forEach(registro => {
+            const row = worksheet.addRow([
+                // NUM. CITA
+                registro.citaPorDia || registro.cita,
+                // NOMBRE DE INVITADOS (EN MAYÚSCULAS)
+                registro.nombre ? registro.nombre.toUpperCase() : '',
+                // NUM PERSONA
+                registro.numPersonas ? registro.numPersonas.toString().toUpperCase() : '',
+                // ESTADO CIVIL (EN MAYÚSCULAS)
+                registro.estadoCivil ? registro.estadoCivil.toUpperCase() : '',
+                // HORA
+                registro.hora ? registro.hora.toUpperCase() : '',
+                // DÍA EVENTO
+                registro.diaEvento ? registro.diaEvento.toUpperCase() : '',
+                // SALON (EN MAYÚSCULAS)
+                registro.hotel ? registro.hotel.toUpperCase() : '',
+                // EDAD (EN MAYÚSCULAS)
+                registro.edad ? registro.edad.toUpperCase() : '',
+                // INGRESOS (EN MAYÚSCULAS)
+                registro.ingresos ? registro.ingresos.toUpperCase() : '',
+                // TARJETA (EN MAYÚSCULAS)
+                registro.tarjeta ? registro.tarjeta.toUpperCase() : '',
+                // CALIF ORIGEN (EN MAYÚSCULAS)
+                registro.calificacionOrigen ? registro.calificacionOrigen.toUpperCase() : '',
+                // GERENTE (EN MAYÚSCULAS)
+                registro.gerente ? registro.gerente.toUpperCase() : '',
+                // ID OPERADOR (EN MAYÚSCULAS)
+                registro.operador ? registro.operador.toUpperCase() : '',
+                // VENDEDOR (EN MAYÚSCULAS)
+                registro.vendedor ? registro.vendedor.toUpperCase() : '',
+                // BASE DATOS (EN MAYÚSCULAS)
+                registro.baseDatos ? registro.baseDatos.toUpperCase() : '',
+                // SUPERVISOR NOMBRE (EN MAYÚSCULAS)
+                registro.supervisora ? registro.supervisora.toUpperCase() : '',
+                // ACOMPAÑANTE SUPERVISOR (DEJAR VACÍO O AGREGAR DATOS SI EXISTEN)
+                '', // ACOMPAÑANTE SUPERVISOR - DEJAR VACÍO O AGREGAR DATOS SI EXISTEN
+                // TELEFONO
+                registro.telefono ? registro.telefono.toUpperCase() : ''
+            ]);
+            
+            // APLICAR ESTILO A LA CELDA DE NÚMERO DE CITA
+            const primeraCelda = row.getCell(1);
+            primeraCelda.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF2ECC71' }
+            };
+            primeraCelda.font = {
+                bold: true,
+                color: { argb: 'FFFFFFFF' }
+            };
+            primeraCelda.alignment = { horizontal: 'center' };
+            
+            // APLICAR BORDES A TODAS LAS CELDAS
+            row.eachCell((cell) => {
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                // APLICAR MAYÚSCULAS A TODAS LAS CELDAS
+                if (cell.value && typeof cell.value === 'string') {
+                    cell.value = cell.value.toUpperCase();
+                }
+            });
+        });
+        
+        // AJUSTAR ANCHOS DE COLUMNAS - AMPLIADAS PARA MEJOR VISUALIZACIÓN
+        worksheet.columns = [
+            { width: 12 },   // NUM. CITA
+            { width: 35 },   // NOMBRE DE INVITADOS (AMPLIADA)
+            { width: 12 },   // NUM PERSONA
+            { width: 15 },   // ESTADO CIVIL
+            { width: 12 },   // HORA
+            { width: 12 },   // DÍA EVENTO
+            { width: 25 },   // SALON
+            { width: 10 },   // EDAD
+            { width: 15 },   // INGRESOS
+            { width: 20 },   // TARJETA
+            { width: 12 },   // CALIF ORIGEN
+            { width: 15 },   // GERENTE
+            { width: 20 },   // ID OPERADOR (AMPLIADA)
+            { width: 15 },   // VENDEDOR
+            { width: 15 },   // BASE DATOS
+            { width: 25 },   // SUPERVISOR NOMBRE (AMPLIADA)
+            { width: 25 },   // ACOMPAÑANTE SUPERVISOR (AMPLIADA)
+            { width: 15 }    // TELEFONO
+        ];
+        
+        // AÑADIR ESPACIOS ENTRE CELDAS (PADDING)
+        worksheet.eachRow((row, rowNumber) => {
+            row.eachCell((cell) => {
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            });
+            row.height = 25;
+        });
+        
+        // ACTIVAR FILTROS
+        worksheet.autoFilter = {
+            from: 'A3',
+            to: 'R' + (worksheet.rowCount)
+        };
+        
+        // CONGELAR PANELES (FIJAR ENCABEZADOS)
+        worksheet.views = [
+            { state: 'frozen', xSplit: 0, ySplit: 3, activeCell: 'A4' }
+        ];
+        
+        // GENERAR EL ARCHIVO EXCEL
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        
+        // DESCARGAR EL ARCHIVO CON NOMBRE ESPECÍFICO
+        saveAs(blob, `${titulo}.xlsx`);
+        
+    } catch (error) {
+        console.error('ERROR AL GENERAR EL EXCEL:', error);
+        alert('OCURRIÓ UN ERROR AL GENERAR EL ARCHIVO EXCEL.');
+    }
+});
 
       // Manejo global de errores
       window.addEventListener('error', (e) => {
