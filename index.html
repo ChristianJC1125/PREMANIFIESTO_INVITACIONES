@@ -2613,17 +2613,16 @@ document.getElementById("descargarExcel").addEventListener("click", async () => 
         const tituloRow = worksheet.addRow([titulo]);
         tituloRow.font = { size: 16, bold: true };
         tituloRow.alignment = { horizontal: 'center' };
-        worksheet.mergeCells('A1:S1'); // ACTUALIZADO A S1 POR LAS NUEVAS COLUMNAS
+        worksheet.mergeCells('A1:R1'); // ACTUALIZADO A R1 POR LAS COLUMNAS
         
         // SALTAR UNA LÍNEA
         worksheet.addRow([]);
         
-        // DEFINIR ENCABEZADOS EN MAYÚSCULAS
+        // DEFINIR ENCABEZADOS EN MAYÚSCULAS COMO SOLICITASTE
         const headers = [
-            'NUM. CITA', 'NOMBRE DE INVITADOS', 'NUM PERSONA', 'ESTADO CIVIL', 'HORA', 
-            'DÍA EVENTO', 'SALON', 'EDAD', 'INGRESOS', 'TARJETA', 'CALIF ORIGEN', 
-            'GERENTE', 'ID OPERADOR', 'VENDEDOR', 'BASE DATOS', 'SUPERVISOR NOMBRE', 
-            'ACOMPAÑANTE SUPERVISOR', 'TELEFONO'
+            'NUM DE CITAS', 'FECHA', 'NUM PERSONAS', 'NOMBRE Y ACOMPAÑANTE', 'EDAD', 'ESTADO CIVIL', 
+            'TARJETA', 'ID', 'INGRESOS', 'VENDOR', 'OPERADOR', 'GERENTE', 'SALA', 
+            'HORA DE LLEGADA', 'BASE DE DATOS', 'SUPERVISOR', 'TELEFONO'
         ].map(header => header.toUpperCase());
         
         // AÑADIR ENCABEZADOS
@@ -2631,11 +2630,11 @@ document.getElementById("descargarExcel").addEventListener("click", async () => 
         
         // OBTENER EL COLOR SEGÚN EL MES ACTUAL
         const meses = [
-            'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-            'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+            'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+            'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
         ];
         const mesActual = fechaTitulo.getMonth();
-        const nombreMes = meses[mesActual];
+        const nombreMes = meses[mesActual].toLowerCase();
         
         // MAPEAR MESES A COLORES
         const coloresPorMes = {
@@ -2686,41 +2685,26 @@ document.getElementById("descargarExcel").addEventListener("click", async () => 
         // AÑADIR DATOS (TODO EN MAYÚSCULAS)
         registrosParaExcel.forEach(registro => {
             const row = worksheet.addRow([
-                // NUM. CITA
+                // USAR CITAPORDIA EN LUGAR DE CITA
                 registro.citaPorDia || registro.cita,
-                // NOMBRE DE INVITADOS (EN MAYÚSCULAS)
-                registro.nombre ? registro.nombre.toUpperCase() : '',
-                // NUM PERSONA
-                registro.numPersonas ? registro.numPersonas.toString().toUpperCase() : '',
-                // ESTADO CIVIL (EN MAYÚSCULAS)
-                registro.estadoCivil ? registro.estadoCivil.toUpperCase() : '',
-                // HORA
-                registro.hora ? registro.hora.toUpperCase() : '',
-                // DÍA EVENTO
+                // FECHA (USANDO DIAEVENTO)
                 registro.diaEvento ? registro.diaEvento.toUpperCase() : '',
-                // SALON (EN MAYÚSCULAS)
-                registro.hotel ? registro.hotel.toUpperCase() : '',
-                // EDAD (EN MAYÚSCULAS)
+                registro.numPersonas ? registro.numPersonas.toString().toUpperCase() : '',
+                registro.nombre ? registro.nombre.toUpperCase() : '',
                 registro.edad ? registro.edad.toUpperCase() : '',
-                // INGRESOS (EN MAYÚSCULAS)
-                registro.ingresos ? registro.ingresos.toUpperCase() : '',
-                // TARJETA (EN MAYÚSCULAS)
+                registro.estadoCivil ? registro.estadoCivil.toUpperCase() : '',
                 registro.tarjeta ? registro.tarjeta.toUpperCase() : '',
-                // CALIF ORIGEN (EN MAYÚSCULAS)
-                registro.calificacionOrigen ? registro.calificacionOrigen.toUpperCase() : '',
-                // GERENTE (EN MAYÚSCULAS)
-                registro.gerente ? registro.gerente.toUpperCase() : '',
-                // ID OPERADOR (EN MAYÚSCULAS)
-                registro.operador ? registro.operador.toUpperCase() : '',
-                // VENDEDOR (EN MAYÚSCULAS)
+                // ID - DEJAR EN BLANCO COMO SOLICITASTE
+                '',
+                // INGRESOS - MOSTRAR COMO ESTÁ EN EL VISUAL
+                registro.ingresos ? registro.ingresos.toUpperCase() : '',
                 registro.vendedor ? registro.vendedor.toUpperCase() : '',
-                // BASE DATOS (EN MAYÚSCULAS)
+                registro.operador ? registro.operador.toUpperCase() : '',
+                registro.gerente ? registro.gerente.toUpperCase() : '',
+                registro.hotel ? registro.hotel.toUpperCase() : '',
+                registro.hora ? registro.hora.toUpperCase() : '',
                 registro.baseDatos ? registro.baseDatos.toUpperCase() : '',
-                // SUPERVISOR NOMBRE (EN MAYÚSCULAS)
                 registro.supervisora ? registro.supervisora.toUpperCase() : '',
-                // ACOMPAÑANTE SUPERVISOR (DEJAR VACÍO O AGREGAR DATOS SI EXISTEN)
-                '', // ACOMPAÑANTE SUPERVISOR - DEJAR VACÍO O AGREGAR DATOS SI EXISTEN
-                // TELEFONO
                 registro.telefono ? registro.telefono.toUpperCase() : ''
             ]);
             
@@ -2745,32 +2729,27 @@ document.getElementById("descargarExcel").addEventListener("click", async () => 
                     bottom: { style: 'thin' },
                     right: { style: 'thin' }
                 };
-                // APLICAR MAYÚSCULAS A TODAS LAS CELDAS
-                if (cell.value && typeof cell.value === 'string') {
-                    cell.value = cell.value.toUpperCase();
-                }
             });
         });
         
-        // AJUSTAR ANCHOS DE COLUMNAS - AMPLIADAS PARA MEJOR VISUALIZACIÓN
+        // AJUSTAR ANCHOS DE COLUMNAS - AUMENTADOS PARA MEJOR VISUALIZACIÓN
         worksheet.columns = [
-            { width: 12 },   // NUM. CITA
-            { width: 35 },   // NOMBRE DE INVITADOS (AMPLIADA)
-            { width: 12 },   // NUM PERSONA
-            { width: 15 },   // ESTADO CIVIL
-            { width: 12 },   // HORA
-            { width: 12 },   // DÍA EVENTO
-            { width: 25 },   // SALON
+            { width: 12 },   // NUM DE CITAS
+            { width: 12 },   // FECHA
+            { width: 12 },   // NUM PERSONAS
+            { width: 35 },   // NOMBRE Y ACOMPAÑANTE
             { width: 10 },   // EDAD
-            { width: 15 },   // INGRESOS
+            { width: 12 },   // ESTADO CIVIL
             { width: 20 },   // TARJETA
-            { width: 12 },   // CALIF ORIGEN
-            { width: 15 },   // GERENTE
-            { width: 20 },   // ID OPERADOR (AMPLIADA)
-            { width: 15 },   // VENDEDOR
-            { width: 15 },   // BASE DATOS
-            { width: 25 },   // SUPERVISOR NOMBRE (AMPLIADA)
-            { width: 25 },   // ACOMPAÑANTE SUPERVISOR (AMPLIADA)
+            { width: 20 },   // ID (VACÍO) - AMPLIADA A 20
+            { width: 15 },   // INGRESOS
+            { width: 12 },   // VENDOR
+            { width: 15 },   // OPERADOR
+            { width: 12 },   // GERENTE
+            { width: 20 },   // SALA
+            { width: 15 },   // HORA DE LLEGADA
+            { width: 15 },   // BASE DE DATOS
+            { width: 15 },   // SUPERVISOR
             { width: 15 }    // TELEFONO
         ];
         
@@ -2785,7 +2764,7 @@ document.getElementById("descargarExcel").addEventListener("click", async () => 
         // ACTIVAR FILTROS
         worksheet.autoFilter = {
             from: 'A3',
-            to: 'R' + (worksheet.rowCount)
+            to: 'Q' + (worksheet.rowCount)
         };
         
         // CONGELAR PANELES (FIJAR ENCABEZADOS)
