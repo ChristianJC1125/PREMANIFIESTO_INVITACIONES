@@ -2682,8 +2682,8 @@ document.getElementById("descargarExcel").addEventListener("click", async () => 
             });
         }
         
-        // AÑADIR DATOS (TODO EN MAYÚSCULAS)
-     registrosParaExcel.forEach(registro => {
+     // AÑADIR DATOS (TODO EN MAYÚSCULAS)
+registrosParaExcel.forEach(registro => {
     const row = worksheet.addRow([
         // USAR CITAPORDIA EN LUGAR DE CITA
         registro.citaPorDia || registro.cita,
@@ -2698,7 +2698,6 @@ document.getElementById("descargarExcel").addEventListener("click", async () => 
         '',
         // INGRESOS - MOSTRAR COMO ESTÁ EN EL VISUAL
         registro.ingresos ? registro.ingresos.toUpperCase() : '',
-        // CALIFICACIÓN DE ORIGEN - ¡ESTA ES LA QUE FALTA!
         registro.calificacionOrigen ? registro.calificacionOrigen.toUpperCase() : '',
         registro.vendedor ? registro.vendedor.toUpperCase() : '',
         registro.operador ? registro.operador.toUpperCase() : '',
@@ -2709,7 +2708,7 @@ document.getElementById("descargarExcel").addEventListener("click", async () => 
         registro.supervisora ? registro.supervisora.toUpperCase() : '',
         registro.telefono ? registro.telefono.toUpperCase() : ''
     ]);
-
+            
             // APLICAR ESTILO A LA CELDA DE NÚMERO DE CITA
             const primeraCelda = row.getCell(1);
             primeraCelda.fill = {
@@ -2734,27 +2733,27 @@ document.getElementById("descargarExcel").addEventListener("click", async () => 
             });
         });
         
-        // AJUSTAR ANCHOS DE COLUMNAS - AUMENTADOS PARA MEJOR VISUALIZACIÓN
-        worksheet.columns = [
-            { width: 12 },   // NUM DE CITAS
-            { width: 12 },   // FECHA
-            { width: 12 },   // NUM PERSONAS
-            { width: 35 },   // NOMBRE Y ACOMPAÑANTE
-            { width: 10 },   // EDAD
-            { width: 12 },   // ESTADO CIVIL
-            { width: 20 },   // TARJETA
-            { width: 25 },   // ID (VACÍO) - AMPLIADA A 20
-            { width: 15 },   // INGRESOS
-            { width: 15 },   // CALIF DE ORIGEN - NUEVA COLUMNA
-            { width: 12 },   // VENDOR
-            { width: 20 },   // OPERADOR
-            { width: 12 },   // GERENTE
-            { width: 20 },   // SALA
-            { width: 15 },   // HORA DE LLEGADA
-            { width: 20 },   // BASE DE DATOS
-            { width: 20 },   // SUPERVISOR
-            { width: 15 }    // TELEFONO
-        ];
+     // AJUSTAR ANCHOS DE COLUMNAS - AUMENTADOS PARA MEJOR VISUALIZACIÓN
+worksheet.columns = [
+    { width: 12 },   // NUM DE CITAS
+    { width: 12 },   // FECHA
+    { width: 12 },   // NUM PERSONAS
+    { width: 35 },   // NOMBRE Y ACOMPAÑANTE
+    { width: 10 },   // EDAD
+    { width: 12 },   // ESTADO CIVIL
+    { width: 20 },   // TARJETA
+    { width: 20 },   // ID (VACÍO) - AMPLIADA A 20
+    { width: 15 },   // INGRESOS
+    { width: 15 },   // CALIF DE ORIGEN - NUEVA COLUMNA
+    { width: 12 },   // VENDOR
+    { width: 15 },   // OPERADOR
+    { width: 12 },   // GERENTE
+    { width: 20 },   // SALA
+    { width: 15 },   // HORA DE LLEGADA
+    { width: 15 },   // BASE DE DATOS
+    { width: 15 },   // SUPERVISOR
+    { width: 15 }    // TELEFONO
+];
         
         // AÑADIR ESPACIOS ENTRE CELDAS (PADDING)
         worksheet.eachRow((row, rowNumber) => {
