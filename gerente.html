@@ -30,6 +30,7 @@
       --success: #10b981;
       --warning: #f59e0b;
       --danger: #ef4444;
+      --gold: #d4af37;
     }
 
     body {
@@ -692,6 +693,14 @@
       background: linear-gradient(145deg, #7c3aed, #6d28d9);
     }
 
+    .btn-citas-mes {
+      background: linear-gradient(145deg, var(--gold), #b8941f);
+    }
+
+    .btn-citas-mes:hover {
+      background: linear-gradient(145deg, #b8941f, var(--gold));
+    }
+
     .sin-datos {
       text-align: center;
       padding: 50px;
@@ -849,6 +858,174 @@
       border: 1px solid rgba(30, 64, 175, 0.5);
     }
 
+    /* Estilos para el modal de citas del mes */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      animation: fadeIn 0.3s;
+      overflow-y: auto;
+    }
+
+    .modal-contenido {
+      background: linear-gradient(145deg, var(--dark-light), var(--dark));
+      margin: 2% auto;
+      padding: 30px;
+      border-radius: 16px;
+      width: 95%;
+      max-width: 1400px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      animation: slideDown 0.3s;
+      border: 1px solid rgba(30, 64, 175, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .modal-contenido::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--gold), #f4d03f, var(--gold));
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    }
+
+    .modal-header h3 {
+      color: var(--gold);
+      font-size: 1.8rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cerrar-modal {
+      color: var(--gold);
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .cerrar-modal:hover {
+      color: #f4d03f;
+      transform: rotate(90deg);
+    }
+
+    /* Pestañas para las citas del mes */
+    .pestanas-mes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: rgba(30, 41, 59, 0.7);
+      border-radius: 12px;
+      border: 1px solid rgba(212, 175, 55, 0.2);
+    }
+
+    .pestana-dia {
+      background: linear-gradient(145deg, var(--dark-light), var(--dark));
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      color: var(--text);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pestana-dia::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold), #f4d03f);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .pestana-dia.activa {
+      background: linear-gradient(145deg, rgba(212, 175, 55, 0.2), rgba(244, 208, 63, 0.1));
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .pestana-dia.activa::before {
+      transform: scaleX(1);
+    }
+
+    .pestana-dia:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    }
+
+    .contenido-pestana {
+      display: none;
+    }
+
+    .contenido-pestana.activa {
+      display: block;
+    }
+
+    .resumen-citas-mes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .resumen-mes-item {
+      background: linear-gradient(145deg, var(--dark-light), var(--dark));
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      border-left: 4px solid var(--gold);
+    }
+
+    .resumen-mes-item .titulo {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .resumen-mes-item .valor {
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .resumen-mes-item .detalle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
     /* Responsive */
     @media (max-width: 1200px) {
       .container {
@@ -960,6 +1137,14 @@
         text-align: center;
         justify-content: center;
       }
+      
+      .pestanas-mes {
+        flex-direction: column;
+      }
+      
+      .pestana-dia {
+        text-align: center;
+      }
     }
 
     @media (max-width: 576px) {
@@ -991,6 +1176,19 @@
   </style>
 </head>
 <body>
+  <!-- Modal para citas del mes -->
+  <div id="modalCitasMes" class="modal">
+    <div class="modal-contenido">
+      <div class="modal-header">
+        <h3><i class="fas fa-calendar-alt"></i> CITAS DEL MES</h3>
+        <span class="cerrar-modal">&times;</span>
+      </div>
+      <div id="contenidoCitasMes">
+        <!-- El contenido se cargará dinámicamente -->
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <header>
       <div class="logo-container">
@@ -1005,6 +1203,9 @@
       <div class="header-controls">
         <button class="btn-filtro" id="actualizarBtn">
           <i class="fas fa-sync-alt"></i> ACTUALIZAR
+        </button>
+        <button class="btn-filtro btn-citas-mes" id="btnCitasMes">
+          <i class="fas fa-calendar-alt"></i> VER CITAS DEL MES
         </button>
         <button class="btn-filtro btn-exportar" id="exportarEstadisticas">
           <i class="fas fa-file-excel"></i> EXPORTAR ESTADÍSTICAS
@@ -1543,6 +1744,170 @@
         detalleContainer.innerHTML = html || '<div class="sin-datos">NO HAY CITAS PARA MOSTRAR CON LOS FILTROS ACTUALES</div>';
       }
 
+      // --- NUEVAS FUNCIONALIDADES SOLICITADAS ---
+
+      // FUNCIÓN PARA OBTENER CITAS POR DÍA (CORREGIDA)
+      function obtenerCitasPorDia(fechaEspecifica = null) {
+        const fecha = fechaEspecifica ? new Date(fechaEspecifica) : new Date();
+        const fechaFormateada = fecha.toISOString().split('T')[0];
+        
+        // Obtener citas del día específico
+        const citasDelDia = registrosPremanifiesto.filter(registro => 
+          registro.diaEvento === fechaFormateada
+        );
+        
+        return citasDelDia;
+      }
+
+      // FUNCIÓN PARA MOSTRAR CITAS DEL MES
+      function mostrarCitasDelMes() {
+        const modal = document.getElementById('modalCitasMes');
+        const contenido = document.getElementById('contenidoCitasMes');
+        
+        // Obtener el mes actual
+        const hoy = new Date();
+        const año = hoy.getFullYear();
+        const mes = hoy.getMonth();
+        
+        // Obtener todos los días del mes
+        const diasDelMes = new Date(año, mes + 1, 0).getDate();
+        
+        // Agrupar citas por día
+        const citasPorDia = {};
+        let totalCitasMes = 0;
+        let mejorBase = '';
+        let maxCitas = 0;
+        
+        for (let dia = 1; dia <= diasDelMes; dia++) {
+          const fecha = `${año}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+          const citasDia = registrosPremanifiesto.filter(registro => 
+            registro.diaEvento === fecha
+          );
+          
+          citasPorDia[fecha] = citasDia;
+          totalCitasMes += citasDia.length;
+          
+          // Encontrar la mejor base
+          citasDia.forEach(cita => {
+            const base = cita.baseDatos || 'Sin Base';
+            if (!citasPorDia[base]) citasPorDia[base] = 0;
+            citasPorDia[base]++;
+            
+            if (citasPorDia[base] > maxCitas) {
+              maxCitas = citasPorDia[base];
+              mejorBase = base;
+            }
+          });
+        }
+        
+        // Calcular porcentaje de la mejor base
+        const porcentajeMejorBase = totalCitasMes > 0 ? 
+          Math.round((maxCitas / totalCitasMes) * 100) : 0;
+        
+        // Generar HTML para el modal
+        let html = `
+          <div class="resumen-citas-mes">
+            <div class="resumen-mes-item">
+              <div class="titulo">TOTAL DE CITAS DEL MES</div>
+              <div class="valor">${totalCitasMes}</div>
+              <div class="detalle">Todas las citas programadas</div>
+            </div>
+            <div class="resumen-mes-item">
+              <div class="titulo">MEJOR BASE</div>
+              <div class="valor">${mejorBase || 'N/A'}</div>
+              <div class="detalle">${maxCitas} citas (${porcentajeMejorBase}%)</div>
+            </div>
+          </div>
+          
+          <div class="pestanas-mes" id="pestanasMes">
+        `;
+        
+        // Crear pestañas para cada día con citas
+        Object.keys(citasPorDia).sort().forEach((fecha, index) => {
+          if (fecha.includes('-') && citasPorDia[fecha].length > 0) {
+            const fechaObj = new Date(fecha);
+            const nombreDia = fechaObj.toLocaleDateString('es-MX', { 
+              weekday: 'short', 
+              day: '2-digit', 
+              month: 'short' 
+            }).toUpperCase();
+            
+            html += `
+              <div class="pestana-dia ${index === 0 ? 'activa' : ''}" data-fecha="${fecha}">
+                ${nombreDia.replace('.', '')} (${citasPorDia[fecha].length})
+              </div>
+            `;
+          }
+        });
+        
+        html += `</div>`;
+        
+        // Crear contenido para cada pestaña
+        Object.keys(citasPorDia).sort().forEach((fecha, index) => {
+          if (fecha.includes('-') && citasPorDia[fecha].length > 0) {
+            html += `
+              <div class="contenido-pestana ${index === 0 ? 'activa' : ''}" id="contenido-${fecha}">
+                <h4>CITAS DEL ${new Date(fecha).toLocaleDateString('es-MX', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                }).toUpperCase()}</h4>
+                <div class="supervisora-citas">
+            `;
+            
+            citasPorDia[fecha].forEach((cita, citaIndex) => {
+              html += `
+                <div class="cita-item">
+                  <div class="cita-numero">CITA #${citaIndex + 1}</div>
+                  <div class="cita-cliente">${cita.nombre || 'CLIENTE NO ESPECIFICADO'}</div>
+                  <div class="cita-hora">${cita.hora || 'HORA NO ESPECIFICADA'}</div>
+                  <div class="cita-detalles">
+                    <small>SUPERVISORA: ${cita.supervisora || 'N/A'} | HOTEL: ${cita.hotel || 'N/A'} | CALIFICACIÓN: ${cita.calificacionOrigen || 'N/A'}</small>
+                  </div>
+                </div>
+              `;
+            });
+            
+            html += `
+                </div>
+              </div>
+            `;
+          }
+        });
+        
+        contenido.innerHTML = html;
+        modal.style.display = 'block';
+        
+        // Configurar eventos para las pestañas
+        const pestanas = document.querySelectorAll('.pestana-dia');
+        pestanas.forEach(pestana => {
+          pestana.addEventListener('click', function() {
+            const fecha = this.getAttribute('data-fecha');
+            
+            // Remover clase activa de todas las pestañas
+            pestanas.forEach(p => p.classList.remove('activa'));
+            // Agregar clase activa a la pestaña clickeada
+            this.classList.add('activa');
+            
+            // Ocultar todos los contenidos
+            document.querySelectorAll('.contenido-pestana').forEach(contenido => {
+              contenido.classList.remove('activa');
+            });
+            
+            // Mostrar el contenido correspondiente
+            document.getElementById(`contenido-${fecha}`).classList.add('activa');
+          });
+        });
+      }
+
+      // FUNCIÓN PARA OBTENER CITAS POR SUPERVISOR (CORREGIDA)
+      function obtenerCitasPorSupervisora(supervisora) {
+        return registrosPremanifiesto.filter(registro => 
+          registro.supervisora === supervisora
+        );
+      }
+
       function mostrarNotificacion(mensaje, tipo = 'success') {
         const notificacion = document.createElement('div');
         notificacion.innerHTML = `<i class="fas fa-${tipo === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${mensaje}`;
@@ -1577,6 +1942,9 @@
         const exportarBtn = document.getElementById('exportarEstadisticas');
         const aplicarFiltroBtn = document.getElementById('aplicarFiltro');
         const limpiarFiltroBtn = document.getElementById('limpiarFiltro');
+        const btnCitasMes = document.getElementById('btnCitasMes');
+        const modal = document.getElementById('modalCitasMes');
+        const cerrarModal = document.querySelector('.cerrar-modal');
         
         if (!actualizarBtn || !exportarBtn || !aplicarFiltroBtn || !limpiarFiltroBtn) {
           console.error("❌ NO SE ENCONTRARON TODOS LOS ELEMENTOS DEL DOM");
@@ -1612,8 +1980,21 @@
         exportarBtn.addEventListener("click", function() {
           exportarEstadisticasCompletas();
         });
+        
+        btnCitasMes.addEventListener('click', mostrarCitasDelMes);
+        
+        cerrarModal.addEventListener('click', function() {
+          modal.style.display = 'none';
+        });
+        
+        window.addEventListener('click', function(event) {
+          if (event.target === modal) {
+            modal.style.display = 'none';
+          }
+        });
       }
 
+      // FUNCIÓN CORREGIDA: Exportar estadísticas con calificación de origen
       function exportarEstadisticasCompletas() {
         if (registrosPremanifiesto.length === 0) {
           mostrarNotificacion("NO HAY DATOS PARA EXPORTAR", 'error');
@@ -1724,13 +2105,14 @@
           const tituloDetRow = wsDetalle.addRow(["DETALLE COMPLETO DE CITAS"]);
           tituloDetRow.font = { size: 16, bold: true };
           tituloDetRow.alignment = { horizontal: 'center' };
-          wsDetalle.mergeCells('A1:P1');
+          wsDetalle.mergeCells('A1:Q1'); // CORREGIDO: A1:Q1 para incluir la columna de ingresos
           
           wsDetalle.addRow([]);
           
+          // CORREGIDO: Incluir la columna de ingresos y calificación de origen
           const headersDet = [
             'NUM CITAS', 'CLIENTE Y NOMBRE ACOMPAÑANTE', 'NUM PERSONAS', 'ESTADO CIVIL', 'HORA', 
-            'DÍA EVENTO', 'SALON', 'EDAD', 'TARJETA', 'CALIF DE ORIGEN', 'GERENTE', 
+            'DÍA EVENTO', 'SALON', 'EDAD', 'INGRESOS', 'TARJETA', 'CALIF DE ORIGEN', 'GERENTE', 
             'OPERADOR', 'VENDEDOR', 'BASE DE DATOS', 'SUPERVISORA', 'TELEFONO'
           ];
           
@@ -1765,8 +2147,9 @@
                   registro.diaEvento || '',
                   registro.hotel || '',
                   registro.edad || '',
+                  registro.ingresos || '', // COLUMNA DE INGRESOS
                   registro.tarjeta || '',
-                  registro.calificacionOrigen || '',
+                  registro.calificacionOrigen || '', // COLUMNA DE CALIFICACIÓN DE ORIGEN
                   registro.gerente || '',
                   registro.operador || '',
                   registro.vendedor || '',
@@ -1785,10 +2168,12 @@
               });
           });
           
+          // CORREGIDO: Ajustar anchos de columnas para incluir ingresos
           wsDetalle.columns = [
               { width: 10 }, { width: 35 }, { width: 15 }, { width: 15 }, { width: 12 },
-              { width: 15 }, { width: 25 }, { width: 10 }, { width: 22 }, { width: 18 },
-              { width: 15 }, { width: 15 }, { width: 12 }, { width: 15 }, { width: 15 }, { width: 18 }
+              { width: 15 }, { width: 25 }, { width: 10 }, { width: 15 }, { width: 22 }, 
+              { width: 18 }, { width: 15 }, { width: 15 }, { width: 12 }, { width: 15 }, 
+              { width: 15 }, { width: 18 }
           ];
           
           workbook.xlsx.writeBuffer().then(buffer => {
