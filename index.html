@@ -2687,44 +2687,44 @@ document.getElementById("descargarExcel").addEventListener("click", async () => 
             });
         }
         
-        // ✅ MODIFICADO: AÑADIR DATOS CON LA NUEVA ESTRUCTURA
-        registrosParaExcel.forEach(registro => {
-            const row = worksheet.addRow([
-                // 1. NUM DE CITAS
-                registro.citaPorDia || registro.cita,
-                // 2. FECHA
-                registro.diaEvento ? registro.diaEvento.toUpperCase() : '',
-                // 3. PAX
-                registro.numPersonas ? registro.numPersonas.toString().toUpperCase() : '',
-                // 4. NOMBRES FAMILIA
-                registro.nombre ? registro.nombre.toUpperCase() : '',
-                // 5. EDAD
-                registro.edad ? registro.edad.toUpperCase() : '',
-                // 6. ESTADO CIVIL
-                registro.estadoCivil ? registro.estadoCivil.toUpperCase() : '',
-                // 7. TARJETAS
-                registro.tarjeta ? registro.tarjeta.toUpperCase() : '',
-                // 8. ID
-                registro.id ? registro.id.toUpperCase() : '',
-                // 9. INGRESOS
-                registro.ingresos ? registro.ingresos.toUpperCase() : '',
-                // 10. VENDOR
-                registro.vendedor ? registro.vendedor.toUpperCase() : '',
-                // 11. OPERADOR
-                registro.operador ? registro.operador.toUpperCase() : '',
-                // 12. GERENTE - ✅ MODIFICADO: Ahora toma el valor de CALIF DE ORIGEN
-                registro.calificacionOrigen ? registro.calificacionOrigen.toUpperCase() : '',
-                // 13. SALA
-                registro.hotel ? registro.hotel.toUpperCase() : '',
-                // 14. HORA DE LLEGADA
-                registro.hora ? registro.hora.toUpperCase() : '',
-                // 15. BASE DE DATOS
-                registro.baseDatos ? registro.baseDatos.toUpperCase() : '',
-                // 16. SUPERVISOR
-                registro.supervisora ? registro.supervisora.toUpperCase() : '',
-                // 17. TELEFONO
-                registro.telefono ? registro.telefono.toUpperCase() : ''
-            ]);
+       // ✅ MODIFICADO: AÑADIR DATOS CON LA NUEVA ESTRUCTURA
+registrosParaExcel.forEach(registro => {
+    const row = worksheet.addRow([
+        // 1. NUM DE CITAS
+        registro.citaPorDia || registro.cita,
+        // 2. FECHA
+        registro.diaEvento ? registro.diaEvento.toUpperCase() : '',
+        // 3. PAX ✅ - AHORA ES NUM DE PERSONAS
+        registro.numPersonas ? registro.numPersonas.toString().toUpperCase() : '',
+        // 4. NOMBRES FAMILIA
+        registro.nombre ? registro.nombre.toUpperCase() : '',
+        // 5. EDAD
+        registro.edad ? registro.edad.toUpperCase() : '',
+        // 6. ESTADO CIVIL
+        registro.estadoCivil ? registro.estadoCivil.toUpperCase() : '',
+        // 7. TARJETAS
+        registro.tarjeta ? registro.tarjeta.toUpperCase() : '',
+        // 8. ID ✅ - AHORA QUEDA EN BLANCO/VACÍO
+        '', // ← ESTA LÍNEA CAMBIADA - ID EN BLANCO
+        // 9. INGRESOS
+        registro.ingresos ? registro.ingresos.toUpperCase() : '',
+        // 10. VENDOR ✅ - SE MANTIENE PREDETERMINADO "TMK/SF"
+        registro.vendedor ? registro.vendedor.toUpperCase() : '',
+        // 11. OPERADOR
+        registro.operador ? registro.operador.toUpperCase() : '',
+        // 12. GERENTE ✅ - AHORA TOMA CALIF DE ORIGEN
+        registro.calificacionOrigen ? registro.calificacionOrigen.toUpperCase() : '',
+        // 13. SALA
+        registro.hotel ? registro.hotel.toUpperCase() : '',
+        // 14. HORA DE LLEGADA
+        registro.hora ? registro.hora.toUpperCase() : '',
+        // 15. BASE DE DATOS
+        registro.baseDatos ? registro.baseDatos.toUpperCase() : '',
+        // 16. SUPERVISOR
+        registro.supervisora ? registro.supervisora.toUpperCase() : '',
+        // 17. TELEFONO
+        registro.telefono ? registro.telefono.toUpperCase() : ''
+    ]);
             
             // APLICAR ESTILO A LA CELDA DE NÚMERO DE CITA
             const primeraCelda = row.getCell(1);
