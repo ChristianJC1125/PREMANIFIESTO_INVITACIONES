@@ -2750,27 +2750,26 @@ registrosParaExcel.forEach(registro => {
             });
         });
         
-        // ✅ MODIFICADO: AJUSTAR ANCHOS DE COLUMNAS PARA LA NUEVA ESTRUCTURA
-        worksheet.columns = [
-            { width: 12 },   // 1. NUM DE CITAS
-            { width: 12 },   // 2. FECHA
-            { width: 8 },    // 3. PAX
-            { width: 35 },   // 4. NOMBRES FAMILIA
-            { width: 10 },   // 5. EDAD
-            { width: 12 },   // 6. ESTADO CIVIL
-            { width: 20 },   // 7. TARJETAS
-            { width: 20 },   // 8. ID
-            { width: 15 },   // 9. INGRESOS
-            { width: 12 },   // 10. VENDOR
-            { width: 15 },   // 11. OPERADOR
-            { width: 12 },   // 12. GERENTE
-            { width: 20 },   // 13. SALA
-            { width: 15 },   // 14. HORA DE LLEGADA
-            { width: 15 },   // 15. BASE DE DATOS
-            { width: 15 },   // 16. SUPERVISOR
-            { width: 15 }    // 17. TELEFONO
-        ];
-        
+       // ✅ MODIFICADO: AJUSTAR ANCHOS DE COLUMNAS AMPLIADOS
+worksheet.columns = [
+    { width: 15 },   // 1. NUM DE CITAS
+    { width: 15 },   // 2. FECHA
+    { width: 10 },   // 3. PAX
+    { width: 40 },   // 4. NOMBRES FAMILIA
+    { width: 12 },   // 5. EDAD
+    { width: 15 },   // 6. ESTADO CIVIL
+    { width: 25 },   // 7. TARJETAS
+    { width: 20 },   // 8. ID (vacío pero con espacio)
+    { width: 18 },   // 9. INGRESOS
+    { width: 15 },   // 10. VENDOR
+    { width: 25 },   // 11. OPERADOR
+    { width: 15 },   // 12. GERENTE
+    { width: 25 },   // 13. SALA
+    { width: 18 },   // 14. HORA DE LLEGADA
+    { width: 20 },   // 15. BASE DE DATOS
+    { width: 18 },   // 16. SUPERVISOR
+    { width: 18 }    // 17. TELEFONO
+];
         // AÑADIR ESPACIOS ENTRE CELDAS (PADDING)
         worksheet.eachRow((row, rowNumber) => {
             row.eachCell((cell) => {
