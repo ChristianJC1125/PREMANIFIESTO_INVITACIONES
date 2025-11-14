@@ -1722,9 +1722,11 @@
             `;
             
             citas.forEach((cita, index) => {
+              // ✅ CORREGIDO: Usar el número de cita correcto (citaPorDia) en lugar del índice
+              const numeroCita = cita.citaPorDia || (index + 1);
               html += `
                 <div class="cita-item">
-                  <div class="cita-numero">CITA #${index + 1}</div>
+                  <div class="cita-numero">CITA #${numeroCita}</div>
                   <div class="cita-cliente">${cita.nombre || 'CLIENTE NO ESPECIFICADO'}</div>
                   <div class="cita-hora">${cita.hora || 'HORA NO ESPECIFICADA'} - ${cita.fechaRegistro || 'FECHA NO ESPECIFICADA'}</div>
                   <div class="cita-detalles">
@@ -1746,20 +1748,33 @@
 
       // --- NUEVAS FUNCIONALIDADES SOLICITADAS ---
 
-      // FUNCIÓN PARA OBTENER CITAS POR DÍA (CORREGIDA)
+      // ✅ FUNCIÓN CORREGIDA: OBTENER CITAS POR DÍA
       function obtenerCitasPorDia(fechaEspecifica = null) {
         const fecha = fechaEspecifica ? new Date(fechaEspecifica) : new Date();
         const fechaFormateada = fecha.toISOString().split('T')[0];
         
-        // Obtener citas del día específico
-        const citasDelDia = registrosPremanifiesto.filter(registro => 
-          registro.diaEvento === fechaFormateada
-        );
+        console.log(`🔍 BUSCANDO CITAS PARA EL DÍA: ${fechaFormateada}`);
+        
+        // Obtener citas del día específico usando diaEvento
+        const citasDelDia = registrosPremanifiesto.filter(registro => {
+          if (!registro.diaEvento) {
+            console.log(`❌ REGISTRO SIN diaEvento:`, registro);
+            return false;
+          }
+          
+          const coincide = registro.diaEvento === fechaFormateada;
+          if (coincide) {
+            console.log(`✅ CITA ENCONTRADA: ${registro.nombre} - Número: ${registro.citaPorDia || 'Sin número'}`);
+          }
+          return coincide;
+        });
+        
+        console.log(`📊 TOTAL CITAS ENCONTRADAS: ${citasDelDia.length}`);
         
         return citasDelDia;
       }
 
-      // FUNCIÓN PARA MOSTRAR CITAS DEL MES
+      // ✅ FUNCIÓN CORREGIDA: MOSTRAR CITAS DEL MES
       function mostrarCitasDelMes() {
         const modal = document.getElementById('modalCitasMes');
         const contenido = document.getElementById('contenidoCitasMes');
@@ -1772,7 +1787,7 @@
         // Obtener todos los días del mes
         const diasDelMes = new Date(año, mes + 1, 0).getDate();
         
-        // Agrupar citas por día
+        // Agrupar citas por día usando diaEvento
         const citasPorDia = {};
         let totalCitasMes = 0;
         let mejorBase = '';
@@ -1856,10 +1871,12 @@
                 <div class="supervisora-citas">
             `;
             
-            citasPorDia[fecha].forEach((cita, citaIndex) => {
+            // ✅ CORREGIDO: Usar citaPorDia en lugar del índice
+            citasPorDia[fecha].forEach((cita) => {
+              const numeroCita = cita.citaPorDia || 'Sin número';
               html += `
                 <div class="cita-item">
-                  <div class="cita-numero">CITA #${citaIndex + 1}</div>
+                  <div class="cita-numero">CITA #${numeroCita}</div>
                   <div class="cita-cliente">${cita.nombre || 'CLIENTE NO ESPECIFICADO'}</div>
                   <div class="cita-hora">${cita.hora || 'HORA NO ESPECIFICADA'}</div>
                   <div class="cita-detalles">
@@ -1901,7 +1918,7 @@
         });
       }
 
-      // FUNCIÓN PARA OBTENER CITAS POR SUPERVISOR (CORREGIDA)
+      // ✅ FUNCIÓN CORREGIDA: OBTENER CITAS POR SUPERVISORA
       function obtenerCitasPorSupervisora(supervisora) {
         return registrosPremanifiesto.filter(registro => 
           registro.supervisora === supervisora
@@ -1994,7 +2011,7 @@
         });
       }
 
-      // FUNCIÓN CORREGIDA: Exportar estadísticas con calificación de origen
+      // ✅ FUNCIÓN CORREGIDA: Exportar estadísticas con calificación de origen
       function exportarEstadisticasCompletas() {
         if (registrosPremanifiesto.length === 0) {
           mostrarNotificacion("NO HAY DATOS PARA EXPORTAR", 'error');
