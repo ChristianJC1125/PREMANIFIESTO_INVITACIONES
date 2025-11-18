@@ -1328,6 +1328,35 @@
     let listaSupervisoras = [];
     let registrosPremanifiesto = [];
 
+    // --- NUEVA FUNCIÓN: OBTENER ESTADÍSTICAS DE REGISTROS POR SUPERVISORA ---
+    function obtenerEstadisticasRegistros(fechaInicio, fechaFin, supervisora) {
+      if (!fechaInicio || !fechaFin || !supervisora) {
+        return null;
+      }
+      
+      // Convertir fechas a formato compatible
+      const inicio = new Date(fechaInicio);
+      const fin = new Date(fechaFin);
+      
+      // Filtrar registros por supervisora y rango de fechas
+      const registrosFiltrados = registrosPremanifiesto.filter(registro => {
+        if (registro.supervisora !== supervisora) return false;
+        
+        if (!registro.diaEvento) return false;
+        
+        const fechaEvento = new Date(registro.diaEvento);
+        return fechaEvento >= inicio && fechaEvento <= fin;
+      });
+      
+      return {
+        supervisora: supervisora,
+        fechaInicio: fechaInicio,
+        fechaFin: fechaFin,
+        totalRegistros: registrosFiltrados.length,
+        registros: registrosFiltrados
+      };
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
       // --- FUNCIONES PRINCIPALES ---
 
@@ -2044,7 +2073,7 @@
         });
         
         exportarBtn.addEventListener("click", function() {
-          exportarEstadisticasCompletas();
+          exportarEstadisticasConRegistros();
         });
         
         btnCitasMes.addEventListener('click', mostrarCitasDelMes);
@@ -2060,8 +2089,8 @@
         });
       }
 
-      // ✅ FUNCIÓN CORREGIDA: Exportar estadísticas con calificación de origen
-      function exportarEstadisticasCompletas() {
+      // ✅ FUNCIÓN CORREGIDA: Exportar estadísticas con información de registros
+      function exportarEstadisticasConRegistros() {
         if (registrosPremanifiesto.length === 0) {
           mostrarNotificacion("NO HAY DATOS PARA EXPORTAR", 'error');
           return;
@@ -2070,9 +2099,35 @@
         try {
           const workbook = new ExcelJS.Workbook();
           
+          // Obtener filtros actuales
+          const filtroFecha = document.getElementById('filtroFecha').value;
+          const filtroSupervisora = document.getElementById('filtroSupervisora').value;
+          
+          // Hoja de RESUMEN GENERAL
           const wsResumen = workbook.addWorksheet("RESUMEN GENERAL");
           
-          const tituloRow = wsResumen.addRow(["REPORTE DE ESTADÍSTICAS - BLUE ELEGANCE"]);
+          // Título personalizado según filtros
+          let tituloPrincipal = "REPORTE DE ESTADÍSTICAS - BLUE ELEGANCE";
+          
+          if (filtroFecha && filtroSupervisora) {
+            const fechaInicio = new Date(filtroFecha);
+            const fechaFin = new Date(fechaInicio);
+            fechaFin.setDate(fechaFin.getDate() + 5);
+            
+            const fechaInicioFormateada = fechaInicio.toLocaleDateString('es-MX');
+            const fechaFinFormateada = fechaFin.toLocaleDateString('es-MX');
+            
+            const fechaFinISO = fechaFin.toISOString().split('T')[0];
+            const estadisticas = obtenerEstadisticasRegistros(filtroFecha, fechaFinISO, filtroSupervisora);
+            
+            tituloPrincipal = `CITAS DE ${filtroSupervisora} DEL ${fechaInicioFormateada} AL ${fechaFinFormateada}`;
+            
+            if (estadisticas && estadisticas.totalRegistros > 0) {
+              tituloPrincipal += ` - ${estadisticas.totalRegistros} REGISTROS`;
+            }
+          }
+          
+          const tituloRow = wsResumen.addRow([tituloPrincipal]);
           tituloRow.font = { size: 16, bold: true };
           tituloRow.alignment = { horizontal: 'center' };
           wsResumen.mergeCells('A1:F1');
@@ -2245,7 +2300,15 @@
           workbook.xlsx.writeBuffer().then(buffer => {
               const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
               const fecha = new Date().toISOString().split('T')[0];
-              saveAs(blob, `REPORTE_ESTADISTICAS_COMPLETO_${fecha}.xlsx`);
+              
+              // Nombre del archivo personalizado
+              let nombreArchivo = `REPORTE_ESTADISTICAS_${fecha}`;
+              
+              if (filtroFecha && filtroSupervisora) {
+                nombreArchivo = `CITAS_${filtroSupervisora.replace(/\s+/g, '_')}_${fecha}`;
+              }
+              
+              saveAs(blob, `${nombreArchivo}.xlsx`);
               mostrarNotificacion("REPORTE DE ESTADÍSTICAS DESCARGADO CORRECTAMENTE");
           });
           
