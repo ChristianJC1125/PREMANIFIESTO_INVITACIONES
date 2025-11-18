@@ -278,6 +278,13 @@
       color: var(--success);
     }
     
+    .eficiencia-excelente {
+      background: rgba(212, 175, 55, 0.3) !important;
+      border-left: 3px solid var(--gold) !important;
+      color: var(--gold) !important;
+      font-weight: bold;
+    }
+    
     /* Sección de citas agregadas hoy */
     .citas-agregadas-hoy {
       background: linear-gradient(145deg, var(--dark-light), var(--dark));
@@ -414,9 +421,13 @@
     }
 
     .stat-card.leader {
-      background: linear-gradient(145deg, var(--primary-dark), var(--primary));
-      color: var(--text);
-      border-top: 4px solid var(--accent);
+      background: linear-gradient(145deg, var(--gold), #b8941f);
+      color: #1a1a1a;
+      border-top: 4px solid #f4d03f;
+    }
+
+    .stat-card.leader .count {
+      color: #1a1a1a !important;
     }
 
     .stat-card h3 {
@@ -1438,29 +1449,50 @@
       // --- FUNCIONES DE CÁLCULO DE EFICIENCIA ---
       
       function calcularEficienciaSupervisora(citasHoy) {
-        // REGLA DE TRES MEJORADA: 8 citas = 100% de eficiencia
+        // 8 citas = 100% de eficiencia
         if (citasHoy === 0) return 0;
-        const eficiencia = Math.min(100, Math.round((citasHoy / 8) * 100));
+        
+        let eficiencia = Math.round((citasHoy / 8) * 100);
+        
+        // Permitir eficiencia mayor al 100% si supera las 8 citas
+        if (citasHoy > 8) {
+          eficiencia = 100 + Math.round(((citasHoy - 8) / 8) * 100);
+        }
+        
         return eficiencia;
       }
       
       function obtenerClaseEficiencia(eficiencia) {
+        if (eficiencia === 0) return 'eficiencia-baja';
         if (eficiencia < 50) return 'eficiencia-baja';
         if (eficiencia < 80) return 'eficiencia-media';
-        return 'eficiencia-alta';
+        if (eficiencia < 100) return 'eficiencia-alta';
+        return 'eficiencia-excelente'; // Para > 100%
       }
       
       function obtenerTextoEficiencia(citasHoy, eficiencia) {
         if (eficiencia === 0) {
           return `META: 8 CITAS/DÍA (${8} FALTANTES)`;
         }
+        
+        if (eficiencia >= 100) {
+          const extra = eficiencia - 100;
+          return `🎯 EFICIENCIA: ${eficiencia}% (${citasHoy}/8 +${extra}%)`;
+        }
+        
         return `EFICIENCIA: ${eficiencia}% (${citasHoy}/8 CITAS)`;
       }
       
       function calcularEficienciaGeneral(citasHoyTotal) {
         // EFICIENCIA GENERAL DEL EQUIPO: total de citas hoy vs meta total
         const metaTotal = listaSupervisoras.length * 8;
-        const eficienciaGeneral = Math.min(100, Math.round((citasHoyTotal / metaTotal) * 100));
+        let eficienciaGeneral = Math.round((citasHoyTotal / metaTotal) * 100);
+        
+        // Permitir eficiencia mayor al 100%
+        if (citasHoyTotal > metaTotal) {
+          eficienciaGeneral = 100 + Math.round(((citasHoyTotal - metaTotal) / metaTotal) * 100);
+        }
+        
         return eficienciaGeneral;
       }
 
@@ -1477,6 +1509,12 @@
         
         const supervisorasActivas = listaSupervisoras.length;
         const eficienciaGeneral = calcularEficienciaGeneral(citasHoy);
+        
+        // Determinar clase de eficiencia general
+        let claseEficienciaGeneral = 'eficiencia-baja';
+        if (eficienciaGeneral >= 50) claseEficienciaGeneral = 'eficiencia-media';
+        if (eficienciaGeneral >= 80) claseEficienciaGeneral = 'eficiencia-alta';
+        if (eficienciaGeneral >= 100) claseEficienciaGeneral = 'eficiencia-excelente';
         
         resumenContainer.innerHTML = `
           <div class="resumen-item">
@@ -1498,6 +1536,11 @@
             <div class="icono"><i class="fas fa-chart-line"></i></div>
             <div class="valor">${eficienciaGeneral}%</div>
             <div class="etiqueta">EFICIENCIA DEL EQUIPO</div>
+            <div class="eficiencia-indicator ${claseEficienciaGeneral}">
+              ${eficienciaGeneral >= 100 ? 
+                `🎯 SUPERÓ LA META EN ${eficienciaGeneral - 100}%` : 
+                `META: ${supervisorasActivas * 8} CITAS/DÍA`}
+            </div>
           </div>
         `;
       }
@@ -1532,9 +1575,15 @@
           const claseEficiencia = obtenerClaseEficiencia(eficiencia);
           const textoEficiencia = obtenerTextoEficiencia(citasHoy, eficiencia);
           
+          // Agregar emoji según eficiencia
+          let emoji = '❌';
+          if (eficiencia >= 50) emoji = '⚠️';
+          if (eficiencia >= 80) emoji = '✅';
+          if (eficiencia >= 100) emoji = '🎯';
+          
           html += `
             <div class="cita-agregada-item">
-              <div class="cita-agregada-supervisora">${supervisora}</div>
+              <div class="cita-agregada-supervisora">${emoji} ${supervisora}</div>
               <div class="cita-agregada-cantidad">${citasHoy} CITAS</div>
               <div class="cita-agregada-eficiencia ${claseEficiencia}">${textoEficiencia}</div>
             </div>
