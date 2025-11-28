@@ -17,7 +17,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 
-  <style>
+<style>
     * {
       box-sizing: border-box;
       margin: 0;
@@ -742,6 +742,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      height: 44px;
     }
 
     .btn-filtro:hover {
@@ -995,8 +996,8 @@
       z-index: 1000;
     }
 
-    /* NUEVO: Estilos para el botón de búsqueda */
-     .busqueda-container {
+    /* NUEVO: Estilos para el botón de búsqueda - CORREGIDO */
+    .busqueda-container {
       display: flex;
       gap: 10px;
       align-items: center;
@@ -1009,10 +1010,10 @@
     }
 
     .btn-buscar {
-      background: linear-gradient(135deg, #3498db, #2980b9);
-      color: white;
+      background: linear-gradient(135deg, #3498db, #2980b9) !important;
+      color: white !important;
       border: none;
-      padding: 12px 18px;
+      padding: 12px 18px !important;
       border-radius: 8px;
       cursor: pointer;
       font-size: 0.9rem;
@@ -1022,12 +1023,14 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      height: 44px; /* Misma altura que otros botones */
+      height: 44px;
       white-space: nowrap;
+      margin: 0 !important;
+      animation: none !important;
     }
 
     .btn-buscar:hover {
-      background: linear-gradient(135deg, #2980b9, #3498db);
+      background: linear-gradient(135deg, #2980b9, #3498db) !important;
       transform: translateY(-3px);
       box-shadow: 0 8px 25px rgba(52, 152, 219, 0.5);
     }
@@ -1057,10 +1060,10 @@
     
     /* NUEVO: Estilos para el botón de filtro supervisor */
     .btn-filtro-supervisor {
-      background: linear-gradient(135deg, #9b59b6, #8e44ad);
-      color: white;
+      background: linear-gradient(135deg, #9b59b6, #8e44ad) !important;
+      color: white !important;
       border: none;
-      padding: 12px 18px;
+      padding: 12px 18px !important;
       border-radius: 8px;
       cursor: pointer;
       font-size: 0.9rem;
@@ -1070,16 +1073,19 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      height: 44px; /* Altura consistente con otros botones */
+      height: 44px;
+      margin: 0 !important;
+      animation: none !important;
     }
 
     .btn-filtro-supervisor:hover {
-      background: linear-gradient(135deg, #8e44ad, #7d3c98);
+      background: linear-gradient(135deg, #8e44ad, #7d3c98) !important;
       transform: translateY(-3px);
       box-shadow: 0 8px 25px rgba(155, 89, 182, 0.5);
     }
+    
   </style>
-  
+
   <!-- Librerías necesarias -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
