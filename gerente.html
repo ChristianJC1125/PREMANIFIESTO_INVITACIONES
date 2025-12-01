@@ -1275,12 +1275,29 @@
           </select>
         </div>
         
+        <!-- NUEVOS CONTROLES PARA RANGO DE FECHAS -->
+        <div class="filtro-group">
+          <label for="fechaInicio"><i class="fas fa-calendar-day"></i> FECHA INICIO:</label>
+          <input type="date" id="fechaInicio">
+        </div>
+
+        <div class="filtro-group">
+          <label for="fechaFin"><i class="fas fa-calendar-day"></i> FECHA FIN:</label>
+          <input type="date" id="fechaFin">
+        </div>
+        
         <div class="btn-group">
           <button type="button" id="aplicarFiltro" class="btn-filtro">
             <i class="fas fa-filter"></i> APLICAR FILTROS
           </button>
           <button type="button" id="limpiarFiltro" class="btn-filtro btn-limpiar">
             <i class="fas fa-broom"></i> LIMPIAR
+          </button>
+          <button type="button" id="btnBuscarPorFechas" class="btn-filtro">
+            <i class="fas fa-search"></i> BUSCAR POR FECHAS
+          </button>
+          <button type="button" id="btnDescargarMes" class="btn-filtro btn-exportar">
+            <i class="fas fa-file-download"></i> DESCARGAR MES COMPLETO
           </button>
         </div>
       </div>
@@ -1355,6 +1372,351 @@
         totalRegistros: registrosFiltrados.length,
         registros: registrosFiltrados
       };
+    }
+
+    // --- NUEVAS FUNCIONES SOLICITADAS ---
+    
+    // FUNCIÓN PARA MOSTRAR CITAS POR RANGO DE FECHAS
+    function mostrarCitasPorFechas() {
+      const fechaInicio = document.getElementById('fechaInicio').value;
+      const fechaFin = document.getElementById('fechaFin').value;
+      
+      if (!fechaInicio || !fechaFin) {
+        mostrarNotificacion('SELECCIONE FECHA DE INICIO Y FIN', 'error');
+        return;
+      }
+      
+      if (new Date(fechaInicio) > new Date(fechaFin)) {
+        mostrarNotificacion('LA FECHA DE INICIO DEBE SER ANTERIOR A LA DE FIN', 'error');
+        return;
+      }
+      
+      // Filtrar registros por rango de fechas (usando diaEvento)
+      const registrosFiltrados = registrosPremanifiesto.filter(registro => {
+        if (!registro.diaEvento) return false;
+        
+        const fechaEvento = new Date(registro.diaEvento);
+        const inicio = new Date(fechaInicio);
+        const fin = new Date(fechaFin);
+        
+        return fechaEvento >= inicio && fechaEvento <= fin;
+      });
+      
+      // Mostrar modal con resultados
+      mostrarModalCitasPorFechas(fechaInicio, fechaFin, registrosFiltrados);
+    }
+
+    // FUNCIÓN PARA MOSTRAR MODAL CON CITAS POR FECHAS
+    function mostrarModalCitasPorFechas(fechaInicio, fechaFin, registros) {
+      const modal = document.getElementById('modalCitasMes');
+      const contenido = document.getElementById('contenidoCitasMes');
+      
+      // Formatear fechas
+      const inicioFormateada = new Date(fechaInicio).toLocaleDateString('es-MX', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).toUpperCase();
+      
+      const finFormateada = new Date(fechaFin).toLocaleDateString('es-MX', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).toUpperCase();
+      
+      // Agrupar por supervisoras
+      const citasPorSupervisora = {};
+      const citasPorDia = {};
+      
+      registros.forEach(registro => {
+        const supervisora = registro.supervisora || 'SIN SUPERVISORA';
+        const fecha = registro.diaEvento;
+        
+        if (!citasPorSupervisora[supervisora]) {
+          citasPorSupervisora[supervisora] = [];
+        }
+        citasPorSupervisora[supervisora].push(registro);
+        
+        if (fecha) {
+          if (!citasPorDia[fecha]) {
+            citasPorDia[fecha] = [];
+          }
+          citasPorDia[fecha].push(registro);
+        }
+      });
+      
+      // Generar HTML
+      let html = `
+        <div class="modal-header">
+          <h3><i class="fas fa-calendar-alt"></i> CITAS DEL ${inicioFormateada} AL ${finFormateada}</h3>
+          <span class="cerrar-modal">&times;</span>
+        </div>
+        
+        <div class="resumen-citas-mes">
+          <div class="resumen-mes-item">
+            <div class="titulo">TOTAL DE CITAS</div>
+            <div class="valor">${registros.length}</div>
+            <div class="detalle">En el período seleccionado</div>
+          </div>
+          <div class="resumen-mes-item">
+            <div class="titulo">SUPERVISORAS</div>
+            <div class="valor">${Object.keys(citasPorSupervisora).length}</div>
+            <div class="detalle">Con citas en el período</div>
+          </div>
+          <div class="resumen-mes-item">
+            <div class="titulo">DÍAS</div>
+            <div class="valor">${Object.keys(citasPorDia).length}</div>
+            <div class="detalle">Con citas programadas</div>
+          </div>
+        </div>
+        
+        <div class="pestanas-mes" id="pestanasMes">
+          <div class="pestana-dia activa" data-tab="resumen">RESUMEN POR SUPERVISORA</div>
+      `;
+      
+      // Agregar pestañas para cada día con citas
+      Object.keys(citasPorDia).sort().forEach((fecha, index) => {
+        const fechaObj = new Date(fecha);
+        const nombreDia = fechaObj.toLocaleDateString('es-MX', { 
+          weekday: 'short', 
+          day: '2-digit', 
+          month: 'short' 
+        }).toUpperCase().replace('.', '');
+        
+        html += `
+          <div class="pestana-dia" data-fecha="${fecha}">
+            ${nombreDia} (${citasPorDia[fecha].length})
+          </div>
+        `;
+      });
+      
+      html += `</div>`;
+      
+      // Contenido de pestaña RESUMEN
+      html += `
+        <div class="contenido-pestana activa" id="contenido-resumen">
+          <h4>DISTRIBUCIÓN POR SUPERVISORA</h4>
+          <div class="stats-container" style="margin-top: 20px;">
+      `;
+      
+      // Mostrar estadísticas por supervisora
+      Object.keys(citasPorSupervisora).sort((a, b) => 
+        citasPorSupervisora[b].length - citasPorSupervisora[a].length
+      ).forEach(supervisora => {
+        const citas = citasPorSupervisora[supervisora];
+        
+        html += `
+          <div class="stat-card">
+            <h3>${supervisora}</h3>
+            <div class="count">${citas.length}</div>
+            <div class="supervisora">TOTAL DE CITAS</div>
+            <div class="conteo-dia">
+              <div class="titulo">DETALLES</div>
+              <div class="valor-dia">${citas.length} registros</div>
+            </div>
+          </div>
+        `;
+      });
+      
+      html += `</div></div>`;
+      
+      // Contenido para cada día
+      Object.keys(citasPorDia).sort().forEach((fecha, index) => {
+        const citasDelDia = citasPorDia[fecha];
+        
+        html += `
+          <div class="contenido-pestana" id="contenido-${fecha}">
+            <h4>CITAS DEL ${new Date(fecha).toLocaleDateString('es-MX', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            }).toUpperCase()}</h4>
+            <div class="supervisora-citas">
+        `;
+        
+        citasDelDia.forEach((cita) => {
+          const numeroCita = cita.citaPorDia || 'Sin número';
+          html += `
+            <div class="cita-item">
+              <div class="cita-numero">CITA #${numeroCita}</div>
+              <div class="cita-cliente">${cita.nombre || 'CLIENTE NO ESPECIFICADO'}</div>
+              <div class="cita-hora">${cita.hora || 'HORA NO ESPECIFICADA'} - SUPERVISORA: ${cita.supervisora || 'N/A'}</div>
+              <div class="cita-detalles">
+                <small>PERSONAS: ${cita.numPersonas || 'N/A'} | HOTEL: ${cita.hotel || 'N/A'} | ESTADO: ${cita.estadoCivil || 'N/A'}</small>
+              </div>
+            </div>
+          `;
+        });
+        
+        html += `</div></div>`;
+      });
+      
+      contenido.innerHTML = html;
+      modal.style.display = 'block';
+      
+      // Configurar eventos para las pestañas
+      configurarPestanasModal();
+    }
+
+    // FUNCIÓN PARA CONFIGURAR PESTAÑAS DEL MODAL
+    function configurarPestanasModal() {
+      const pestanas = document.querySelectorAll('.pestana-dia');
+      pestanas.forEach(pestana => {
+        pestana.addEventListener('click', function() {
+          const target = this.getAttribute('data-fecha') || this.getAttribute('data-tab');
+          
+          // Remover clase activa de todas las pestañas
+          pestanas.forEach(p => p.classList.remove('activa'));
+          // Agregar clase activa a la pestaña clickeada
+          this.classList.add('activa');
+          
+          // Ocultar todos los contenidos
+          document.querySelectorAll('.contenido-pestana').forEach(contenido => {
+            contenido.classList.remove('activa');
+          });
+          
+          // Mostrar el contenido correspondiente
+          const contenidoId = target ? `contenido-${target}` : 'contenido-resumen';
+          const contenidoElement = document.getElementById(contenidoId);
+          if (contenidoElement) {
+            contenidoElement.classList.add('activa');
+          }
+        });
+      });
+    }
+
+    // FUNCIÓN PARA DESCARGAR PREMANIFIESTO DEL MES
+    function descargarPremanifiestoMes() {
+      const hoy = new Date();
+      const mesActual = hoy.getMonth();
+      const añoActual = hoy.getFullYear();
+      
+      // Obtener todos los registros del mes actual
+      const registrosMes = registrosPremanifiesto.filter(registro => {
+        if (!registro.diaEvento) return false;
+        
+        const fechaEvento = new Date(registro.diaEvento);
+        return fechaEvento.getMonth() === mesActual && fechaEvento.getFullYear() === añoActual;
+      });
+      
+      if (registrosMes.length === 0) {
+        mostrarNotificacion('NO HAY REGISTROS PARA EL MES ACTUAL', 'error');
+        return;
+      }
+      
+      // Crear libro de Excel con formato de premanifiesto
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("PREMANIFIESTO MES");
+      
+      // Título
+      const tituloRow = worksheet.addRow(["PREMANIFIESTO - BLUE ELEGANCE"]);
+      tituloRow.font = { size: 18, bold: true, color: { argb: 'FF1E40AF' } };
+      tituloRow.alignment = { horizontal: 'center' };
+      worksheet.mergeCells('A1:Q1');
+      
+      const mesNombre = hoy.toLocaleDateString('es-MX', { month: 'long' }).toUpperCase();
+      const subTituloRow = worksheet.addRow([`MES DE ${mesNombre} ${añoActual}`]);
+      subTituloRow.font = { size: 14, bold: true };
+      subTituloRow.alignment = { horizontal: 'center' };
+      worksheet.mergeCells('A2:Q2');
+      
+      worksheet.addRow([]);
+      
+      // Encabezados en el formato de la imagen
+      const headers = [
+        'ULADECITA', 'ECCIA', 'PAX', 'NOMBRES FAMILIA', 'EDAD', 
+        'ESTADO CIVIL', 'ADJEJAS', 'ID', 'INGRESOS', 'VERDOR', 
+        'OPERADOR', 'GEREATE', 'SPA', 'SUPERVISORA', 'HORA', 
+        'DÍA EVENTO', 'HOTEL'
+      ];
+      
+      const headerRow = worksheet.addRow(headers);
+      headerRow.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF0F172A' }
+        };
+        cell.font = {
+          bold: true,
+          color: { argb: 'FFFFFFFF' }
+        };
+        cell.alignment = { horizontal: 'center' };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+      });
+      
+      // Agregar datos en el mismo formato que la imagen
+      registrosMes.forEach((registro, index) => {
+        // Mapear datos al formato de la imagen
+        const rowData = [
+          index + 1, // ULADECITA
+          registro.diaEvento || '', // ECCIA (fecha del evento)
+          registro.numPersonas || '', // PAX
+          registro.nombre || '', // NOMBRES FAMILIA
+          registro.edad || '', // EDAD
+          registro.estadoCivil || '', // ESTADO CIVIL
+          registro.tarjeta || '', // ADJEJAS (tarjeta)
+          '---', // ID (placeholder)
+          registro.ingresos || '', // INGRESOS
+          registro.vendedor || '', // VERDOR
+          registro.operador || '', // OPERADOR
+          registro.gerente || '', // GEREATE
+          'RESTAURANTE', // SPA (siempre restaurante)
+          registro.supervisora || '', // SUPERVISORA
+          registro.hora || '', // HORA
+          registro.diaEvento || '', // DÍA EVENTO
+          registro.hotel || '' // HOTEL
+        ];
+        
+        const row = worksheet.addRow(rowData);
+        
+        // Alternar colores de fila
+        if (index % 2 === 0) {
+          row.eachCell((cell) => {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFF8FAFC' }
+            };
+          });
+        }
+        
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+          };
+        });
+      });
+      
+      // Ajustar anchos de columnas
+      worksheet.columns = [
+        { width: 12 }, { width: 15 }, { width: 8 }, { width: 30 }, { width: 10 },
+        { width: 15 }, { width: 15 }, { width: 10 }, { width: 12 }, { width: 15 },
+        { width: 15 }, { width: 15 }, { width: 12 }, { width: 15 }, { width: 10 },
+        { width: 15 }, { width: 20 }
+      ];
+      
+      // Generar y descargar archivo
+      workbook.xlsx.writeBuffer().then(buffer => {
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const nombreMes = mesNombre.toLowerCase();
+        saveAs(blob, `PREMANIFIESTO_${nombreMes}_${añoActual}.xlsx`);
+        mostrarNotificacion(`PREMANIFIESTO DE ${mesNombre} DESCARGADO CORRECTAMENTE`);
+      }).catch(error => {
+        console.error('Error al generar Excel:', error);
+        mostrarNotificacion('ERROR AL GENERAR EL ARCHIVO', 'error');
+      });
     }
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -2024,8 +2386,20 @@
         
         configurarFirebase();
         
-        const hoy = new Date().toISOString().split('T')[0];
-        document.getElementById('filtroFecha').value = hoy;
+        const hoy = new Date();
+        const fechaInicioInput = document.getElementById('fechaInicio');
+        const fechaFinInput = document.getElementById('fechaFin');
+        
+        // Configurar fechas por defecto
+        const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        const hoyFormateado = hoy.toISOString().split('T')[0];
+        
+        document.getElementById('filtroFecha').value = hoyFormateado;
+        
+        if (fechaInicioInput && fechaFinInput) {
+          fechaInicioInput.value = primerDiaMes.toISOString().split('T')[0];
+          fechaFinInput.value = hoyFormateado;
+        }
         
         configurarEventListeners();
         
@@ -2038,6 +2412,8 @@
         const aplicarFiltroBtn = document.getElementById('aplicarFiltro');
         const limpiarFiltroBtn = document.getElementById('limpiarFiltro');
         const btnCitasMes = document.getElementById('btnCitasMes');
+        const btnBuscarPorFechas = document.getElementById('btnBuscarPorFechas');
+        const btnDescargarMes = document.getElementById('btnDescargarMes');
         const modal = document.getElementById('modalCitasMes');
         const cerrarModal = document.querySelector('.cerrar-modal');
         
@@ -2077,6 +2453,15 @@
         });
         
         btnCitasMes.addEventListener('click', mostrarCitasDelMes);
+        
+        // NUEVOS EVENT LISTENERS
+        if (btnBuscarPorFechas) {
+          btnBuscarPorFechas.addEventListener('click', mostrarCitasPorFechas);
+        }
+        
+        if (btnDescargarMes) {
+          btnDescargarMes.addEventListener('click', descargarPremanifiestoMes);
+        }
         
         cerrarModal.addEventListener('click', function() {
           modal.style.display = 'none';
