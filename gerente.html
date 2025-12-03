@@ -1297,7 +1297,7 @@
             <i class="fas fa-search"></i> BUSCAR POR FECHAS
           </button>
           <button type="button" id="btnDescargarMes" class="btn-filtro btn-exportar">
-            <i class="fas fa-file-download"></i> DESCARGAR MES COMPLETO
+            <i class="fas fa-file-download"></i> DESCARGAR PREMANIFIESTO MES
           </button>
         </div>
       </div>
@@ -1344,380 +1344,6 @@
     // Variables globales
     let listaSupervisoras = [];
     let registrosPremanifiesto = [];
-
-    // --- NUEVA FUNCIÓN: OBTENER ESTADÍSTICAS DE REGISTROS POR SUPERVISORA ---
-    function obtenerEstadisticasRegistros(fechaInicio, fechaFin, supervisora) {
-      if (!fechaInicio || !fechaFin || !supervisora) {
-        return null;
-      }
-      
-      // Convertir fechas a formato compatible
-      const inicio = new Date(fechaInicio);
-      const fin = new Date(fechaFin);
-      
-      // Filtrar registros por supervisora y rango de fechas
-      const registrosFiltrados = registrosPremanifiesto.filter(registro => {
-        if (registro.supervisora !== supervisora) return false;
-        
-        if (!registro.diaEvento) return false;
-        
-        const fechaEvento = new Date(registro.diaEvento);
-        return fechaEvento >= inicio && fechaEvento <= fin;
-      });
-      
-      return {
-        supervisora: supervisora,
-        fechaInicio: fechaInicio,
-        fechaFin: fechaFin,
-        totalRegistros: registrosFiltrados.length,
-        registros: registrosFiltrados
-      };
-    }
-
-    // --- NUEVAS FUNCIONES SOLICITADAS ---
-    
-    // FUNCIÓN PARA MOSTRAR CITAS POR RANGO DE FECHAS
-    function mostrarCitasPorFechas() {
-      const fechaInicio = document.getElementById('fechaInicio').value;
-      const fechaFin = document.getElementById('fechaFin').value;
-      
-      if (!fechaInicio || !fechaFin) {
-        mostrarNotificacion('SELECCIONE FECHA DE INICIO Y FIN', 'error');
-        return;
-      }
-      
-      if (new Date(fechaInicio) > new Date(fechaFin)) {
-        mostrarNotificacion('LA FECHA DE INICIO DEBE SER ANTERIOR A LA DE FIN', 'error');
-        return;
-      }
-      
-      // Filtrar registros por rango de fechas (usando diaEvento)
-      const registrosFiltrados = registrosPremanifiesto.filter(registro => {
-        if (!registro.diaEvento) return false;
-        
-        const fechaEvento = new Date(registro.diaEvento);
-        const inicio = new Date(fechaInicio);
-        const fin = new Date(fechaFin);
-        
-        return fechaEvento >= inicio && fechaEvento <= fin;
-      });
-      
-      // Mostrar modal con resultados
-      mostrarModalCitasPorFechas(fechaInicio, fechaFin, registrosFiltrados);
-    }
-
-    // FUNCIÓN PARA MOSTRAR MODAL CON CITAS POR FECHAS
-    function mostrarModalCitasPorFechas(fechaInicio, fechaFin, registros) {
-      const modal = document.getElementById('modalCitasMes');
-      const contenido = document.getElementById('contenidoCitasMes');
-      
-      // Formatear fechas
-      const inicioFormateada = new Date(fechaInicio).toLocaleDateString('es-MX', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).toUpperCase();
-      
-      const finFormateada = new Date(fechaFin).toLocaleDateString('es-MX', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).toUpperCase();
-      
-      // Agrupar por supervisoras
-      const citasPorSupervisora = {};
-      const citasPorDia = {};
-      
-      registros.forEach(registro => {
-        const supervisora = registro.supervisora || 'SIN SUPERVISORA';
-        const fecha = registro.diaEvento;
-        
-        if (!citasPorSupervisora[supervisora]) {
-          citasPorSupervisora[supervisora] = [];
-        }
-        citasPorSupervisora[supervisora].push(registro);
-        
-        if (fecha) {
-          if (!citasPorDia[fecha]) {
-            citasPorDia[fecha] = [];
-          }
-          citasPorDia[fecha].push(registro);
-        }
-      });
-      
-      // Generar HTML
-      let html = `
-        <div class="modal-header">
-          <h3><i class="fas fa-calendar-alt"></i> CITAS DEL ${inicioFormateada} AL ${finFormateada}</h3>
-          <span class="cerrar-modal">&times;</span>
-        </div>
-        
-        <div class="resumen-citas-mes">
-          <div class="resumen-mes-item">
-            <div class="titulo">TOTAL DE CITAS</div>
-            <div class="valor">${registros.length}</div>
-            <div class="detalle">En el período seleccionado</div>
-          </div>
-          <div class="resumen-mes-item">
-            <div class="titulo">SUPERVISORAS</div>
-            <div class="valor">${Object.keys(citasPorSupervisora).length}</div>
-            <div class="detalle">Con citas en el período</div>
-          </div>
-          <div class="resumen-mes-item">
-            <div class="titulo">DÍAS</div>
-            <div class="valor">${Object.keys(citasPorDia).length}</div>
-            <div class="detalle">Con citas programadas</div>
-          </div>
-        </div>
-        
-        <div class="pestanas-mes" id="pestanasMes">
-          <div class="pestana-dia activa" data-tab="resumen">RESUMEN POR SUPERVISORA</div>
-      `;
-      
-      // Agregar pestañas para cada día con citas
-      Object.keys(citasPorDia).sort().forEach((fecha, index) => {
-        const fechaObj = new Date(fecha);
-        const nombreDia = fechaObj.toLocaleDateString('es-MX', { 
-          weekday: 'short', 
-          day: '2-digit', 
-          month: 'short' 
-        }).toUpperCase().replace('.', '');
-        
-        html += `
-          <div class="pestana-dia" data-fecha="${fecha}">
-            ${nombreDia} (${citasPorDia[fecha].length})
-          </div>
-        `;
-      });
-      
-      html += `</div>`;
-      
-      // Contenido de pestaña RESUMEN
-      html += `
-        <div class="contenido-pestana activa" id="contenido-resumen">
-          <h4>DISTRIBUCIÓN POR SUPERVISORA</h4>
-          <div class="stats-container" style="margin-top: 20px;">
-      `;
-      
-      // Mostrar estadísticas por supervisora
-      Object.keys(citasPorSupervisora).sort((a, b) => 
-        citasPorSupervisora[b].length - citasPorSupervisora[a].length
-      ).forEach(supervisora => {
-        const citas = citasPorSupervisora[supervisora];
-        
-        html += `
-          <div class="stat-card">
-            <h3>${supervisora}</h3>
-            <div class="count">${citas.length}</div>
-            <div class="supervisora">TOTAL DE CITAS</div>
-            <div class="conteo-dia">
-              <div class="titulo">DETALLES</div>
-              <div class="valor-dia">${citas.length} registros</div>
-            </div>
-          </div>
-        `;
-      });
-      
-      html += `</div></div>`;
-      
-      // Contenido para cada día
-      Object.keys(citasPorDia).sort().forEach((fecha, index) => {
-        const citasDelDia = citasPorDia[fecha];
-        
-        html += `
-          <div class="contenido-pestana" id="contenido-${fecha}">
-            <h4>CITAS DEL ${new Date(fecha).toLocaleDateString('es-MX', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            }).toUpperCase()}</h4>
-            <div class="supervisora-citas">
-        `;
-        
-        citasDelDia.forEach((cita) => {
-          const numeroCita = cita.citaPorDia || 'Sin número';
-          html += `
-            <div class="cita-item">
-              <div class="cita-numero">CITA #${numeroCita}</div>
-              <div class="cita-cliente">${cita.nombre || 'CLIENTE NO ESPECIFICADO'}</div>
-              <div class="cita-hora">${cita.hora || 'HORA NO ESPECIFICADA'} - SUPERVISORA: ${cita.supervisora || 'N/A'}</div>
-              <div class="cita-detalles">
-                <small>PERSONAS: ${cita.numPersonas || 'N/A'} | HOTEL: ${cita.hotel || 'N/A'} | ESTADO: ${cita.estadoCivil || 'N/A'}</small>
-              </div>
-            </div>
-          `;
-        });
-        
-        html += `</div></div>`;
-      });
-      
-      contenido.innerHTML = html;
-      modal.style.display = 'block';
-      
-      // Configurar eventos para las pestañas
-      configurarPestanasModal();
-    }
-
-    // FUNCIÓN PARA CONFIGURAR PESTAÑAS DEL MODAL
-    function configurarPestanasModal() {
-      const pestanas = document.querySelectorAll('.pestana-dia');
-      pestanas.forEach(pestana => {
-        pestana.addEventListener('click', function() {
-          const target = this.getAttribute('data-fecha') || this.getAttribute('data-tab');
-          
-          // Remover clase activa de todas las pestañas
-          pestanas.forEach(p => p.classList.remove('activa'));
-          // Agregar clase activa a la pestaña clickeada
-          this.classList.add('activa');
-          
-          // Ocultar todos los contenidos
-          document.querySelectorAll('.contenido-pestana').forEach(contenido => {
-            contenido.classList.remove('activa');
-          });
-          
-          // Mostrar el contenido correspondiente
-          const contenidoId = target ? `contenido-${target}` : 'contenido-resumen';
-          const contenidoElement = document.getElementById(contenidoId);
-          if (contenidoElement) {
-            contenidoElement.classList.add('activa');
-          }
-        });
-      });
-    }
-
-    // FUNCIÓN PARA DESCARGAR PREMANIFIESTO DEL MES
-    function descargarPremanifiestoMes() {
-      const hoy = new Date();
-      const mesActual = hoy.getMonth();
-      const añoActual = hoy.getFullYear();
-      
-      // Obtener todos los registros del mes actual
-      const registrosMes = registrosPremanifiesto.filter(registro => {
-        if (!registro.diaEvento) return false;
-        
-        const fechaEvento = new Date(registro.diaEvento);
-        return fechaEvento.getMonth() === mesActual && fechaEvento.getFullYear() === añoActual;
-      });
-      
-      if (registrosMes.length === 0) {
-        mostrarNotificacion('NO HAY REGISTROS PARA EL MES ACTUAL', 'error');
-        return;
-      }
-      
-      // Crear libro de Excel con formato de premanifiesto
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("PREMANIFIESTO MES");
-      
-      // Título
-      const tituloRow = worksheet.addRow(["PREMANIFIESTO - BLUE ELEGANCE"]);
-      tituloRow.font = { size: 18, bold: true, color: { argb: 'FF1E40AF' } };
-      tituloRow.alignment = { horizontal: 'center' };
-      worksheet.mergeCells('A1:Q1');
-      
-      const mesNombre = hoy.toLocaleDateString('es-MX', { month: 'long' }).toUpperCase();
-      const subTituloRow = worksheet.addRow([`MES DE ${mesNombre} ${añoActual}`]);
-      subTituloRow.font = { size: 14, bold: true };
-      subTituloRow.alignment = { horizontal: 'center' };
-      worksheet.mergeCells('A2:Q2');
-      
-      worksheet.addRow([]);
-      
-      // Encabezados en el formato de la imagen
-      const headers = [
-        'ULADECITA', 'ECCIA', 'PAX', 'NOMBRES FAMILIA', 'EDAD', 
-        'ESTADO CIVIL', 'ADJEJAS', 'ID', 'INGRESOS', 'VERDOR', 
-        'OPERADOR', 'GEREATE', 'SPA', 'SUPERVISORA', 'HORA', 
-        'DÍA EVENTO', 'HOTEL'
-      ];
-      
-      const headerRow = worksheet.addRow(headers);
-      headerRow.eachCell((cell) => {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FF0F172A' }
-        };
-        cell.font = {
-          bold: true,
-          color: { argb: 'FFFFFFFF' }
-        };
-        cell.alignment = { horizontal: 'center' };
-        cell.border = {
-          top: { style: 'thin', color: { argb: 'FF000000' } },
-          left: { style: 'thin', color: { argb: 'FF000000' } },
-          bottom: { style: 'thin', color: { argb: 'FF000000' } },
-          right: { style: 'thin', color: { argb: 'FF000000' } }
-        };
-      });
-      
-      // Agregar datos en el mismo formato que la imagen
-      registrosMes.forEach((registro, index) => {
-        // Mapear datos al formato de la imagen
-        const rowData = [
-          index + 1, // ULADECITA
-          registro.diaEvento || '', // ECCIA (fecha del evento)
-          registro.numPersonas || '', // PAX
-          registro.nombre || '', // NOMBRES FAMILIA
-          registro.edad || '', // EDAD
-          registro.estadoCivil || '', // ESTADO CIVIL
-          registro.tarjeta || '', // ADJEJAS (tarjeta)
-          '---', // ID (placeholder)
-          registro.ingresos || '', // INGRESOS
-          registro.vendedor || '', // VERDOR
-          registro.operador || '', // OPERADOR
-          registro.gerente || '', // GEREATE
-          'RESTAURANTE', // SPA (siempre restaurante)
-          registro.supervisora || '', // SUPERVISORA
-          registro.hora || '', // HORA
-          registro.diaEvento || '', // DÍA EVENTO
-          registro.hotel || '' // HOTEL
-        ];
-        
-        const row = worksheet.addRow(rowData);
-        
-        // Alternar colores de fila
-        if (index % 2 === 0) {
-          row.eachCell((cell) => {
-            cell.fill = {
-              type: 'pattern',
-              pattern: 'solid',
-              fgColor: { argb: 'FFF8FAFC' }
-            };
-          });
-        }
-        
-        row.eachCell((cell) => {
-          cell.border = {
-            top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-            left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-            bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-            right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
-          };
-        });
-      });
-      
-      // Ajustar anchos de columnas
-      worksheet.columns = [
-        { width: 12 }, { width: 15 }, { width: 8 }, { width: 30 }, { width: 10 },
-        { width: 15 }, { width: 15 }, { width: 10 }, { width: 12 }, { width: 15 },
-        { width: 15 }, { width: 15 }, { width: 12 }, { width: 15 }, { width: 10 },
-        { width: 15 }, { width: 20 }
-      ];
-      
-      // Generar y descargar archivo
-      workbook.xlsx.writeBuffer().then(buffer => {
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const nombreMes = mesNombre.toLowerCase();
-        saveAs(blob, `PREMANIFIESTO_${nombreMes}_${añoActual}.xlsx`);
-        mostrarNotificacion(`PREMANIFIESTO DE ${mesNombre} DESCARGADO CORRECTAMENTE`);
-      }).catch(error => {
-        console.error('Error al generar Excel:', error);
-        mostrarNotificacion('ERROR AL GENERAR EL ARCHIVO', 'error');
-      });
-    }
 
     document.addEventListener("DOMContentLoaded", function () {
       // --- FUNCIONES PRINCIPALES ---
@@ -2188,30 +1814,560 @@
 
       // --- NUEVAS FUNCIONALIDADES SOLICITADAS ---
 
-      // ✅ FUNCIÓN CORREGIDA: OBTENER CITAS POR DÍA
-      function obtenerCitasPorDia(fechaEspecifica = null) {
-        const fecha = fechaEspecifica ? new Date(fechaEspecifica) : new Date();
-        const fechaFormateada = fecha.toISOString().split('T')[0];
+      // FUNCIÓN PARA MOSTRAR CITAS POR RANGO DE FECHAS
+      function mostrarCitasPorFechas() {
+        const fechaInicio = document.getElementById('fechaInicio').value;
+        const fechaFin = document.getElementById('fechaFin').value;
         
-        console.log(`🔍 BUSCANDO CITAS PARA EL DÍA: ${fechaFormateada}`);
+        if (!fechaInicio || !fechaFin) {
+          mostrarNotificacion('SELECCIONE FECHA DE INICIO Y FIN', 'error');
+          return;
+        }
         
-        // Obtener citas del día específico usando diaEvento
-        const citasDelDia = registrosPremanifiesto.filter(registro => {
-          if (!registro.diaEvento) {
-            console.log(`❌ REGISTRO SIN diaEvento:`, registro);
-            return false;
-          }
+        if (new Date(fechaInicio) > new Date(fechaFin)) {
+          mostrarNotificacion('LA FECHA DE INICIO DEBE SER ANTERIOR A LA DE FIN', 'error');
+          return;
+        }
+        
+        // Filtrar registros por rango de fechas (usando diaEvento)
+        const registrosFiltrados = registrosPremanifiesto.filter(registro => {
+          if (!registro.diaEvento) return false;
           
-          const coincide = registro.diaEvento === fechaFormateada;
-          if (coincide) {
-            console.log(`✅ CITA ENCONTRADA: ${registro.nombre} - Número: ${registro.citaPorDia || 'Sin número'}`);
-          }
-          return coincide;
+          const fechaEvento = new Date(registro.diaEvento);
+          const inicio = new Date(fechaInicio);
+          const fin = new Date(fechaFin);
+          
+          return fechaEvento >= inicio && fechaEvento <= fin;
         });
         
-        console.log(`📊 TOTAL CITAS ENCONTRADAS: ${citasDelDia.length}`);
+        // Mostrar modal con resultados
+        mostrarModalCitasPorFechas(fechaInicio, fechaFin, registrosFiltrados);
+      }
+
+      // FUNCIÓN PARA MOSTRAR MODAL CON CITAS POR FECHAS
+      function mostrarModalCitasPorFechas(fechaInicio, fechaFin, registros) {
+        const modal = document.getElementById('modalCitasMes');
+        const contenido = document.getElementById('contenidoCitasMes');
         
-        return citasDelDia;
+        // Formatear fechas
+        const inicioFormateada = new Date(fechaInicio).toLocaleDateString('es-MX', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }).toUpperCase();
+        
+        const finFormateada = new Date(fechaFin).toLocaleDateString('es-MX', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }).toUpperCase();
+        
+        // Agrupar por días
+        const citasPorDia = {};
+        
+        registros.forEach(registro => {
+          const fecha = registro.diaEvento;
+          
+          if (fecha) {
+            if (!citasPorDia[fecha]) {
+              citasPorDia[fecha] = [];
+            }
+            citasPorDia[fecha].push(registro);
+          }
+        });
+        
+        // Ordenar fechas y excluir lunes
+        const fechasOrdenadas = Object.keys(citasPorDia).sort();
+        const fechasFiltradas = fechasOrdenadas.filter(fecha => {
+          const fechaObj = new Date(fecha);
+          return fechaObj.getDay() !== 1; // Excluir lunes (1 = lunes)
+        });
+        
+        // Generar HTML
+        let html = `
+          <div class="modal-header">
+            <h3><i class="fas fa-calendar-alt"></i> PREMANIFIESTO DEL ${inicioFormateada} AL ${finFormateada}</h3>
+            <span class="cerrar-modal">&times;</span>
+          </div>
+          
+          <div class="resumen-citas-mes">
+            <div class="resumen-mes-item">
+              <div class="titulo">TOTAL DE CITAS</div>
+              <div class="valor">${registros.length}</div>
+              <div class="detalle">En el período seleccionado</div>
+            </div>
+            <div class="resumen-mes-item">
+              <div class="titulo">DÍAS CON CITAS</div>
+              <div class="valor">${fechasFiltradas.length}</div>
+              <div class="detalle">Excluyendo lunes</div>
+            </div>
+            <div class="resumen-mes-item">
+              <div class="titulo">PROMEDIO POR DÍA</div>
+              <div class="valor">${fechasFiltradas.length > 0 ? Math.round(registros.length / fechasFiltradas.length) : 0}</div>
+              <div class="detalle">Citas por día</div>
+            </div>
+          </div>
+          
+          <div class="pestanas-mes" id="pestanasMes">
+        `;
+        
+        // Agregar pestañas para cada día (excluyendo lunes)
+        fechasFiltradas.forEach((fecha, index) => {
+          const fechaObj = new Date(fecha);
+          const dia = fechaObj.getDate();
+          const mes = fechaObj.toLocaleDateString('es-MX', { month: 'short' }).toUpperCase().replace('.', '');
+          
+          // Nombre de la pestaña: PREMANIFIESTO DEL 01 DE DIC
+          html += `
+            <div class="pestana-dia ${index === 0 ? 'activa' : ''}" data-fecha="${fecha}">
+              PREMANIFIESTO DEL ${dia.toString().padStart(2, '0')} DE ${mes}
+            </div>
+          `;
+        });
+        
+        html += `</div>`;
+        
+        // Contenido para cada día
+        fechasFiltradas.forEach((fecha, index) => {
+          const citasDelDia = citasPorDia[fecha];
+          const fechaObj = new Date(fecha);
+          const nombreDiaCompleto = fechaObj.toLocaleDateString('es-MX', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }).toUpperCase();
+          
+          html += `
+            <div class="contenido-pestana ${index === 0 ? 'activa' : ''}" id="contenido-${fecha}">
+              <h4>${nombreDiaCompleto}</h4>
+              
+              <div class="resumen-citas-mes" style="margin-bottom: 20px;">
+                <div class="resumen-mes-item">
+                  <div class="titulo">TOTAL CITAS</div>
+                  <div class="valor">${citasDelDia.length}</div>
+                  <div class="detalle">Este día</div>
+                </div>
+                <div class="resumen-mes-item">
+                  <div class="titulo">SUPERVISORAS</div>
+                  <div class="valor">${[...new Set(citasDelDia.map(c => c.supervisora))].length}</div>
+                  <div class="detalle">Participantes</div>
+                </div>
+                <div class="resumen-mes-item">
+                  <div class="titulo">PERSONAS</div>
+                  <div class="valor">${citasDelDia.reduce((sum, c) => sum + (parseInt(c.numPersonas) || 0), 0)}</div>
+                  <div class="detalle">Total asistentes</div>
+                </div>
+              </div>
+              
+              <div style="overflow-x: auto; margin-top: 20px;">
+                <table style="width: 100%; border-collapse: collapse; background: rgba(30, 41, 59, 0.7);">
+                  <thead>
+                    <tr style="background: var(--primary);">
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">NUM DE CITA</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">FECHA</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">PAX</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">NOMBRES FAMILIA</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">EDAD</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">ESTADO CIVIL</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">TARJETAS</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">ID</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">INGRESOS</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">VENDEDOR</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">OPERADOR</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">GERENTE</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">SPA</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+          `;
+          
+          // Ordenar citas por número de cita
+          const citasOrdenadas = [...citasDelDia].sort((a, b) => {
+            const numA = a.citaPorDia || 0;
+            const numB = b.citaPorDia || 0;
+            return numA - numB;
+          });
+          
+          citasOrdenadas.forEach((cita, idx) => {
+            const numeroCita = cita.citaPorDia || idx + 1;
+            const fechaFormateada = fechaObj.toISOString().split('T')[0];
+            
+            html += `
+              <tr style="${idx % 2 === 0 ? 'background: rgba(30, 41, 59, 0.5);' : 'background: rgba(30, 41, 59, 0.8);'}">
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${numeroCita}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${fechaFormateada}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.numPersonas || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light);">${cita.nombre || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.edad || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.estadoCivil || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.tarjeta || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">---</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.ingresos || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.vendedor || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.operador || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.gerente || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">RESTAURANTE</td>
+              </tr>
+            `;
+          });
+          
+          html += `
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        });
+        
+        contenido.innerHTML = html;
+        modal.style.display = 'block';
+        
+        // Configurar eventos para las pestañas
+        configurarPestanasModal();
+      }
+
+      // FUNCIÓN PARA CONFIGURAR PESTAÑAS DEL MODAL
+      function configurarPestanasModal() {
+        const pestanas = document.querySelectorAll('.pestana-dia');
+        pestanas.forEach(pestana => {
+          pestana.addEventListener('click', function() {
+            const fecha = this.getAttribute('data-fecha');
+            
+            // Remover clase activa de todas las pestañas
+            pestanas.forEach(p => p.classList.remove('activa'));
+            // Agregar clase activa a la pestaña clickeada
+            this.classList.add('activa');
+            
+            // Ocultar todos los contenidos
+            document.querySelectorAll('.contenido-pestana').forEach(contenido => {
+              contenido.classList.remove('activa');
+            });
+            
+            // Mostrar el contenido correspondiente
+            document.getElementById(`contenido-${fecha}`).classList.add('activa');
+          });
+        });
+      }
+
+      // FUNCIÓN PARA DESCARGAR PREMANIFIESTO DEL MES COMPLETO
+      function descargarPremanifiestoMesCompleto() {
+        const hoy = new Date();
+        const mesActual = hoy.getMonth();
+        const añoActual = hoy.getFullYear();
+        const mesNombre = hoy.toLocaleDateString('es-MX', { month: 'long' }).toUpperCase();
+        
+        // Obtener todos los registros del mes actual
+        const registrosMes = registrosPremanifiesto.filter(registro => {
+          if (!registro.diaEvento) return false;
+          
+          const fechaEvento = new Date(registro.diaEvento);
+          return fechaEvento.getMonth() === mesActual && fechaEvento.getFullYear() === añoActual;
+        });
+        
+        if (registrosMes.length === 0) {
+          mostrarNotificacion('NO HAY REGISTROS PARA EL MES ACTUAL', 'error');
+          return;
+        }
+        
+        // Agrupar por día y excluir lunes
+        const registrosPorDia = {};
+        registrosMes.forEach(registro => {
+          const fecha = registro.diaEvento;
+          const fechaObj = new Date(fecha);
+          
+          // Excluir lunes (día 1 = lunes)
+          if (fechaObj.getDay() === 1) return;
+          
+          if (!registrosPorDia[fecha]) {
+            registrosPorDia[fecha] = [];
+          }
+          registrosPorDia[fecha].push(registro);
+        });
+        
+        // Ordenar fechas
+        const fechasOrdenadas = Object.keys(registrosPorDia).sort();
+        
+        if (fechasOrdenadas.length === 0) {
+          mostrarNotificacion('NO HAY REGISTROS PARA DÍAS QUE NO SEAN LUNES', 'error');
+          return;
+        }
+        
+        // Crear libro de Excel
+        const workbook = new ExcelJS.Workbook();
+        
+        // HOJA 1: RESUMEN GENERAL
+        const resumenWorksheet = workbook.addWorksheet("RESUMEN MES");
+        
+        // Título
+        resumenWorksheet.addRow([`PREMANIFIESTO MENSUAL - ${mesNombre} ${añoActual}`]);
+        resumenWorksheet.mergeCells('A1:M1');
+        const tituloRow = resumenWorksheet.getRow(1);
+        tituloRow.font = { size: 18, bold: true, color: { argb: 'FF1E40AF' } };
+        tituloRow.alignment = { horizontal: 'center' };
+        
+        resumenWorksheet.addRow([`GENERADO EL: ${new Date().toLocaleDateString('es-MX')}`]);
+        resumenWorksheet.mergeCells('A2:M2');
+        const fechaRow = resumenWorksheet.getRow(2);
+        fechaRow.font = { bold: true };
+        fechaRow.alignment = { horizontal: 'center' };
+        
+        resumenWorksheet.addRow([]);
+        
+        // Estadísticas por día
+        resumenWorksheet.addRow(['DÍA', 'FECHA', 'TOTAL CITAS', 'SUPERVISORAS', 'TOTAL PERSONAS', 'PROMEDIO PERSONAS/CITA']);
+        const headerRow = resumenWorksheet.getRow(4);
+        headerRow.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF1E40AF' }
+          };
+          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.alignment = { horizontal: 'center' };
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+        
+        let filaActual = 5;
+        let totalCitasMes = 0;
+        let totalPersonasMes = 0;
+        
+        fechasOrdenadas.forEach((fecha, index) => {
+          const fechaObj = new Date(fecha);
+          const diaNombre = fechaObj.toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase();
+          const diaNumero = fechaObj.getDate();
+          const registrosDelDia = registrosPorDia[fecha];
+          
+          const totalCitas = registrosDelDia.length;
+          const supervisoras = [...new Set(registrosDelDia.map(r => r.supervisora))].length;
+          const totalPersonas = registrosDelDia.reduce((sum, r) => sum + (parseInt(r.numPersonas) || 0), 0);
+          const promedioPersonas = totalPersonas / totalCitas;
+          
+          resumenWorksheet.addRow([
+            diaNombre,
+            fecha,
+            totalCitas,
+            supervisoras,
+            totalPersonas,
+            promedioPersonas.toFixed(1)
+          ]);
+          
+          totalCitasMes += totalCitas;
+          totalPersonasMes += totalPersonas;
+          
+          filaActual++;
+        });
+        
+        // Totales
+        resumenWorksheet.addRow([]);
+        resumenWorksheet.addRow(['TOTAL MES', '', totalCitasMes, '', totalPersonasMes, (totalPersonasMes / totalCitasMes).toFixed(1)]);
+        const totalRow = resumenWorksheet.getRow(filaActual + 2);
+        totalRow.font = { bold: true };
+        totalRow.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFFF3CD' }
+          };
+        });
+        
+        // Estadísticas por supervisora
+        resumenWorksheet.addRow([]);
+        resumenWorksheet.addRow([]);
+        
+        const estadisticasSupervisora = {};
+        registrosMes.forEach(registro => {
+          const supervisora = registro.supervisora || 'SIN SUPERVISORA';
+          if (!estadisticasSupervisora[supervisora]) {
+            estadisticasSupervisora[supervisora] = { citas: 0, personas: 0 };
+          }
+          estadisticasSupervisora[supervisora].citas++;
+          estadisticasSupervisora[supervisora].personas += parseInt(registro.numPersonas) || 0;
+        });
+        
+        resumenWorksheet.addRow(['ESTADÍSTICAS POR SUPERVISORA']);
+        resumenWorksheet.mergeCells(`A${filaActual + 5}:F${filaActual + 5}`);
+        const statsHeader = resumenWorksheet.getRow(filaActual + 5);
+        statsHeader.font = { size: 14, bold: true, color: { argb: 'FF10B981' } };
+        statsHeader.alignment = { horizontal: 'center' };
+        
+        resumenWorksheet.addRow(['SUPERVISORA', 'TOTAL CITAS', 'TOTAL PERSONAS', 'PROMEDIO PERSONAS/CITA', '% DEL TOTAL']);
+        const statsSubHeader = resumenWorksheet.getRow(filaActual + 6);
+        statsSubHeader.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF10B981' }
+          };
+          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.alignment = { horizontal: 'center' };
+        });
+        
+        Object.keys(estadisticasSupervisora).forEach(supervisora => {
+          const stats = estadisticasSupervisora[supervisora];
+          const promedio = stats.personas / stats.citas;
+          const porcentaje = (stats.citas / totalCitasMes * 100).toFixed(1);
+          
+          resumenWorksheet.addRow([
+            supervisora,
+            stats.citas,
+            stats.personas,
+            promedio.toFixed(1),
+            `${porcentaje}%`
+          ]);
+        });
+        
+        // HOJAS POR DÍA (excluyendo lunes)
+        fechasOrdenadas.forEach((fecha, diaIndex) => {
+          const fechaObj = new Date(fecha);
+          const diaNombre = fechaObj.toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase();
+          const diaNumero = fechaObj.getDate();
+          const mesDia = fechaObj.toLocaleDateString('es-MX', { month: 'short' }).toUpperCase().replace('.', '');
+          
+          // Nombre de la hoja: PREMANIFIESTO 01 DIC
+          const nombreHoja = `PREMANIFIESTO ${diaNumero.toString().padStart(2, '0')} ${mesDia}`.substring(0, 31);
+          const worksheet = workbook.addWorksheet(nombreHoja);
+          
+          // Título de la hoja
+          const tituloDia = `PREMANIFIESTO DEL ${diaNombre}, ${diaNumero} DE ${mesNombre} DE ${añoActual}`;
+          worksheet.addRow([tituloDia]);
+          worksheet.mergeCells('A1:M1');
+          const tituloDiaRow = worksheet.getRow(1);
+          tituloDiaRow.font = { size: 16, bold: true, color: { argb: 'FF1E40AF' } };
+          tituloDiaRow.alignment = { horizontal: 'center' };
+          
+          worksheet.addRow([]);
+          
+          // Encabezados exactos como en la imagen
+          const headers = [
+            'NUM DE CITA', 'FECHA', 'PAX', 'NOMBRES FAMILIA', 'EDAD', 
+            'ESTADO CIVIL', 'TARJETAS', 'ID', 'INGRESOS', 'VENDEDOR', 
+            'OPERADOR', 'GERENTE', 'SPA'
+          ];
+          
+          const headerRowDia = worksheet.addRow(headers);
+          headerRowDia.eachCell((cell) => {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FF0F172A' }
+            };
+            cell.font = {
+              bold: true,
+              color: { argb: 'FFFFFFFF' }
+            };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } }
+            };
+          });
+          
+          // Agregar datos
+          const registrosDelDia = registrosPorDia[fecha];
+          const citasOrdenadas = [...registrosDelDia].sort((a, b) => {
+            const numA = a.citaPorDia || 0;
+            const numB = b.citaPorDia || 0;
+            return numA - numB;
+          });
+          
+          citasOrdenadas.forEach((registro, index) => {
+            const numeroCita = registro.citaPorDia || (index + 1);
+            
+            const rowData = [
+              numeroCita,
+              fecha,
+              registro.numPersonas || '',
+              registro.nombre || '',
+              registro.edad || '',
+              registro.estadoCivil || '',
+              registro.tarjeta || '',
+              '---', // ID siempre como ---
+              registro.ingresos || '',
+              registro.vendedor || '',
+              registro.operador || '',
+              registro.gerente || '',
+              'RESTAURANTE' // SPA siempre como RESTAURANTE
+            ];
+            
+            const row = worksheet.addRow(rowData);
+            
+            // Alternar colores de fila
+            if (index % 2 === 0) {
+              row.eachCell((cell) => {
+                cell.fill = {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  fgColor: { argb: 'FFF8FAFC' }
+                };
+              });
+            }
+            
+            row.eachCell((cell) => {
+              cell.border = {
+                top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+              };
+              cell.alignment = { vertical: 'middle' };
+            });
+          });
+          
+          // Ajustar anchos de columnas
+          worksheet.columns = [
+            { width: 12 }, // NUM DE CITA
+            { width: 12 }, // FECHA
+            { width: 8 },  // PAX
+            { width: 35 }, // NOMBRES FAMILIA
+            { width: 10 }, // EDAD
+            { width: 15 }, // ESTADO CIVIL
+            { width: 15 }, // TARJETAS
+            { width: 10 }, // ID
+            { width: 12 }, // INGRESOS
+            { width: 15 }, // VENDEDOR
+            { width: 15 }, // OPERADOR
+            { width: 15 }, // GERENTE
+            { width: 12 }  // SPA
+          ];
+          
+          // Resumen al final de la hoja
+          const totalCitasDia = registrosDelDia.length;
+          const totalPersonasDia = registrosDelDia.reduce((sum, r) => sum + (parseInt(r.numPersonas) || 0), 0);
+          const supervisorasDia = [...new Set(registrosDelDia.map(r => r.supervisora))].length;
+          
+          worksheet.addRow([]);
+          worksheet.addRow(['RESUMEN DEL DÍA:', '', '', '', '', '', '', '', '', '', '', '', '']);
+          const resumenHeader = worksheet.getRow(worksheet.rowCount);
+          resumenHeader.font = { bold: true, size: 12 };
+          
+          worksheet.addRow(['TOTAL CITAS:', totalCitasDia]);
+          worksheet.addRow(['TOTAL PERSONAS:', totalPersonasDia]);
+          worksheet.addRow(['SUPERVISORAS:', supervisorasDia]);
+          worksheet.addRow(['PROMEDIO PERSONAS/CITA:', (totalPersonasDia / totalCitasDia).toFixed(1)]);
+        });
+        
+        // Generar y descargar archivo
+        workbook.xlsx.writeBuffer().then(buffer => {
+          const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          const nombreMes = mesNombre.toLowerCase();
+          const nombreArchivo = `PREMANIFIESTO_COMPLETO_${nombreMes}_${añoActual}.xlsx`;
+          
+          saveAs(blob, nombreArchivo);
+          mostrarNotificacion(`PREMANIFIESTO COMPLETO DE ${mesNombre} DESCARGADO CORRECTAMENTE`);
+        }).catch(error => {
+          console.error('Error al generar Excel:', error);
+          mostrarNotificacion('ERROR AL GENERAR EL ARCHIVO', 'error');
+        });
       }
 
       // ✅ FUNCIÓN CORREGIDA: MOSTRAR CITAS DEL MES
@@ -2227,37 +2383,26 @@
         // Obtener todos los días del mes
         const diasDelMes = new Date(año, mes + 1, 0).getDate();
         
-        // Agrupar citas por día usando diaEvento
+        // Agrupar citas por día usando diaEvento y excluir lunes
         const citasPorDia = {};
         let totalCitasMes = 0;
-        let mejorBase = '';
-        let maxCitas = 0;
         
         for (let dia = 1; dia <= diasDelMes; dia++) {
           const fecha = `${año}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+          const fechaObj = new Date(fecha);
+          
+          // Excluir lunes (día 1 = lunes)
+          if (fechaObj.getDay() === 1) continue;
+          
           const citasDia = registrosPremanifiesto.filter(registro => 
             registro.diaEvento === fecha
           );
           
-          citasPorDia[fecha] = citasDia;
-          totalCitasMes += citasDia.length;
-          
-          // Encontrar la mejor base
-          citasDia.forEach(cita => {
-            const base = cita.baseDatos || 'Sin Base';
-            if (!citasPorDia[base]) citasPorDia[base] = 0;
-            citasPorDia[base]++;
-            
-            if (citasPorDia[base] > maxCitas) {
-              maxCitas = citasPorDia[base];
-              mejorBase = base;
-            }
-          });
+          if (citasDia.length > 0) {
+            citasPorDia[fecha] = citasDia;
+            totalCitasMes += citasDia.length;
+          }
         }
-        
-        // Calcular porcentaje de la mejor base
-        const porcentajeMejorBase = totalCitasMes > 0 ? 
-          Math.round((maxCitas / totalCitasMes) * 100) : 0;
         
         // Generar HTML para el modal
         let html = `
@@ -2265,72 +2410,129 @@
             <div class="resumen-mes-item">
               <div class="titulo">TOTAL DE CITAS DEL MES</div>
               <div class="valor">${totalCitasMes}</div>
-              <div class="detalle">Todas las citas programadas</div>
+              <div class="detalle">Excluyendo lunes</div>
             </div>
             <div class="resumen-mes-item">
-              <div class="titulo">MEJOR BASE</div>
-              <div class="valor">${mejorBase || 'N/A'}</div>
-              <div class="detalle">${maxCitas} citas (${porcentajeMejorBase}%)</div>
+              <div class="titulo">DÍAS CON CITAS</div>
+              <div class="valor">${Object.keys(citasPorDia).length}</div>
+              <div class="detalle">Este mes</div>
+            </div>
+            <div class="resumen-mes-item">
+              <div class="titulo">PROMEDIO POR DÍA</div>
+              <div class="valor">${Object.keys(citasPorDia).length > 0 ? Math.round(totalCitasMes / Object.keys(citasPorDia).length) : 0}</div>
+              <div class="detalle">Citas por día</div>
             </div>
           </div>
           
           <div class="pestanas-mes" id="pestanasMes">
         `;
         
-        // Crear pestañas para cada día con citas
+        // Crear pestañas para cada día con citas (excluyendo lunes)
         Object.keys(citasPorDia).sort().forEach((fecha, index) => {
-          if (fecha.includes('-') && citasPorDia[fecha].length > 0) {
-            const fechaObj = new Date(fecha);
-            const nombreDia = fechaObj.toLocaleDateString('es-MX', { 
-              weekday: 'short', 
-              day: '2-digit', 
-              month: 'short' 
-            }).toUpperCase();
-            
-            html += `
-              <div class="pestana-dia ${index === 0 ? 'activa' : ''}" data-fecha="${fecha}">
-                ${nombreDia.replace('.', '')} (${citasPorDia[fecha].length})
-              </div>
-            `;
-          }
+          const fechaObj = new Date(fecha);
+          const dia = fechaObj.getDate();
+          const mes = fechaObj.toLocaleDateString('es-MX', { month: 'short' }).toUpperCase().replace('.', '');
+          
+          html += `
+            <div class="pestana-dia ${index === 0 ? 'activa' : ''}" data-fecha="${fecha}">
+              PREMANIFIESTO DEL ${dia.toString().padStart(2, '0')} DE ${mes}
+            </div>
+          `;
         });
         
         html += `</div>`;
         
         // Crear contenido para cada pestaña
         Object.keys(citasPorDia).sort().forEach((fecha, index) => {
-          if (fecha.includes('-') && citasPorDia[fecha].length > 0) {
-            html += `
-              <div class="contenido-pestana ${index === 0 ? 'activa' : ''}" id="contenido-${fecha}">
-                <h4>CITAS DEL ${new Date(fecha).toLocaleDateString('es-MX', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                }).toUpperCase()}</h4>
-                <div class="supervisora-citas">
-            `;
-            
-            // ✅ CORREGIDO: Usar citaPorDia en lugar del índice
-            citasPorDia[fecha].forEach((cita) => {
-              const numeroCita = cita.citaPorDia || 'Sin número';
-              html += `
-                <div class="cita-item">
-                  <div class="cita-numero">CITA #${numeroCita}</div>
-                  <div class="cita-cliente">${cita.nombre || 'CLIENTE NO ESPECIFICADO'}</div>
-                  <div class="cita-hora">${cita.hora || 'HORA NO ESPECIFICADA'}</div>
-                  <div class="cita-detalles">
-                    <small>SUPERVISORA: ${cita.supervisora || 'N/A'} | HOTEL: ${cita.hotel || 'N/A'} | CALIFICACIÓN: ${cita.calificacionOrigen || 'N/A'}</small>
-                  </div>
+          const citasDia = citasPorDia[fecha];
+          const fechaObj = new Date(fecha);
+          const nombreDiaCompleto = fechaObj.toLocaleDateString('es-MX', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }).toUpperCase();
+          
+          html += `
+            <div class="contenido-pestana ${index === 0 ? 'activa' : ''}" id="contenido-${fecha}">
+              <h4>${nombreDiaCompleto}</h4>
+              
+              <div class="resumen-citas-mes" style="margin-bottom: 20px;">
+                <div class="resumen-mes-item">
+                  <div class="titulo">TOTAL CITAS</div>
+                  <div class="valor">${citasDia.length}</div>
+                  <div class="detalle">Este día</div>
                 </div>
-              `;
-            });
-            
-            html += `
+                <div class="resumen-mes-item">
+                  <div class="titulo">SUPERVISORAS</div>
+                  <div class="valor">${[...new Set(citasDia.map(c => c.supervisora))].length}</div>
+                  <div class="detalle">Participantes</div>
+                </div>
+                <div class="resumen-mes-item">
+                  <div class="titulo">PERSONAS</div>
+                  <div class="valor">${citasDia.reduce((sum, c) => sum + (parseInt(c.numPersonas) || 0), 0)}</div>
+                  <div class="detalle">Total asistentes</div>
                 </div>
               </div>
+              
+              <div style="overflow-x: auto; margin-top: 20px;">
+                <table style="width: 100%; border-collapse: collapse; background: rgba(30, 41, 59, 0.7);">
+                  <thead>
+                    <tr style="background: var(--primary);">
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">NUM DE CITA</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">FECHA</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">PAX</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">NOMBRES FAMILIA</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">EDAD</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">ESTADO CIVIL</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">TARJETAS</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">ID</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">INGRESOS</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">VENDEDOR</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">OPERADOR</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">GERENTE</th>
+                      <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">SPA</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+          `;
+          
+          // Ordenar citas por número de cita
+          const citasOrdenadas = [...citasDia].sort((a, b) => {
+            const numA = a.citaPorDia || 0;
+            const numB = b.citaPorDia || 0;
+            return numA - numB;
+          });
+          
+          citasOrdenadas.forEach((cita, idx) => {
+            const numeroCita = cita.citaPorDia || idx + 1;
+            const fechaFormateada = fechaObj.toISOString().split('T')[0];
+            
+            html += `
+              <tr style="${idx % 2 === 0 ? 'background: rgba(30, 41, 59, 0.5);' : 'background: rgba(30, 41, 59, 0.8);'}">
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${numeroCita}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${fechaFormateada}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.numPersonas || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light);">${cita.nombre || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.edad || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.estadoCivil || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.tarjeta || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">---</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.ingresos || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.vendedor || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.operador || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.gerente || ''}</td>
+                <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">RESTAURANTE</td>
+              </tr>
             `;
-          }
+          });
+          
+          html += `
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
         });
         
         contenido.innerHTML = html;
@@ -2358,13 +2560,6 @@
         });
       }
 
-      // ✅ FUNCIÓN CORREGIDA: OBTENER CITAS POR SUPERVISORA
-      function obtenerCitasPorSupervisora(supervisora) {
-        return registrosPremanifiesto.filter(registro => 
-          registro.supervisora === supervisora
-        );
-      }
-
       function mostrarNotificacion(mensaje, tipo = 'success') {
         const notificacion = document.createElement('div');
         notificacion.innerHTML = `<i class="fas fa-${tipo === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${mensaje}`;
@@ -2390,7 +2585,7 @@
         const fechaInicioInput = document.getElementById('fechaInicio');
         const fechaFinInput = document.getElementById('fechaFin');
         
-        // Configurar fechas por defecto
+        // Configurar fechas por defecto (primer día del mes hasta hoy)
         const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
         const hoyFormateado = hoy.toISOString().split('T')[0];
         
@@ -2460,7 +2655,7 @@
         }
         
         if (btnDescargarMes) {
-          btnDescargarMes.addEventListener('click', descargarPremanifiestoMes);
+          btnDescargarMes.addEventListener('click', descargarPremanifiestoMesCompleto);
         }
         
         cerrarModal.addEventListener('click', function() {
@@ -2495,21 +2690,9 @@
           let tituloPrincipal = "REPORTE DE ESTADÍSTICAS - BLUE ELEGANCE";
           
           if (filtroFecha && filtroSupervisora) {
-            const fechaInicio = new Date(filtroFecha);
-            const fechaFin = new Date(fechaInicio);
-            fechaFin.setDate(fechaFin.getDate() + 5);
+            const fechaInicioFormateada = new Date(filtroFecha).toLocaleDateString('es-MX');
             
-            const fechaInicioFormateada = fechaInicio.toLocaleDateString('es-MX');
-            const fechaFinFormateada = fechaFin.toLocaleDateString('es-MX');
-            
-            const fechaFinISO = fechaFin.toISOString().split('T')[0];
-            const estadisticas = obtenerEstadisticasRegistros(filtroFecha, fechaFinISO, filtroSupervisora);
-            
-            tituloPrincipal = `CITAS DE ${filtroSupervisora} DEL ${fechaInicioFormateada} AL ${fechaFinFormateada}`;
-            
-            if (estadisticas && estadisticas.totalRegistros > 0) {
-              tituloPrincipal += ` - ${estadisticas.totalRegistros} REGISTROS`;
-            }
+            tituloPrincipal = `CITAS DE ${filtroSupervisora} - ${fechaInicioFormateada}`;
           }
           
           const tituloRow = wsResumen.addRow([tituloPrincipal]);
@@ -2611,11 +2794,10 @@
           const tituloDetRow = wsDetalle.addRow(["DETALLE COMPLETO DE CITAS"]);
           tituloDetRow.font = { size: 16, bold: true };
           tituloDetRow.alignment = { horizontal: 'center' };
-          wsDetalle.mergeCells('A1:Q1'); // CORREGIDO: A1:Q1 para incluir la columna de ingresos
+          wsDetalle.mergeCells('A1:Q1');
           
           wsDetalle.addRow([]);
           
-          // CORREGIDO: Incluir la columna de ingresos y calificación de origen
           const headersDet = [
             'NUM CITAS', 'CLIENTE Y NOMBRE ACOMPAÑANTE', 'NUM PERSONAS', 'ESTADO CIVIL', 'HORA', 
             'DÍA EVENTO', 'SALON', 'EDAD', 'INGRESOS', 'TARJETA', 'CALIF DE ORIGEN', 'GERENTE', 
@@ -2653,9 +2835,9 @@
                   registro.diaEvento || '',
                   registro.hotel || '',
                   registro.edad || '',
-                  registro.ingresos || '', // COLUMNA DE INGRESOS
+                  registro.ingresos || '',
                   registro.tarjeta || '',
-                  registro.calificacionOrigen || '', // COLUMNA DE CALIFICACIÓN DE ORIGEN
+                  registro.calificacionOrigen || '',
                   registro.gerente || '',
                   registro.operador || '',
                   registro.vendedor || '',
@@ -2674,7 +2856,6 @@
               });
           });
           
-          // CORREGIDO: Ajustar anchos de columnas para incluir ingresos
           wsDetalle.columns = [
               { width: 10 }, { width: 35 }, { width: 15 }, { width: 15 }, { width: 12 },
               { width: 15 }, { width: 25 }, { width: 10 }, { width: 15 }, { width: 22 }, 
@@ -2686,7 +2867,6 @@
               const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
               const fecha = new Date().toISOString().split('T')[0];
               
-              // Nombre del archivo personalizado
               let nombreArchivo = `REPORTE_ESTADISTICAS_${fecha}`;
               
               if (filtroFecha && filtroSupervisora) {
