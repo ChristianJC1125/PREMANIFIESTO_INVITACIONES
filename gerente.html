@@ -1398,11 +1398,12 @@
           
           if (registrosPremanifiesto.length > 0) {
             console.log("📝 PRIMER REGISTRO:", registrosPremanifiesto[0]);
+            console.log("📝 ÚLTIMO REGISTRO:", registrosPremanifiesto[registrosPremanifiesto.length - 1]);
           }
           
           // Actualizar TODAS las secciones del panel
           actualizarTodoElPanel();
-          mostrarNotificacion("DATOS ACTUALIZADOS EN TIEMPO REAL DESDE FIREBASE");
+          mostrarNotificacion("DATOS ACTUALIZADOS EN TIEMPO REAL DESDE FIREBASE - " + registrosPremanifiesto.length + " CITAS");
           
         }, (error) => {
           console.error("🔥 ERROR DE FIREBASE:", error);
@@ -1450,6 +1451,7 @@
       // NUEVA FUNCIÓN: Actualizar todo el panel de una vez
       function actualizarTodoElPanel() {
         console.log("🔄 ACTUALIZANDO TODO EL PANEL...");
+        console.log("📊 TOTAL DE CITAS ACTUALES:", registrosPremanifiesto.length);
         
         try {
           actualizarResumenGeneral();
@@ -1518,11 +1520,24 @@
       function actualizarResumenGeneral() {
         const resumenContainer = document.getElementById('resumenGeneral');
         
+        // ✅ CORRECCIÓN IMPORTANTE: Asegurarse de contar TODAS las citas
         const totalCitas = registrosPremanifiesto.length;
+        console.log("🔢 TOTAL DE CITAS CONTADAS:", totalCitas);
+        
         const hoy = new Date().toISOString().split('T')[0];
-        const citasHoy = registrosPremanifiesto.filter(reg => 
-          reg.fechaRegistro && reg.fechaRegistro.includes(hoy)
-        ).length;
+        
+        // ✅ CORRECCIÓN: Contar citas de hoy correctamente
+        const citasHoy = registrosPremanifiesto.filter(reg => {
+          if (!reg.fechaRegistro) return false;
+          
+          // Buscar la fecha en cualquier formato
+          const fechaReg = reg.fechaRegistro.toString();
+          return fechaReg.includes(hoy) || 
+                 fechaReg.includes(hoy.replace(/-/g, '/')) ||
+                 fechaReg.includes(new Date().toLocaleDateString('es-MX'));
+        }).length;
+        
+        console.log("📅 CITAS HOY CONTADAS:", citasHoy);
         
         const supervisorasActivas = listaSupervisoras.length;
         const eficienciaGeneral = calcularEficienciaGeneral(citasHoy);
@@ -1538,6 +1553,9 @@
             <div class="icono"><i class="fas fa-calendar-check"></i></div>
             <div class="valor">${totalCitas}</div>
             <div class="etiqueta">TOTAL DE CITAS</div>
+            <div class="eficiencia-indicator eficiencia-excelente">
+              ${totalCitas} CITAS REGISTRADAS
+            </div>
           </div>
           <div class="resumen-item">
             <div class="icono"><i class="fas fa-calendar-day"></i></div>
@@ -1573,7 +1591,7 @@
           const citasHoy = registrosPremanifiesto.filter(reg => 
             reg.supervisora === supervisora && 
             reg.fechaRegistro && 
-            reg.fechaRegistro.includes(hoy)
+            reg.fechaRegistro.toString().includes(hoy)
           ).length;
           
           citasHoyPorSupervisora[supervisora] = citasHoy;
@@ -1585,6 +1603,17 @@
         );
         
         let html = '';
+        
+        // Agregar fila para el total
+        html += `
+          <div class="cita-agregada-item" style="border-left: 4px solid var(--gold);">
+            <div class="cita-agregada-supervisora">🏆 TOTAL DE CITAS HOY</div>
+            <div class="cita-agregada-cantidad">${totalCitasHoy} CITAS</div>
+            <div class="cita-agregada-eficiencia eficiencia-excelente">
+              ${totalCitasHoy} CITAS AGREGADAS HOY
+            </div>
+          </div>
+        `;
         
         supervisorasOrdenadas.forEach(supervisora => {
           const citasHoy = citasHoyPorSupervisora[supervisora];
@@ -1636,7 +1665,7 @@
         
         if (filtroFecha) {
           registrosFiltrados = registrosFiltrados.filter(reg => 
-            reg.fechaRegistro && reg.fechaRegistro.includes(filtroFecha)
+            reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
           );
         }
         
@@ -1652,7 +1681,7 @@
         listaSupervisoras.forEach(supervisora => {
           const citasSupervisora = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
           const citasHoy = citasSupervisora.filter(reg => 
-            reg.fechaRegistro && reg.fechaRegistro.includes(hoy)
+            reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
           ).length;
           
           const eficiencia = calcularEficienciaSupervisora(citasHoy);
@@ -1673,6 +1702,27 @@
         );
         
         let html = '';
+        
+        // Agregar tarjeta de TOTALES
+        const totalCitasFiltradas = registrosFiltrados.length;
+        const totalCitasHoyFiltradas = registrosFiltrados.filter(reg => 
+          reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
+        ).length;
+        
+        html += `
+          <div class="stat-card leader">
+            <h3>🏆 TOTAL GENERAL</h3>
+            <div class="count">${totalCitasFiltradas}</div>
+            <div class="supervisora">TOTAL DE CITAS</div>
+            <div class="conteo-dia">
+              <div class="titulo">CITAS HOY</div>
+              <div class="valor-dia">${totalCitasHoyFiltradas}</div>
+            </div>
+            <div class="eficiencia-indicator eficiencia-excelente">
+              ${totalCitasFiltradas} CITAS EN TOTAL
+            </div>
+          </div>
+        `;
         
         supervisorasOrdenadas.forEach((supervisora, index) => {
           const stats = statsPorSupervisora[supervisora];
@@ -1707,7 +1757,7 @@
         
         if (filtroFecha) {
           registrosFiltrados = registrosFiltrados.filter(reg => 
-            reg.fechaRegistro && reg.fechaRegistro.includes(filtroFecha)
+            reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
           );
         }
         
@@ -1725,9 +1775,14 @@
           statsPorSupervisora[supervisora] = citasSupervisora.length;
         });
         
-        const supervisorasOrdenadas = Object.keys(statsPorSupervisora).sort((a, b) => 
-          statsPorSupervisora[b] - statsPorSupervisora[a]
-        );
+        // Agregar "TOTAL" al gráfico
+        statsPorSupervisora["TOTAL"] = totalCitas;
+        
+        const supervisorasOrdenadas = Object.keys(statsPorSupervisora).sort((a, b) => {
+          if (a === "TOTAL") return -1; // Total siempre primero
+          if (b === "TOTAL") return 1;
+          return statsPorSupervisora[b] - statsPorSupervisora[a];
+        });
         
         let html = '';
         
@@ -1735,11 +1790,15 @@
           const count = statsPorSupervisora[supervisora];
           const porcentaje = totalCitas > 0 ? Math.round((count / totalCitas) * 100) : 0;
           
+          // Color especial para TOTAL
+          const esTotal = supervisora === "TOTAL";
+          const colorEspecial = esTotal ? "background: linear-gradient(90deg, var(--gold), #f4d03f);" : "";
+          
           html += `
             <div class="barra">
-              <div class="barra-label">${supervisora}</div>
+              <div class="barra-label">${esTotal ? "🏆 " : ""}${supervisora}</div>
               <div class="barra-progreso">
-                <div class="barra-relleno" style="width: ${porcentaje}%">
+                <div class="barra-relleno" style="width: ${porcentaje}%; ${colorEspecial}">
                   ${count} (${porcentaje}%)
                 </div>
               </div>
@@ -1759,7 +1818,7 @@
         
         if (filtroFecha) {
           registrosFiltrados = registrosFiltrados.filter(reg => 
-            reg.fechaRegistro && reg.fechaRegistro.includes(filtroFecha)
+            reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
           );
         }
         
@@ -1777,6 +1836,56 @@
         
         let html = '';
         
+        // Agregar sección de TOTAL primero
+        if (registrosFiltrados.length > 0) {
+          html += `
+            <div class="supervisora-detalle">
+              <h3><i class="fas fa-chart-pie"></i> TOTAL DE CITAS - ${registrosFiltrados.length} REGISTROS</h3>
+              <div class="supervisora-citas">
+          `;
+          
+          // Mostrar todas las citas (limitado a 20 para no saturar)
+          const citasParaMostrar = registrosFiltrados.slice(0, 20);
+          
+          citasParaMostrar.forEach((cita, index) => {
+            // ✅ CORREGIDO: Usar el número de cita correcto
+            const numeroCita = cita.citaPorDia || cita.cita || (index + 1);
+            const nombreCliente = cita.nombre || cita.cliente || 'CLIENTE NO ESPECIFICADO';
+            const supervisoraNombre = cita.supervisora || 'SIN SUPERVISORA';
+            
+            html += `
+              <div class="cita-item">
+                <div class="cita-numero">CITA #${numeroCita}</div>
+                <div class="cita-cliente">${nombreCliente}</div>
+                <div class="cita-detalles">
+                  <div><strong>Supervisora:</strong> ${supervisoraNombre}</div>
+                  <div><strong>Fecha:</strong> ${cita.fechaRegistro || 'NO ESPECIFICADA'}</div>
+                  <div><strong>Hora:</strong> ${cita.hora || 'NO ESPECIFICADA'}</div>
+                  <div><small>PERSONAS: ${cita.numPersonas || 'N/A'} | EDAD: ${cita.edad || 'N/A'} | HOTEL: ${cita.hotel || 'N/A'}</small></div>
+                </div>
+              </div>
+            `;
+          });
+          
+          if (registrosFiltrados.length > 20) {
+            html += `
+              <div class="cita-item" style="text-align: center; background: rgba(30, 64, 175, 0.3);">
+                <div class="cita-numero">...</div>
+                <div class="cita-cliente">Y ${registrosFiltrados.length - 20} CITAS MÁS</div>
+                <div class="cita-detalles">
+                  <small>Mostrando 20 de ${registrosFiltrados.length} citas</small>
+                </div>
+              </div>
+            `;
+          }
+          
+          html += `
+              </div>
+            </div>
+          `;
+        }
+        
+        // Luego mostrar por supervisora
         Object.keys(citasPorSupervisora).forEach(supervisora => {
           const citas = citasPorSupervisora[supervisora];
           
@@ -1788,13 +1897,15 @@
             `;
             
             citas.forEach((cita, index) => {
-              // ✅ CORREGIDO: Usar el número de cita correcto (citaPorDia) en lugar del índice
-              const numeroCita = cita.citaPorDia || (index + 1);
+              // ✅ CORREGIDO: Usar el número de cita correcto
+              const numeroCita = cita.citaPorDia || cita.cita || (index + 1);
+              const nombreCliente = cita.nombre || cita.cliente || 'CLIENTE NO ESPECIFICADO';
+              
               html += `
                 <div class="cita-item">
                   <div class="cita-numero">CITA #${numeroCita}</div>
-                  <div class="cita-cliente">${cita.nombre || 'CLIENTE NO ESPECIFICADO'}</div>
-                  <div class="cita-hora">${cita.hora || 'HORA NO ESPECIFICADA'} - ${cita.fechaRegistro || 'FECHA NO ESPECIFICADA'}</div>
+                  <div class="cita-cliente">${nombreCliente}</div>
+                  <div class="cita-hora">${cita.hora || 'NO ESPECIFICADA'} - ${cita.fechaRegistro || 'NO ESPECIFICADA'}</div>
                   <div class="cita-detalles">
                     <small>PERSONAS: ${cita.numPersonas || 'N/A'} | EDAD: ${cita.edad || 'N/A'} | HOTEL: ${cita.hotel || 'N/A'}</small>
                   </div>
@@ -2629,7 +2740,7 @@
             actualizarTodoElPanel();
             icono.classList.remove('actualizando');
             btn.disabled = false;
-            mostrarNotificacion('DATOS ACTUALIZADOS MANUALMENTE');
+            mostrarNotificacion('DATOS ACTUALIZADOS MANUALMENTE - ' + registrosPremanifiesto.length + ' CITAS');
           }, 1000);
         });
         
@@ -2709,7 +2820,7 @@
           const totalCitas = registrosPremanifiesto.length;
           const supervisorasActivas = listaSupervisoras.length;
           const hoy = new Date().toISOString().split('T')[0];
-          const citasHoy = registrosPremanifiesto.filter(reg => reg.fechaRegistro && reg.fechaRegistro.includes(hoy)).length;
+          const citasHoy = registrosPremanifiesto.filter(reg => reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)).length;
           const eficienciaGeneral = calcularEficienciaGeneral(citasHoy);
           
           wsResumen.addRow(["ESTADÍSTICAS GENERALES", "", "", "", "", ""]);
@@ -2756,7 +2867,7 @@
           listaSupervisoras.forEach(supervisora => {
               const citasSupervisora = registrosPremanifiesto.filter(reg => reg.supervisora === supervisora);
               const citasHoy = citasSupervisora.filter(reg => 
-                reg.fechaRegistro && reg.fechaRegistro.includes(hoyExport)
+                reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoyExport)
               ).length;
               
               const eficiencia = calcularEficienciaSupervisora(citasHoy);
