@@ -1373,7 +1373,7 @@
         return [];
       }
 
-      // FUNCIÓN MEJORADA: Configurar Firebase
+      // FUNCIÓN MEJORADA: Configurar Firebase EN TIEMPO REAL
       function configurarFirebase() {
         const database = firebase.database();
         const registrosRef = database.ref('registrosPremanifiesto');
@@ -1383,7 +1383,7 @@
         // Escuchar cambios en tiempo real desde Firebase
         registrosRef.on('value', (snapshot) => {
           const data = snapshot.val();
-          console.log("📊 DATOS CRUDOS DE FIREBASE:", data);
+          console.log("📊 DATOS CRUDOS DE FIREBASE (ACTUALIZACIÓN AUTOMÁTICA):", data);
           
           if (!data) {
             console.log("❌ NO HAY DATOS EN FIREBASE");
@@ -1394,23 +1394,23 @@
           
           registrosPremanifiesto = convertirDatosFirebase(data);
           
-          console.log("✅ DATOS PROCESADOS:", registrosPremanifiesto.length, "REGISTROS");
+          console.log("✅ DATOS PROCESADOS:", registrosPremanifiesto.length, "REGISTROS EN TIEMPO REAL");
           
           if (registrosPremanifiesto.length > 0) {
             console.log("📝 PRIMER REGISTRO:", registrosPremanifiesto[0]);
             console.log("📝 ÚLTIMO REGISTRO:", registrosPremanifiesto[registrosPremanifiesto.length - 1]);
           }
           
-          // Actualizar TODAS las secciones del panel
+          // Actualizar TODAS las secciones del panel automáticamente
           actualizarTodoElPanel();
-          mostrarNotificacion("DATOS ACTUALIZADOS EN TIEMPO REAL DESDE FIREBASE - " + registrosPremanifiesto.length + " CITAS");
+          mostrarNotificacion("✅ DATOS ACTUALIZADOS EN TIEMPO REAL - " + registrosPremanifiesto.length + " CITAS");
           
         }, (error) => {
           console.error("🔥 ERROR DE FIREBASE:", error);
           mostrarNotificacion("ERROR AL CONECTAR CON FIREBASE: " + error.message, 'error');
         });
         
-        // Configurar listener para supervisoras
+        // Configurar listener para supervisoras en tiempo real
         configurarListenerSupervisoras();
       }
 
@@ -1419,7 +1419,7 @@
         
         database.ref('supervisoras').on('value', (snapshot) => {
           const data = snapshot.val();
-          console.log("👥 DATOS DE SUPERVISORAS:", data);
+          console.log("👥 DATOS DE SUPERVISORAS (ACTUALIZACIÓN AUTOMÁTICA):", data);
           
           if (data) {
             // Manejar diferentes formatos de datos
@@ -1450,7 +1450,7 @@
 
       // NUEVA FUNCIÓN: Actualizar todo el panel de una vez
       function actualizarTodoElPanel() {
-        console.log("🔄 ACTUALIZANDO TODO EL PANEL...");
+        console.log("🔄 ACTUALIZANDO TODO EL PANEL AUTOMÁTICAMENTE...");
         console.log("📊 TOTAL DE CITAS ACTUALES:", registrosPremanifiesto.length);
         
         try {
@@ -1520,7 +1520,7 @@
       function actualizarResumenGeneral() {
         const resumenContainer = document.getElementById('resumenGeneral');
         
-        // ✅ CORRECCIÓN IMPORTANTE: Asegurarse de contar TODAS las citas
+        // ✅ CORRECCIÓN IMPORTANTE: Contar TODAS las citas correctamente
         const totalCitas = registrosPremanifiesto.length;
         console.log("🔢 TOTAL DE CITAS CONTADAS:", totalCitas);
         
@@ -1532,9 +1532,14 @@
           
           // Buscar la fecha en cualquier formato
           const fechaReg = reg.fechaRegistro.toString();
-          return fechaReg.includes(hoy) || 
-                 fechaReg.includes(hoy.replace(/-/g, '/')) ||
-                 fechaReg.includes(new Date().toLocaleDateString('es-MX'));
+          const hoyFormateado1 = hoy; // Formato YYYY-MM-DD
+          const hoyFormateado2 = hoy.replace(/-/g, '/'); // Formato YYYY/MM/DD
+          const hoyFormateado3 = new Date().toLocaleDateString('es-MX'); // Formato local
+          
+          return fechaReg.includes(hoyFormateado1) || 
+                 fechaReg.includes(hoyFormateado2) ||
+                 fechaReg.includes(hoyFormateado3) ||
+                 fechaReg.includes(new Date().getDate().toString()); // Solo el día
         }).length;
         
         console.log("📅 CITAS HOY CONTADAS:", citasHoy);
@@ -1551,7 +1556,7 @@
         resumenContainer.innerHTML = `
           <div class="resumen-item">
             <div class="icono"><i class="fas fa-calendar-check"></i></div>
-            <div class="valor">${totalCitas}</div>
+            <div class="valor" id="totalCitasCount">${totalCitas}</div>
             <div class="etiqueta">TOTAL DE CITAS</div>
             <div class="eficiencia-indicator eficiencia-excelente">
               ${totalCitas} CITAS REGISTRADAS
@@ -1848,7 +1853,6 @@
           const citasParaMostrar = registrosFiltrados.slice(0, 20);
           
           citasParaMostrar.forEach((cita, index) => {
-            // ✅ CORREGIDO: Usar el número de cita correcto
             const numeroCita = cita.citaPorDia || cita.cita || (index + 1);
             const nombreCliente = cita.nombre || cita.cliente || 'CLIENTE NO ESPECIFICADO';
             const supervisoraNombre = cita.supervisora || 'SIN SUPERVISORA';
@@ -1897,7 +1901,6 @@
             `;
             
             citas.forEach((cita, index) => {
-              // ✅ CORREGIDO: Usar el número de cita correcto
               const numeroCita = cita.citaPorDia || cita.cita || (index + 1);
               const nombreCliente = cita.nombre || cita.cliente || 'CLIENTE NO ESPECIFICADO';
               
@@ -2688,7 +2691,7 @@
       // --- INICIALIZACIÓN ---
 
       function inicializarSistema() {
-        console.log("🚀 INICIALIZANDO SISTEMA...");
+        console.log("🚀 INICIALIZANDO SISTEMA DE TIEMPO REAL...");
         
         configurarFirebase();
         
@@ -2709,7 +2712,7 @@
         
         configurarEventListeners();
         
-        console.log("✅ SISTEMA INICIALIZADO CORRECTAMENTE");
+        console.log("✅ SISTEMA INICIALIZADO CORRECTAMENTE - LISTO PARA ACTUALIZACIONES EN TIEMPO REAL");
       }
 
       function configurarEventListeners() {
