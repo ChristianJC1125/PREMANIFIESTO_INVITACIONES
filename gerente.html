@@ -1184,6 +1184,50 @@
         font-size: 2.2rem;
       }
     }
+
+/* Q & NQ*/
+
+@media (max-width: 576px) {
+  body {
+    padding: 10px;
+  }
+  
+  .container {
+    padding: 15px;
+  }
+  
+  .logo-img-container {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .logo-text h1 {
+    font-size: 1.8rem;
+  }
+  
+  .resumen-item {
+    padding: 20px;
+  }
+  
+  .resumen-item .valor {
+    font-size: 2.2rem;
+  }
+}
+
+/* ESTILOS PARA Q & NQ - AGREGAR AL FINAL DEL CSS */
+.qnq-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+.supervisora-qnq {
+  transition: all 0.3s ease;
+}
+
+.supervisora-qnq:hover {
+  transform: translateX(5px);
+  background: rgba(30, 64, 175, 0.3) !important;
+}
   </style>
 </head>
 <body>
@@ -1449,21 +1493,22 @@
       }
 
       // NUEVA FUNCIÓN: Actualizar todo el panel de una vez
-      function actualizarTodoElPanel() {
-        console.log("🔄 ACTUALIZANDO TODO EL PANEL AUTOMÁTICAMENTE...");
-        console.log("📊 TOTAL DE CITAS ACTUALES:", registrosPremanifiesto.length);
-        
-        try {
-          actualizarResumenGeneral();
-          actualizarCitasAgregadasHoy();
-          actualizarEstadisticasSupervisoras();
-          actualizarGraficoBarras();
-          actualizarDetallesCitas();
-        } catch (error) {
-          console.error("❌ ERROR AL ACTUALIZAR EL PANEL:", error);
-          mostrarNotificacion("ERROR AL ACTUALIZAR LA INFORMACIÓN", 'error');
-        }
-      }
+     function actualizarTodoElPanel() {
+  console.log("🔄 ACTUALIZANDO TODO EL PANEL AUTOMÁTICAMENTE...");
+  console.log("📊 TOTAL DE CITAS ACTUALES:", registrosPremanifiesto.length);
+  
+  try {
+    actualizarResumenGeneral();
+    actualizarCitasAgregadasHoy();
+    actualizarQnqTotales(); // ✅ NUEVA FUNCIÓN AÑADIDA
+    actualizarEstadisticasSupervisoras();
+    actualizarGraficoBarras();
+    actualizarDetallesCitas();
+  } catch (error) {
+    console.error("❌ ERROR AL ACTUALIZAR EL PANEL:", error);
+    mostrarNotificacion("ERROR AL ACTUALIZAR LA INFORMACIÓN", 'error');
+  }
+}
 // --- FUNCIONES DE CÁLCULO DE EFICIENCIA ---
       
 function calcularEficienciaSupervisora(supervisora, citasHoy) {
@@ -1522,6 +1567,166 @@ function obtenerClaseEficiencia(eficiencia) {
   if (eficiencia < 80) return 'eficiencia-media';
   if (eficiencia < 100) return 'eficiencia-alta';
   return 'eficiencia-excelente'; // Para > 100%
+}
+
+// --- FUNCIONES Q & NQ ---
+
+function actualizarQnqTotales() {
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    // Contar Q y NQ del día de hoy
+    const citasHoy = registrosPremanifiesto.filter(reg => 
+        reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
+    );
+    
+    let totalQ = 0;
+    let totalNQ = 0;
+    const qDetalles = [];
+    const nqDetalles = [];
+    
+    citasHoy.forEach(registro => {
+        const calificacion = registro.calificacionOrigen || '';
+        const esQ = calificacion.toUpperCase().includes('Q') || 
+                    calificacion.toUpperCase() === 'CALIFICADO' ||
+                    calificacion.toUpperCase() === 'CALIFICADA';
+        
+        const detalle = {
+            supervisora: registro.supervisora || 'SIN SUPERVISORA',
+            base: registro.baseDatos || 'SIN BASE',
+            calificacion: calificacion || 'SIN CALIFICACIÓN'
+        };
+        
+        if (esQ) {
+            totalQ++;
+            qDetalles.push(detalle);
+        } else {
+            totalNQ++;
+            nqDetalles.push(detalle);
+        }
+    });
+    
+    document.getElementById('totalQ').textContent = totalQ;
+    document.getElementById('totalNQ').textContent = totalNQ;
+    
+    window.qDetalles = qDetalles;
+    window.nqDetalles = nqDetalles;
+    
+    document.querySelectorAll('.qnq-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const tipo = this.getAttribute('data-tipo');
+            mostrarDetallesQnq(tipo);
+        });
+    });
+    
+    document.querySelectorAll('.qnq-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+            this.style.boxShadow = '0 15px 30px rgba(0, 0, 0, 0.4)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+}
+
+function mostrarDetallesQnq(tipo) {
+    const detallesContainer = document.getElementById('qnq-detalles');
+    const esQ = tipo === 'Q';
+    const datos = esQ ? window.qDetalles : window.nqDetalles;
+    const color = esQ ? 'var(--success)' : 'var(--danger)';
+    const icono = esQ ? 'fa-check-circle' : 'fa-times-circle';
+    const titulo = esQ ? 'CALIFICADOS (Q)' : 'NO CALIFICADOS (NQ)';
+    
+    if (datos.length === 0) {
+        detallesContainer.innerHTML = `
+            <div class="sin-datos" style="text-align: center; padding: 30px; color: var(--text-secondary); font-style: italic; background: rgba(30, 41, 59, 0.7); border-radius: 12px;">
+                <i class="fas fa-${icono}" style="font-size: 3rem; color: ${color}; margin-bottom: 15px;"></i>
+                <h3 style="color: ${color};">NO HAY CITAS ${titulo} HOY</h3>
+                <p>No se encontraron registros ${titulo.toLowerCase()} para el día de hoy</p>
+            </div>
+        `;
+    } else {
+        const porSupervisora = {};
+        datos.forEach(dato => {
+            if (!porSupervisora[dato.supervisora]) {
+                porSupervisora[dato.supervisora] = [];
+            }
+            porSupervisora[dato.supervisora].push(dato);
+        });
+        
+        let html = `
+            <div style="background: rgba(30, 41, 59, 0.9); padding: 25px; border-radius: 12px; border-left: 4px solid ${color};">
+                <h3 style="color: ${color}; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas ${icono}"></i> ${titulo} - ${datos.length} CITAS
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        `;
+        
+        Object.keys(porSupervisora).forEach(supervisora => {
+            const citasSupervisora = porSupervisora[supervisora];
+            
+            const bases = {};
+            citasSupervisora.forEach(dato => {
+                const base = dato.base;
+                if (!bases[base]) bases[base] = 0;
+                bases[base]++;
+            });
+            
+            html += `
+                <div class="supervisora-qnq" style="background: rgba(30, 64, 175, 0.2); padding: 20px; border-radius: 8px; border-left: 3px solid ${color};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="color: var(--text); margin: 0; font-size: 1.2rem;">
+                            ${supervisora}
+                        </h4>
+                        <span style="background: ${color}; color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;">
+                            ${citasSupervisora.length} CITAS
+                        </span>
+                    </div>
+                    
+                    <div style="background: rgba(15, 23, 42, 0.5); padding: 12px; border-radius: 6px;">
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px;">
+                            BASES DE DATOS:
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            `;
+            
+            Object.keys(bases).forEach(base => {
+                html += `
+                    <div style="background: rgba(30, 64, 175, 0.3); padding: 6px 12px; border-radius: 15px; font-size: 0.85rem;">
+                        <span style="color: var(--text);">${base}</span>
+                        <span style="color: ${color}; font-weight: bold; margin-left: 5px;">${bases[base]}</span>
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button onclick="cerrarDetallesQnq()" style="background: ${color}; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem;">
+                        <i class="fas fa-times"></i> CERRAR DETALLES
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    detallesContainer.style.display = 'block';
+    detallesContainer.innerHTML = html;
+}
+
+function cerrarDetallesQnq() {
+    document.getElementById('qnq-detalles').style.display = 'none';
 }
 
       // --- FUNCIONES DE ACTUALIZACIÓN DE UI ---
