@@ -285,6 +285,179 @@
       font-weight: bold;
     }
     
+    /* Sección Q & NQ */
+    .qnq-section {
+      background: linear-gradient(145deg, var(--dark-light), var(--dark));
+      padding: 25px;
+      border-radius: 16px;
+      margin: 25px 0;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(30, 64, 175, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .qnq-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--success), var(--danger), var(--warning));
+    }
+    
+    .qnq-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .qnq-card {
+      background: rgba(30, 41, 59, 0.7);
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .qnq-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+    }
+    
+    .qnq-card.q {
+      border-left: 4px solid var(--success);
+    }
+    
+    .qnq-card.nq {
+      border-left: 4px solid var(--danger);
+    }
+    
+    .qnq-card .qnq-icono {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+    }
+    
+    .qnq-card.q .qnq-icono {
+      color: var(--success);
+    }
+    
+    .qnq-card.nq .qnq-icono {
+      color: var(--danger);
+    }
+    
+    .qnq-card .qnq-titulo {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .qnq-card .qnq-cantidad {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .qnq-card.q .qnq-cantidad {
+      color: var(--success);
+    }
+    
+    .qnq-card.nq .qnq-cantidad {
+      color: var(--danger);
+    }
+    
+    .qnq-card .qnq-detalle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 10px;
+    }
+    
+    /* Detalles Q & NQ */
+    .qnq-detalles-container {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(30, 41, 59, 0.9);
+      border-radius: 12px;
+      border: 1px solid rgba(30, 64, 175, 0.3);
+    }
+    
+    .supervisora-qnq {
+      background: rgba(30, 64, 175, 0.2);
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 3px solid;
+      transition: all 0.3s ease;
+      margin-bottom: 15px;
+    }
+    
+    .supervisora-qnq:hover {
+      transform: translateX(5px);
+      background: rgba(30, 64, 175, 0.3);
+    }
+    
+    .supervisora-qnq-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .supervisora-qnq-nombre {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--text);
+    }
+    
+    .supervisora-qnq-contador {
+      background: var(--primary);
+      color: white;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    
+    .bases-container {
+      background: rgba(15, 23, 42, 0.5);
+      padding: 12px;
+      border-radius: 6px;
+    }
+    
+    .bases-titulo {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    
+    .bases-lista {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .base-item {
+      background: rgba(30, 64, 175, 0.3);
+      padding: 6px 12px;
+      border-radius: 15px;
+      font-size: 0.85rem;
+    }
+    
+    .base-nombre {
+      color: var(--text);
+    }
+    
+    .base-cantidad {
+      color: inherit;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+
     /* Sección de citas agregadas hoy */
     .citas-agregadas-hoy {
       background: linear-gradient(145deg, var(--dark-light), var(--dark));
@@ -1047,6 +1220,10 @@
       .resumen-general {
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       }
+      
+      .qnq-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
     }
 
     @media (max-width: 992px) {
@@ -1090,6 +1267,10 @@
       .btn-group {
         width: 100%;
         justify-content: center;
+      }
+      
+      .qnq-grid {
+        grid-template-columns: 1fr 1fr;
       }
     }
 
@@ -1156,6 +1337,10 @@
       .pestana-dia {
         text-align: center;
       }
+      
+      .qnq-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 576px) {
@@ -1183,51 +1368,15 @@
       .resumen-item .valor {
         font-size: 2.2rem;
       }
+      
+      .qnq-card {
+        padding: 20px;
+      }
+      
+      .qnq-card .qnq-cantidad {
+        font-size: 2.2rem;
+      }
     }
-
-/* Q & NQ*/
-
-@media (max-width: 576px) {
-  body {
-    padding: 10px;
-  }
-  
-  .container {
-    padding: 15px;
-  }
-  
-  .logo-img-container {
-    width: 80px;
-    height: 80px;
-  }
-  
-  .logo-text h1 {
-    font-size: 1.8rem;
-  }
-  
-  .resumen-item {
-    padding: 20px;
-  }
-  
-  .resumen-item .valor {
-    font-size: 2.2rem;
-  }
-}
-
-/* ESTILOS PARA Q & NQ - AGREGAR AL FINAL DEL CSS */
-.qnq-card:hover {
-  transform: translateY(-8px) !important;
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4) !important;
-}
-
-.supervisora-qnq {
-  transition: all 0.3s ease;
-}
-
-.supervisora-qnq:hover {
-  transform: translateX(5px);
-  background: rgba(30, 64, 175, 0.3) !important;
-}
   </style>
 </head>
 <body>
@@ -1276,6 +1425,20 @@
       <div class="cargando">
         <i class="fas fa-spinner"></i>
         <p>CARGANDO DATOS...</p>
+      </div>
+    </section>
+
+    <!-- SECCIÓN Q & NQ -->
+    <section class="qnq-section" id="qnqSection">
+      <h2><i class="fas fa-chart-pie"></i> CALIFICACIÓN Q & NQ HOY</h2>
+      <div class="qnq-grid" id="qnqGrid">
+        <div class="cargando">
+          <i class="fas fa-spinner"></i>
+          <p>CARGANDO Q & NQ...</p>
+        </div>
+      </div>
+      <div class="qnq-detalles-container" id="qnqDetalles">
+        <!-- Los detalles se cargarán dinámicamente -->
       </div>
     </section>
 
@@ -1388,6 +1551,8 @@
     // Variables globales
     let listaSupervisoras = [];
     let registrosPremanifiesto = [];
+    let qDetalles = [];
+    let nqDetalles = [];
 
     document.addEventListener("DOMContentLoaded", function () {
       // --- FUNCIONES PRINCIPALES ---
@@ -1493,80 +1658,250 @@
       }
 
       // NUEVA FUNCIÓN: Actualizar todo el panel de una vez
-     function actualizarTodoElPanel() {
-  console.log("🔄 ACTUALIZANDO TODO EL PANEL AUTOMÁTICAMENTE...");
-  console.log("📊 TOTAL DE CITAS ACTUALES:", registrosPremanifiesto.length);
-  
-  try {
-    actualizarResumenGeneral();
-    actualizarCitasAgregadasHoy();
-    actualizarEstadisticasSupervisoras();
-    actualizarGraficoBarras();
-    actualizarDetallesCitas();
-  } catch (error) {
-    console.error("❌ ERROR AL ACTUALIZAR EL PANEL:", error);
-    mostrarNotificacion("ERROR AL ACTUALIZAR LA INFORMACIÓN", 'error');
-  }
-}
-// --- FUNCIONES DE CÁLCULO DE EFICIENCIA ---
+      function actualizarTodoElPanel() {
+        console.log("🔄 ACTUALIZANDO TODO EL PANEL AUTOMÁTICAMENTE...");
+        console.log("📊 TOTAL DE CITAS ACTUALES:", registrosPremanifiesto.length);
+        
+        try {
+          actualizarResumenGeneral();
+          actualizarQnqTotales();
+          actualizarCitasAgregadasHoy();
+          actualizarEstadisticasSupervisoras();
+          actualizarGraficoBarras();
+          actualizarDetallesCitas();
+        } catch (error) {
+          console.error("❌ ERROR AL ACTUALIZAR EL PANEL:", error);
+          mostrarNotificacion("ERROR AL ACTUALIZAR LA INFORMACIÓN", 'error');
+        }
+      }
+
+      // --- FUNCIONES DE CÁLCULO DE EFICIENCIA ---
       
-function calcularEficienciaSupervisora(supervisora, citasHoy) {
-  // ✅ CAMBIO: Solo Abraham tiene 5 citas = 100%, los demás mantienen 8
-  const metaSupervisora = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham") 
-    ? 5  // Abraham: 5 citas = 100%
-    : 8; // Los demás: 8 citas = 100%
-  
-  if (citasHoy === 0) return 0;
-  
-  let eficiencia = Math.round((citasHoy / metaSupervisora) * 100);
-  
-  // Permitir eficiencia mayor al 100% si supera la meta
-  if (citasHoy > metaSupervisora) {
-    eficiencia = 100 + Math.round(((citasHoy - metaSupervisora) / metaSupervisora) * 100);
-  }
-  
-  return eficiencia;
-}
+      function calcularEficienciaSupervisora(supervisora, citasHoy) {
+        // ✅ CAMBIO: Solo Abraham tiene 5 citas = 100%, los demás mantienen 8
+        const metaSupervisora = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham") 
+          ? 5  // Abraham: 5 citas = 100%
+          : 8; // Los demás: 8 citas = 100%
+        
+        if (citasHoy === 0) return 0;
+        
+        let eficiencia = Math.round((citasHoy / metaSupervisora) * 100);
+        
+        // Permitir eficiencia mayor al 100% si supera la meta
+        if (citasHoy > metaSupervisora) {
+          eficiencia = 100 + Math.round(((citasHoy - metaSupervisora) / metaSupervisora) * 100);
+        }
+        
+        return eficiencia;
+      }
 
-function obtenerTextoEficiencia(supervisora, citasHoy, eficiencia) {
-  // ✅ CAMBIO: Meta diferente para Abraham
-  const metaSupervisora = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham")
-    ? 5  // Abraham: 5 citas
-    : 8; // Los demás: 8 citas
-  
-  if (eficiencia === 0) {
-    return `META: ${metaSupervisora} CITAS/DÍA (${metaSupervisora} FALTANTES)`;
-  }
-  
-  if (eficiencia >= 100) {
-    const extra = eficiencia - 100;
-    return `🎯 EFICIENCIA: ${eficiencia}% (${citasHoy}/${metaSupervisora} +${extra}%)`;
-  }
-  
-  return `EFICIENCIA: ${eficiencia}% (${citasHoy}/${metaSupervisora} CITAS)`;
-}
+      function obtenerTextoEficiencia(supervisora, citasHoy, eficiencia) {
+        // ✅ CAMBIO: Meta diferente para Abraham
+        const metaSupervisora = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham")
+          ? 5  // Abraham: 5 citas
+          : 8; // Los demás: 8 citas
+        
+        if (eficiencia === 0) {
+          return `META: ${metaSupervisora} CITAS/DÍA (${metaSupervisora} FALTANTES)`;
+        }
+        
+        if (eficiencia >= 100) {
+          const extra = eficiencia - 100;
+          return `🎯 EFICIENCIA: ${eficiencia}% (${citasHoy}/${metaSupervisora} +${extra}%)`;
+        }
+        
+        return `EFICIENCIA: ${eficiencia}% (${citasHoy}/${metaSupervisora} CITAS)`;
+      }
 
-function calcularEficienciaGeneral(citasHoyTotal) {
-  // ✅ CAMBIO: EFICIENCIA GENERAL DEL EQUIPO ajustada para 5 supervisores
-  // Considerando: Abraham (5 citas) + 4 supervisores (8 citas cada uno) = 37 citas totales para 100%
-  const metaTotal = 37; // 37 citas = 100% eficiencia general entre los 5 supervisores
-  let eficienciaGeneral = Math.round((citasHoyTotal / metaTotal) * 100);
-  
-  // Permitir eficiencia mayor al 100%
-  if (citasHoyTotal > metaTotal) {
-    eficienciaGeneral = 100 + Math.round(((citasHoyTotal - metaTotal) / metaTotal) * 100);
-  }
-  
-  return eficienciaGeneral;
-}
+      function calcularEficienciaGeneral(citasHoyTotal) {
+        // ✅ CAMBIO: EFICIENCIA GENERAL DEL EQUIPO ajustada para 5 supervisores
+        // Considerando: Abraham (5 citas) + 4 supervisores (8 citas cada uno) = 37 citas totales para 100%
+        const metaTotal = 37; // 37 citas = 100% eficiencia general entre los 5 supervisores
+        let eficienciaGeneral = Math.round((citasHoyTotal / metaTotal) * 100);
+        
+        // Permitir eficiencia mayor al 100%
+        if (citasHoyTotal > metaTotal) {
+          eficienciaGeneral = 100 + Math.round(((citasHoyTotal - metaTotal) / metaTotal) * 100);
+        }
+        
+        return eficienciaGeneral;
+      }
 
-function obtenerClaseEficiencia(eficiencia) {
-  if (eficiencia === 0) return 'eficiencia-baja';
-  if (eficiencia < 50) return 'eficiencia-baja';
-  if (eficiencia < 80) return 'eficiencia-media';
-  if (eficiencia < 100) return 'eficiencia-alta';
-  return 'eficiencia-excelente'; // Para > 100%
-}
+      function obtenerClaseEficiencia(eficiencia) {
+        if (eficiencia === 0) return 'eficiencia-baja';
+        if (eficiencia < 50) return 'eficiencia-baja';
+        if (eficiencia < 80) return 'eficiencia-media';
+        if (eficiencia < 100) return 'eficiencia-alta';
+        return 'eficiencia-excelente'; // Para > 100%
+      }
+
+      // --- FUNCIONES Q & NQ ---
+
+      function actualizarQnqTotales() {
+        const hoy = new Date().toISOString().split('T')[0];
+        
+        // Contar Q y NQ del día de hoy
+        const citasHoy = registrosPremanifiesto.filter(reg => 
+            reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
+        );
+        
+        let totalQ = 0;
+        let totalNQ = 0;
+        qDetalles = [];
+        nqDetalles = [];
+        
+        citasHoy.forEach(registro => {
+            const calificacion = registro.calificacionOrigen || '';
+            const esQ = calificacion.toUpperCase().includes('Q') || 
+                        calificacion.toUpperCase() === 'CALIFICADO' ||
+                        calificacion.toUpperCase() === 'CALIFICADA' ||
+                        calificacion.toUpperCase() === 'Q - CALIFICADO' ||
+                        calificacion.toUpperCase() === 'Q-CALIFICADO';
+            
+            const detalle = {
+                supervisora: registro.supervisora || 'SIN SUPERVISORA',
+                base: registro.baseDatos || 'SIN BASE',
+                calificacion: calificacion || 'SIN CALIFICACIÓN',
+                cliente: registro.nombre || 'SIN NOMBRE',
+                personas: registro.numPersonas || '0',
+                fecha: registro.fechaRegistro || hoy
+            };
+            
+            if (esQ) {
+                totalQ++;
+                qDetalles.push(detalle);
+            } else {
+                totalNQ++;
+                nqDetalles.push(detalle);
+            }
+        });
+        
+        // Actualizar la interfaz Q & NQ
+        const qnqGrid = document.getElementById('qnqGrid');
+        
+        let html = `
+          <div class="qnq-card q" data-tipo="Q">
+            <div class="qnq-icono"><i class="fas fa-check-circle"></i></div>
+            <div class="qnq-titulo">CALIFICADOS (Q)</div>
+            <div class="qnq-cantidad" id="totalQ">${totalQ}</div>
+            <div class="qnq-detalle">Citas calificadas para venta</div>
+          </div>
+          <div class="qnq-card nq" data-tipo="NQ">
+            <div class="qnq-icono"><i class="fas fa-times-circle"></i></div>
+            <div class="qnq-titulo">NO CALIFICADOS (NQ)</div>
+            <div class="qnq-cantidad" id="totalNQ">${totalNQ}</div>
+            <div class="qnq-detalle">Citas no calificadas</div>
+          </div>
+        `;
+        
+        qnqGrid.innerHTML = html;
+        
+        // Agregar eventos de clic a las tarjetas Q & NQ
+        document.querySelectorAll('.qnq-card').forEach(card => {
+          card.addEventListener('click', function() {
+            const tipo = this.getAttribute('data-tipo');
+            mostrarDetallesQnq(tipo);
+          });
+        });
+      }
+
+      function mostrarDetallesQnq(tipo) {
+        const detallesContainer = document.getElementById('qnqDetalles');
+        const esQ = tipo === 'Q';
+        const datos = esQ ? qDetalles : nqDetalles;
+        const color = esQ ? 'var(--success)' : 'var(--danger)';
+        const icono = esQ ? 'fa-check-circle' : 'fa-times-circle';
+        const titulo = esQ ? 'CALIFICADOS (Q)' : 'NO CALIFICADOS (NQ)';
+        
+        if (datos.length === 0) {
+          detallesContainer.innerHTML = `
+            <div class="sin-datos" style="text-align: center; padding: 30px; color: var(--text-secondary); font-style: italic;">
+              <i class="fas fa-${icono}" style="font-size: 3rem; color: ${color}; margin-bottom: 15px;"></i>
+              <h3 style="color: ${color};">NO HAY CITAS ${titulo} HOY</h3>
+              <p>No se encontraron registros ${titulo.toLowerCase()} para el día de hoy</p>
+            </div>
+          `;
+        } else {
+          const porSupervisora = {};
+          datos.forEach(dato => {
+            const supervisora = dato.supervisora;
+            if (!porSupervisora[supervisora]) {
+              porSupervisora[supervisora] = {
+                total: 0,
+                bases: {}
+              };
+            }
+            porSupervisora[supervisora].total++;
+            
+            const base = dato.base;
+            if (!porSupervisora[supervisora].bases[base]) {
+              porSupervisora[supervisora].bases[base] = 0;
+            }
+            porSupervisora[supervisora].bases[base]++;
+          });
+          
+          let html = `
+            <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid ${color};">
+              <h3 style="color: ${color}; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas ${icono}"></i> ${titulo} - ${datos.length} CITAS
+              </h3>
+              <p style="color: var(--text-secondary);">Desglose por supervisora y base de datos</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+          `;
+          
+          Object.keys(porSupervisora).forEach(supervisora => {
+            const info = porSupervisora[supervisora];
+            
+            html += `
+              <div class="supervisora-qnq" style="border-left-color: ${color};">
+                <div class="supervisora-qnq-header">
+                  <div class="supervisora-qnq-nombre">${supervisora}</div>
+                  <div class="supervisora-qnq-contador" style="background: ${color};">${info.total} CITAS</div>
+                </div>
+                
+                <div class="bases-container">
+                  <div class="bases-titulo">BASES DE DATOS UTILIZADAS:</div>
+                  <div class="bases-lista">
+            `;
+            
+            Object.keys(info.bases).forEach(base => {
+              const cantidad = info.bases[base];
+              html += `
+                <div class="base-item">
+                  <span class="base-nombre">${base}</span>
+                  <span class="base-cantidad" style="color: ${color};">${cantidad}</span>
+                </div>
+              `;
+            });
+            
+            html += `
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          
+          html += `
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+              <button onclick="cerrarDetallesQnq()" style="background: ${color}; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fas fa-times"></i> CERRAR DETALLES
+              </button>
+            </div>
+          `;
+          
+          detallesContainer.innerHTML = html;
+        }
+        
+        detallesContainer.style.display = 'block';
+      }
+
+      function cerrarDetallesQnq() {
+        document.getElementById('qnqDetalles').style.display = 'none';
+      }
 
       // --- FUNCIONES DE ACTUALIZACIÓN DE UI ---
 
@@ -1637,75 +1972,76 @@ function obtenerClaseEficiencia(eficiencia) {
           </div>
         `;
       }
-function actualizarCitasAgregadasHoy() {
-    const citasAgregadasGrid = document.getElementById('citasAgregadasGrid');
-    const hoy = new Date().toISOString().split('T')[0];
-    
-    const citasHoyPorSupervisora = {};
-    let totalCitasHoy = 0;
-    
-    listaSupervisoras.forEach(supervisora => {
-        const citasHoy = registrosPremanifiesto.filter(reg => 
-            reg.supervisora === supervisora && 
-            reg.fechaRegistro && 
-            reg.fechaRegistro.toString().includes(hoy)
-        ).length;
+
+      function actualizarCitasAgregadasHoy() {
+        const citasAgregadasGrid = document.getElementById('citasAgregadasGrid');
+        const hoy = new Date().toISOString().split('T')[0];
         
-        citasHoyPorSupervisora[supervisora] = citasHoy;
-        totalCitasHoy += citasHoy;
-    });
-    
-    const supervisorasOrdenadas = Object.keys(citasHoyPorSupervisora).sort((a, b) => 
-        citasHoyPorSupervisora[b] - citasHoyPorSupervisora[a]
-    );
-    
-    let html = '';
-    
-    // Agregar fila para el total
-    html += `
-        <div class="cita-agregada-item" style="border-left: 4px solid var(--gold);">
-            <div class="cita-agregada-supervisora">🏆 TOTAL DE CITAS HOY</div>
-            <div class="cita-agregada-cantidad">${totalCitasHoy} CITAS</div>
-            <div class="cita-agregada-eficiencia eficiencia-excelente">
-                ${totalCitasHoy} CITAS AGREGADAS HOY
-            </div>
-        </div>
-    `;
-    
-    supervisorasOrdenadas.forEach(supervisora => {
-        const citasHoy = citasHoyPorSupervisora[supervisora];
-        const eficiencia = calcularEficienciaSupervisora(supervisora, citasHoy); // ✅ CAMBIO: Se pasa supervisora como parámetro
-        const claseEficiencia = obtenerClaseEficiencia(eficiencia);
-        const textoEficiencia = obtenerTextoEficiencia(supervisora, citasHoy, eficiencia); // ✅ CAMBIO: Se pasa supervisora como parámetro
+        const citasHoyPorSupervisora = {};
+        let totalCitasHoy = 0;
         
-        // Agregar emoji según eficiencia
-        let emoji = '❌';
-        if (eficiencia >= 50) emoji = '⚠️';
-        if (eficiencia >= 80) emoji = '✅';
-        if (eficiencia >= 100) emoji = '🎯';
+        listaSupervisoras.forEach(supervisora => {
+            const citasHoy = registrosPremanifiesto.filter(reg => 
+                reg.supervisora === supervisora && 
+                reg.fechaRegistro && 
+                reg.fechaRegistro.toString().includes(hoy)
+            ).length;
+            
+            citasHoyPorSupervisora[supervisora] = citasHoy;
+            totalCitasHoy += citasHoy;
+        });
         
-        // Destacar a Abraham
-        const esAbraham = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham");
-        const destacado = esAbraham ? 'style="border-left: 4px solid var(--gold); background: rgba(212, 175, 55, 0.1);"' : '';
+        const supervisorasOrdenadas = Object.keys(citasHoyPorSupervisora).sort((a, b) => 
+            citasHoyPorSupervisora[b] - citasHoyPorSupervisora[a]
+        );
         
+        let html = '';
+        
+        // Agregar fila para el total
         html += `
-            <div class="cita-agregada-item" ${destacado}>
-                <div class="cita-agregada-supervisora">${emoji} ${supervisora} ${esAbraham ? '🎯' : ''}</div>
-                <div class="cita-agregada-cantidad">${citasHoy} CITAS</div>
-                <div class="cita-agregada-eficiencia ${claseEficiencia}">
-                    ${textoEficiencia}
-                    ${esAbraham ? '<br><small>META ESPECIAL: 5 CITAS = 100%</small>' : ''}
+            <div class="cita-agregada-item" style="border-left: 4px solid var(--gold);">
+                <div class="cita-agregada-supervisora">🏆 TOTAL DE CITAS HOY</div>
+                <div class="cita-agregada-cantidad">${totalCitasHoy} CITAS</div>
+                <div class="cita-agregada-eficiencia eficiencia-excelente">
+                    ${totalCitasHoy} CITAS AGREGADAS HOY
                 </div>
             </div>
         `;
-    });
-    
-    if (html === '') {
-        html = '<div class="sin-datos">NO SE HAN AGREGADO CITAS HOY</div>';
-    }
-    
-    citasAgregadasGrid.innerHTML = html;
-}
+        
+        supervisorasOrdenadas.forEach(supervisora => {
+            const citasHoy = citasHoyPorSupervisora[supervisora];
+            const eficiencia = calcularEficienciaSupervisora(supervisora, citasHoy);
+            const claseEficiencia = obtenerClaseEficiencia(eficiencia);
+            const textoEficiencia = obtenerTextoEficiencia(supervisora, citasHoy, eficiencia);
+            
+            // Agregar emoji según eficiencia
+            let emoji = '❌';
+            if (eficiencia >= 50) emoji = '⚠️';
+            if (eficiencia >= 80) emoji = '✅';
+            if (eficiencia >= 100) emoji = '🎯';
+            
+            // Destacar a Abraham
+            const esAbraham = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham");
+            const destacado = esAbraham ? 'style="border-left: 4px solid var(--gold); background: rgba(212, 175, 55, 0.1);"' : '';
+            
+            html += `
+                <div class="cita-agregada-item" ${destacado}>
+                    <div class="cita-agregada-supervisora">${emoji} ${supervisora} ${esAbraham ? '🎯' : ''}</div>
+                    <div class="cita-agregada-cantidad">${citasHoy} CITAS</div>
+                    <div class="cita-agregada-eficiencia ${claseEficiencia}">
+                        ${textoEficiencia}
+                        ${esAbraham ? '<br><small>META ESPECIAL: 5 CITAS = 100%</small>' : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        if (html === '') {
+            html = '<div class="sin-datos">NO SE HAN AGREGADO CITAS HOY</div>';
+        }
+        
+        citasAgregadasGrid.innerHTML = html;
+      }
 
       function cargarListaSupervisoras() {
         const selectFiltro = document.getElementById('filtroSupervisora');
@@ -1720,104 +2056,105 @@ function actualizarCitasAgregadasHoy() {
         });
       }
 
-   function actualizarEstadisticasSupervisoras() {
-    const statsContainer = document.getElementById('statsContainer');
-    const filtroFecha = document.getElementById('filtroFecha').value;
-    const filtroSupervisora = document.getElementById('filtroSupervisora').value;
-    
-    let registrosFiltrados = [...registrosPremanifiesto];
-    
-    if (filtroFecha) {
-        registrosFiltrados = registrosFiltrados.filter(reg => 
-            reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
+      function actualizarEstadisticasSupervisoras() {
+        const statsContainer = document.getElementById('statsContainer');
+        const filtroFecha = document.getElementById('filtroFecha').value;
+        const filtroSupervisora = document.getElementById('filtroSupervisora').value;
+        
+        let registrosFiltrados = [...registrosPremanifiesto];
+        
+        if (filtroFecha) {
+            registrosFiltrados = registrosFiltrados.filter(reg => 
+                reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
+            );
+        }
+        
+        if (filtroSupervisora) {
+            registrosFiltrados = registrosFiltrados.filter(reg => 
+                reg.supervisora === filtroSupervisora
+            );
+        }
+        
+        const statsPorSupervisora = {};
+        const hoy = new Date().toISOString().split('T')[0];
+        
+        listaSupervisoras.forEach(supervisora => {
+            const citasSupervisora = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
+            const citasHoy = citasSupervisora.filter(reg => 
+                reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
+            ).length;
+            
+            // ✅ CORREGIDO: Se pasa supervisora como primer parámetro
+            const eficiencia = calcularEficienciaSupervisora(supervisora, citasHoy);
+            const claseEficiencia = obtenerClaseEficiencia(eficiencia);
+            const textoEficiencia = obtenerTextoEficiencia(supervisora, citasHoy, eficiencia);
+            
+            statsPorSupervisora[supervisora] = {
+                total: citasSupervisora.length,
+                hoy: citasHoy,
+                eficiencia: eficiencia,
+                claseEficiencia: claseEficiencia,
+                textoEficiencia: textoEficiencia,
+                esAbraham: supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham")
+            };
+        });
+        
+        const supervisorasOrdenadas = Object.keys(statsPorSupervisora).sort((a, b) => 
+            statsPorSupervisora[b].total - statsPorSupervisora[a].total
         );
-    }
-    
-    if (filtroSupervisora) {
-        registrosFiltrados = registrosFiltrados.filter(reg => 
-            reg.supervisora === filtroSupervisora
-        );
-    }
-    
-    const statsPorSupervisora = {};
-    const hoy = new Date().toISOString().split('T')[0];
-    
-    listaSupervisoras.forEach(supervisora => {
-        const citasSupervisora = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
-        const citasHoy = citasSupervisora.filter(reg => 
+        
+        let html = '';
+        
+        // Agregar tarjeta de TOTALES
+        const totalCitasFiltradas = registrosFiltrados.length;
+        const totalCitasHoyFiltradas = registrosFiltrados.filter(reg => 
             reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
         ).length;
         
-        // ✅ CORREGIDO: Se pasa supervisora como primer parámetro
-        const eficiencia = calcularEficienciaSupervisora(supervisora, citasHoy);
-        const claseEficiencia = obtenerClaseEficiencia(eficiencia);
-        const textoEficiencia = obtenerTextoEficiencia(supervisora, citasHoy, eficiencia);
-        
-        statsPorSupervisora[supervisora] = {
-            total: citasSupervisora.length,
-            hoy: citasHoy,
-            eficiencia: eficiencia,
-            claseEficiencia: claseEficiencia,
-            textoEficiencia: textoEficiencia,
-            esAbraham: supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham")
-        };
-    });
-    
-    const supervisorasOrdenadas = Object.keys(statsPorSupervisora).sort((a, b) => 
-        statsPorSupervisora[b].total - statsPorSupervisora[a].total
-    );
-    
-    let html = '';
-    
-    // Agregar tarjeta de TOTALES
-    const totalCitasFiltradas = registrosFiltrados.length;
-    const totalCitasHoyFiltradas = registrosFiltrados.filter(reg => 
-        reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
-    ).length;
-    
-    html += `
-        <div class="stat-card leader">
-            <h3>🏆 TOTAL GENERAL</h3>
-            <div class="count">${totalCitasFiltradas}</div>
-            <div class="supervisora">TOTAL DE CITAS</div>
-            <div class="conteo-dia">
-                <div class="titulo">CITAS HOY</div>
-                <div class="valor-dia">${totalCitasHoyFiltradas}</div>
-            </div>
-            <div class="eficiencia-indicator eficiencia-excelente">
-                META DEL EQUIPO: 37 CITAS = 100%
-            </div>
-        </div>
-    `;
-    
-    supervisorasOrdenadas.forEach((supervisora, index) => {
-        const stats = statsPorSupervisora[supervisora];
-        const esLider = index === 0 && stats.total > 0;
-        const esAbraham = stats.esAbraham;
-        
-        // Destacar tarjeta de Abraham
-        const claseEspecial = esAbraham ? ' style="border-top: 4px solid var(--gold); background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(244, 208, 63, 0.05));"' : '';
-        
         html += `
-            <div class="stat-card ${esLider ? 'leader' : ''}"${claseEspecial}>
-                <h3>${supervisora} ${esAbraham ? '🎯' : ''}</h3>
-                <div class="count">${stats.total}</div>
+            <div class="stat-card leader">
+                <h3>🏆 TOTAL GENERAL</h3>
+                <div class="count">${totalCitasFiltradas}</div>
                 <div class="supervisora">TOTAL DE CITAS</div>
                 <div class="conteo-dia">
                     <div class="titulo">CITAS HOY</div>
-                    <div class="valor-dia">${stats.hoy}</div>
+                    <div class="valor-dia">${totalCitasHoyFiltradas}</div>
                 </div>
-                <div class="eficiencia-indicator ${stats.claseEficiencia}">
-                    ${stats.textoEficiencia}
+                <div class="eficiencia-indicator eficiencia-excelente">
+                    META DEL EQUIPO: 37 CITAS = 100%
                 </div>
-                ${esLider ? '<div class="supervisora">🏆 LÍDER DEL DÍA</div>' : ''}
-                ${esAbraham ? '<div class="supervisora" style="color: var(--gold);">META ESPECIAL: 5 CITAS</div>' : ''}
             </div>
         `;
-    });
-    
-    statsContainer.innerHTML = html || '<div class="sin-datos">NO HAY DATOS DISPONIBLES</div>';
-}
+        
+        supervisorasOrdenadas.forEach((supervisora, index) => {
+            const stats = statsPorSupervisora[supervisora];
+            const esLider = index === 0 && stats.total > 0;
+            const esAbraham = stats.esAbraham;
+            
+            // Destacar tarjeta de Abraham
+            const claseEspecial = esAbraham ? ' style="border-top: 4px solid var(--gold); background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(244, 208, 63, 0.05));"' : '';
+            
+            html += `
+                <div class="stat-card ${esLider ? 'leader' : ''}"${claseEspecial}>
+                    <h3>${supervisora} ${esAbraham ? '🎯' : ''}</h3>
+                    <div class="count">${stats.total}</div>
+                    <div class="supervisora">TOTAL DE CITAS</div>
+                    <div class="conteo-dia">
+                        <div class="titulo">CITAS HOY</div>
+                        <div class="valor-dia">${stats.hoy}</div>
+                    </div>
+                    <div class="eficiencia-indicator ${stats.claseEficiencia}">
+                        ${stats.textoEficiencia}
+                    </div>
+                    ${esLider ? '<div class="supervisora">🏆 LÍDER DEL DÍA</div>' : ''}
+                    ${esAbraham ? '<div class="supervisora" style="color: var(--gold);">META ESPECIAL: 5 CITAS</div>' : ''}
+                </div>
+            `;
+        });
+        
+        statsContainer.innerHTML = html || '<div class="sin-datos">NO HAY DATOS DISPONIBLES</div>';
+      }
+
       function actualizarGraficoBarras() {
         const graficoContainer = document.getElementById('graficoBarras');
         const filtroFecha = document.getElementById('filtroFecha').value;
@@ -2897,6 +3234,94 @@ function actualizarCitasAgregadasHoy() {
           wsResumen.addRow(["CITAS REGISTRADAS HOY:", citasHoy]);
           wsResumen.addRow(["EFICIENCIA GENERAL DEL EQUIPO:", `${eficienciaGeneral}%`]);
           wsResumen.addRow(["FECHA DEL REPORTE:", document.getElementById('filtroFecha').value]);
+          
+          // Hoja de Q & NQ
+          const wsQnq = workbook.addWorksheet("Q & NQ HOY");
+          
+          const tituloQnqRow = wsQnq.addRow(["REPORTE DE CALIFICACIÓN Q & NQ - HOY"]);
+          tituloQnqRow.font = { size: 16, bold: true };
+          tituloQnqRow.alignment = { horizontal: 'center' };
+          wsQnq.mergeCells('A1:D1');
+          
+          const hoyFormateado = new Date().toLocaleDateString('es-MX');
+          wsQnq.addRow([`FECHA: ${hoyFormateado}`]);
+          wsQnq.mergeCells('A2:D2');
+          
+          wsQnq.addRow([]);
+          
+          // Totales Q & NQ
+          const totalQ = qDetalles.length;
+          const totalNQ = nqDetalles.length;
+          const totalCitasHoy = totalQ + totalNQ;
+          const porcentajeQ = totalCitasHoy > 0 ? ((totalQ / totalCitasHoy) * 100).toFixed(1) : 0;
+          const porcentajeNQ = totalCitasHoy > 0 ? ((totalNQ / totalCitasHoy) * 100).toFixed(1) : 0;
+          
+          wsQnq.addRow(["RESUMEN Q & NQ", "", "", ""]);
+          wsQnq.addRow(["TOTAL CITAS HOY:", totalCitasHoy]);
+          wsQnq.addRow(["CALIFICADOS (Q):", totalQ, `${porcentajeQ}%`]);
+          wsQnq.addRow(["NO CALIFICADOS (NQ):", totalNQ, `${porcentajeNQ}%`]);
+          
+          wsQnq.addRow([]);
+          
+          // Detalle por supervisora (Q)
+          wsQnq.addRow(["CALIFICADOS (Q) POR SUPERVISORA"]);
+          wsQnq.mergeCells('A8:D8');
+          
+          const qPorSupervisora = {};
+          qDetalles.forEach(detalle => {
+            const supervisora = detalle.supervisora;
+            if (!qPorSupervisora[supervisora]) {
+              qPorSupervisora[supervisora] = { total: 0, bases: {} };
+            }
+            qPorSupervisora[supervisora].total++;
+            
+            const base = detalle.base;
+            if (!qPorSupervisora[supervisora].bases[base]) {
+              qPorSupervisora[supervisora].bases[base] = 0;
+            }
+            qPorSupervisora[supervisora].bases[base]++;
+          });
+          
+          wsQnq.addRow(["SUPERVISORA", "TOTAL Q", "PORCENTAJE", "BASES DE DATOS"]);
+          
+          Object.keys(qPorSupervisora).forEach(supervisora => {
+            const info = qPorSupervisora[supervisora];
+            const porcentajeSup = totalQ > 0 ? ((info.total / totalQ) * 100).toFixed(1) : 0;
+            const bases = Object.keys(info.bases).map(base => `${base}: ${info.bases[base]}`).join(", ");
+            
+            wsQnq.addRow([supervisora, info.total, `${porcentajeSup}%`, bases]);
+          });
+          
+          wsQnq.addRow([]);
+          
+          // Detalle por supervisora (NQ)
+          wsQnq.addRow(["NO CALIFICADOS (NQ) POR SUPERVISORA"]);
+          wsQnq.mergeCells(`A${wsQnq.rowCount}:D${wsQnq.rowCount}`);
+          
+          const nqPorSupervisora = {};
+          nqDetalles.forEach(detalle => {
+            const supervisora = detalle.supervisora;
+            if (!nqPorSupervisora[supervisora]) {
+              nqPorSupervisora[supervisora] = { total: 0, bases: {} };
+            }
+            nqPorSupervisora[supervisora].total++;
+            
+            const base = detalle.base;
+            if (!nqPorSupervisora[supervisora].bases[base]) {
+              nqPorSupervisora[supervisora].bases[base] = 0;
+            }
+            nqPorSupervisora[supervisora].bases[base]++;
+          });
+          
+          wsQnq.addRow(["SUPERVISORA", "TOTAL NQ", "PORCENTAJE", "BASES DE DATOS"]);
+          
+          Object.keys(nqPorSupervisora).forEach(supervisora => {
+            const info = nqPorSupervisora[supervisora];
+            const porcentajeSup = totalNQ > 0 ? ((info.total / totalNQ) * 100).toFixed(1) : 0;
+            const bases = Object.keys(info.bases).map(base => `${base}: ${info.bases[base]}`).join(", ");
+            
+            wsQnq.addRow([supervisora, info.total, `${porcentajeSup}%`, bases]);
+          });
           
           const wsEstadisticas = workbook.addWorksheet("ESTADÍSTICAS POR SUPERVISORA");
           
