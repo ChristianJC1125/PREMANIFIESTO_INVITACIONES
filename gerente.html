@@ -1464,56 +1464,65 @@
           mostrarNotificacion("ERROR AL ACTUALIZAR LA INFORMACIÓN", 'error');
         }
       }
+// --- FUNCIONES DE CÁLCULO DE EFICIENCIA ---
+      
+function calcularEficienciaSupervisora(supervisora, citasHoy) {
+  // ✅ CAMBIO: Solo Abraham tiene 5 citas = 100%, los demás mantienen 8
+  const metaSupervisora = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham") 
+    ? 5  // Abraham: 5 citas = 100%
+    : 8; // Los demás: 8 citas = 100%
+  
+  if (citasHoy === 0) return 0;
+  
+  let eficiencia = Math.round((citasHoy / metaSupervisora) * 100);
+  
+  // Permitir eficiencia mayor al 100% si supera la meta
+  if (citasHoy > metaSupervisora) {
+    eficiencia = 100 + Math.round(((citasHoy - metaSupervisora) / metaSupervisora) * 100);
+  }
+  
+  return eficiencia;
+}
 
-      // --- FUNCIONES DE CÁLCULO DE EFICIENCIA ---
-      
-      function calcularEficienciaSupervisora(citasHoy) {
-        // 8 citas = 100% de eficiencia
-        if (citasHoy === 0) return 0;
-        
-        let eficiencia = Math.round((citasHoy / 8) * 100);
-        
-        // Permitir eficiencia mayor al 100% si supera las 8 citas
-        if (citasHoy > 8) {
-          eficiencia = 100 + Math.round(((citasHoy - 8) / 8) * 100);
-        }
-        
-        return eficiencia;
-      }
-      
-      function obtenerClaseEficiencia(eficiencia) {
-        if (eficiencia === 0) return 'eficiencia-baja';
-        if (eficiencia < 50) return 'eficiencia-baja';
-        if (eficiencia < 80) return 'eficiencia-media';
-        if (eficiencia < 100) return 'eficiencia-alta';
-        return 'eficiencia-excelente'; // Para > 100%
-      }
-      
-      function obtenerTextoEficiencia(citasHoy, eficiencia) {
-        if (eficiencia === 0) {
-          return `META: 8 CITAS/DÍA (${8} FALTANTES)`;
-        }
-        
-        if (eficiencia >= 100) {
-          const extra = eficiencia - 100;
-          return `🎯 EFICIENCIA: ${eficiencia}% (${citasHoy}/8 +${extra}%)`;
-        }
-        
-        return `EFICIENCIA: ${eficiencia}% (${citasHoy}/8 CITAS)`;
-      }
-      
-      function calcularEficienciaGeneral(citasHoyTotal) {
-        // EFICIENCIA GENERAL DEL EQUIPO: total de citas hoy vs meta total
-        const metaTotal = listaSupervisoras.length * 8;
-        let eficienciaGeneral = Math.round((citasHoyTotal / metaTotal) * 100);
-        
-        // Permitir eficiencia mayor al 100%
-        if (citasHoyTotal > metaTotal) {
-          eficienciaGeneral = 100 + Math.round(((citasHoyTotal - metaTotal) / metaTotal) * 100);
-        }
-        
-        return eficienciaGeneral;
-      }
+function obtenerTextoEficiencia(supervisora, citasHoy, eficiencia) {
+  // ✅ CAMBIO: Meta diferente para Abraham
+  const metaSupervisora = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham")
+    ? 5  // Abraham: 5 citas
+    : 8; // Los demás: 8 citas
+  
+  if (eficiencia === 0) {
+    return `META: ${metaSupervisora} CITAS/DÍA (${metaSupervisora} FALTANTES)`;
+  }
+  
+  if (eficiencia >= 100) {
+    const extra = eficiencia - 100;
+    return `🎯 EFICIENCIA: ${eficiencia}% (${citasHoy}/${metaSupervisora} +${extra}%)`;
+  }
+  
+  return `EFICIENCIA: ${eficiencia}% (${citasHoy}/${metaSupervisora} CITAS)`;
+}
+
+function calcularEficienciaGeneral(citasHoyTotal) {
+  // ✅ CAMBIO: EFICIENCIA GENERAL DEL EQUIPO ajustada para 5 supervisores
+  // Considerando: Abraham (5 citas) + 4 supervisores (8 citas cada uno) = 37 citas totales para 100%
+  const metaTotal = 37; // 37 citas = 100% eficiencia general entre los 5 supervisores
+  let eficienciaGeneral = Math.round((citasHoyTotal / metaTotal) * 100);
+  
+  // Permitir eficiencia mayor al 100%
+  if (citasHoyTotal > metaTotal) {
+    eficienciaGeneral = 100 + Math.round(((citasHoyTotal - metaTotal) / metaTotal) * 100);
+  }
+  
+  return eficienciaGeneral;
+}
+
+function obtenerClaseEficiencia(eficiencia) {
+  if (eficiencia === 0) return 'eficiencia-baja';
+  if (eficiencia < 50) return 'eficiencia-baja';
+  if (eficiencia < 80) return 'eficiencia-media';
+  if (eficiencia < 100) return 'eficiencia-alta';
+  return 'eficiencia-excelente'; // Para > 100%
+}
 
       // --- FUNCIONES DE ACTUALIZACIÓN DE UI ---
 
@@ -1584,69 +1593,75 @@
           </div>
         `;
       }
-
-      function actualizarCitasAgregadasHoy() {
-        const citasAgregadasGrid = document.getElementById('citasAgregadasGrid');
-        const hoy = new Date().toISOString().split('T')[0];
-        
-        const citasHoyPorSupervisora = {};
-        let totalCitasHoy = 0;
-        
-        listaSupervisoras.forEach(supervisora => {
-          const citasHoy = registrosPremanifiesto.filter(reg => 
+function actualizarCitasAgregadasHoy() {
+    const citasAgregadasGrid = document.getElementById('citasAgregadasGrid');
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    const citasHoyPorSupervisora = {};
+    let totalCitasHoy = 0;
+    
+    listaSupervisoras.forEach(supervisora => {
+        const citasHoy = registrosPremanifiesto.filter(reg => 
             reg.supervisora === supervisora && 
             reg.fechaRegistro && 
             reg.fechaRegistro.toString().includes(hoy)
-          ).length;
-          
-          citasHoyPorSupervisora[supervisora] = citasHoy;
-          totalCitasHoy += citasHoy;
-        });
+        ).length;
         
-        const supervisorasOrdenadas = Object.keys(citasHoyPorSupervisora).sort((a, b) => 
-          citasHoyPorSupervisora[b] - citasHoyPorSupervisora[a]
-        );
-        
-        let html = '';
-        
-        // Agregar fila para el total
-        html += `
-          <div class="cita-agregada-item" style="border-left: 4px solid var(--gold);">
+        citasHoyPorSupervisora[supervisora] = citasHoy;
+        totalCitasHoy += citasHoy;
+    });
+    
+    const supervisorasOrdenadas = Object.keys(citasHoyPorSupervisora).sort((a, b) => 
+        citasHoyPorSupervisora[b] - citasHoyPorSupervisora[a]
+    );
+    
+    let html = '';
+    
+    // Agregar fila para el total
+    html += `
+        <div class="cita-agregada-item" style="border-left: 4px solid var(--gold);">
             <div class="cita-agregada-supervisora">🏆 TOTAL DE CITAS HOY</div>
             <div class="cita-agregada-cantidad">${totalCitasHoy} CITAS</div>
             <div class="cita-agregada-eficiencia eficiencia-excelente">
-              ${totalCitasHoy} CITAS AGREGADAS HOY
+                ${totalCitasHoy} CITAS AGREGADAS HOY
             </div>
-          </div>
+        </div>
+    `;
+    
+    supervisorasOrdenadas.forEach(supervisora => {
+        const citasHoy = citasHoyPorSupervisora[supervisora];
+        const eficiencia = calcularEficienciaSupervisora(supervisora, citasHoy); // ✅ CAMBIO: Se pasa supervisora como parámetro
+        const claseEficiencia = obtenerClaseEficiencia(eficiencia);
+        const textoEficiencia = obtenerTextoEficiencia(supervisora, citasHoy, eficiencia); // ✅ CAMBIO: Se pasa supervisora como parámetro
+        
+        // Agregar emoji según eficiencia
+        let emoji = '❌';
+        if (eficiencia >= 50) emoji = '⚠️';
+        if (eficiencia >= 80) emoji = '✅';
+        if (eficiencia >= 100) emoji = '🎯';
+        
+        // Destacar a Abraham
+        const esAbraham = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham");
+        const destacado = esAbraham ? 'style="border-left: 4px solid var(--gold); background: rgba(212, 175, 55, 0.1);"' : '';
+        
+        html += `
+            <div class="cita-agregada-item" ${destacado}>
+                <div class="cita-agregada-supervisora">${emoji} ${supervisora} ${esAbraham ? '🎯' : ''}</div>
+                <div class="cita-agregada-cantidad">${citasHoy} CITAS</div>
+                <div class="cita-agregada-eficiencia ${claseEficiencia}">
+                    ${textoEficiencia}
+                    ${esAbraham ? '<br><small>META ESPECIAL: 5 CITAS = 100%</small>' : ''}
+                </div>
+            </div>
         `;
-        
-        supervisorasOrdenadas.forEach(supervisora => {
-          const citasHoy = citasHoyPorSupervisora[supervisora];
-          const eficiencia = calcularEficienciaSupervisora(citasHoy);
-          const claseEficiencia = obtenerClaseEficiencia(eficiencia);
-          const textoEficiencia = obtenerTextoEficiencia(citasHoy, eficiencia);
-          
-          // Agregar emoji según eficiencia
-          let emoji = '❌';
-          if (eficiencia >= 50) emoji = '⚠️';
-          if (eficiencia >= 80) emoji = '✅';
-          if (eficiencia >= 100) emoji = '🎯';
-          
-          html += `
-            <div class="cita-agregada-item">
-              <div class="cita-agregada-supervisora">${emoji} ${supervisora}</div>
-              <div class="cita-agregada-cantidad">${citasHoy} CITAS</div>
-              <div class="cita-agregada-eficiencia ${claseEficiencia}">${textoEficiencia}</div>
-            </div>
-          `;
-        });
-        
-        if (html === '') {
-          html = '<div class="sin-datos">NO SE HAN AGREGADO CITAS HOY</div>';
-        }
-        
-        citasAgregadasGrid.innerHTML = html;
-      }
+    });
+    
+    if (html === '') {
+        html = '<div class="sin-datos">NO SE HAN AGREGADO CITAS HOY</div>';
+    }
+    
+    citasAgregadasGrid.innerHTML = html;
+}
 
       function cargarListaSupervisoras() {
         const selectFiltro = document.getElementById('filtroSupervisora');
@@ -1661,98 +1676,104 @@
         });
       }
 
-      function actualizarEstadisticasSupervisoras() {
-        const statsContainer = document.getElementById('statsContainer');
-        const filtroFecha = document.getElementById('filtroFecha').value;
-        const filtroSupervisora = document.getElementById('filtroSupervisora').value;
-        
-        let registrosFiltrados = [...registrosPremanifiesto];
-        
-        if (filtroFecha) {
-          registrosFiltrados = registrosFiltrados.filter(reg => 
+   function actualizarEstadisticasSupervisoras() {
+    const statsContainer = document.getElementById('statsContainer');
+    const filtroFecha = document.getElementById('filtroFecha').value;
+    const filtroSupervisora = document.getElementById('filtroSupervisora').value;
+    
+    let registrosFiltrados = [...registrosPremanifiesto];
+    
+    if (filtroFecha) {
+        registrosFiltrados = registrosFiltrados.filter(reg => 
             reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
-          );
-        }
-        
-        if (filtroSupervisora) {
-          registrosFiltrados = registrosFiltrados.filter(reg => 
+        );
+    }
+    
+    if (filtroSupervisora) {
+        registrosFiltrados = registrosFiltrados.filter(reg => 
             reg.supervisora === filtroSupervisora
-          );
-        }
-        
-        const statsPorSupervisora = {};
-        const hoy = new Date().toISOString().split('T')[0];
-        
-        listaSupervisoras.forEach(supervisora => {
-          const citasSupervisora = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
-          const citasHoy = citasSupervisora.filter(reg => 
+        );
+    }
+    
+    const statsPorSupervisora = {};
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    listaSupervisoras.forEach(supervisora => {
+        const citasSupervisora = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
+        const citasHoy = citasSupervisora.filter(reg => 
             reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
-          ).length;
-          
-          const eficiencia = calcularEficienciaSupervisora(citasHoy);
-          const claseEficiencia = obtenerClaseEficiencia(eficiencia);
-          const textoEficiencia = obtenerTextoEficiencia(citasHoy, eficiencia);
-          
-          statsPorSupervisora[supervisora] = {
+        ).length;
+        
+        // ✅ CAMBIO: Se pasa supervisora como parámetro
+        const eficiencia = calcularEficienciaSupervisora(supervisora, citasHoy);
+        const claseEficiencia = obtenerClaseEficiencia(eficiencia);
+        const textoEficiencia = obtenerTextoEficiencia(supervisora, citasHoy, eficiencia); // ✅ CAMBIO
+        
+        statsPorSupervisora[supervisora] = {
             total: citasSupervisora.length,
             hoy: citasHoy,
             eficiencia: eficiencia,
             claseEficiencia: claseEficiencia,
-            textoEficiencia: textoEficiencia
-          };
-        });
-        
-        const supervisorasOrdenadas = Object.keys(statsPorSupervisora).sort((a, b) => 
-          statsPorSupervisora[b].total - statsPorSupervisora[a].total
-        );
-        
-        let html = '';
-        
-        // Agregar tarjeta de TOTALES
-        const totalCitasFiltradas = registrosFiltrados.length;
-        const totalCitasHoyFiltradas = registrosFiltrados.filter(reg => 
-          reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
-        ).length;
-        
-        html += `
-          <div class="stat-card leader">
+            textoEficiencia: textoEficiencia,
+            esAbraham: supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham")
+        };
+    });
+    
+    const supervisorasOrdenadas = Object.keys(statsPorSupervisora).sort((a, b) => 
+        statsPorSupervisora[b].total - statsPorSupervisora[a].total
+    );
+    
+    let html = '';
+    
+    // Agregar tarjeta de TOTALES
+    const totalCitasFiltradas = registrosFiltrados.length;
+    const totalCitasHoyFiltradas = registrosFiltrados.filter(reg => 
+        reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
+    ).length;
+    
+    html += `
+        <div class="stat-card leader">
             <h3>🏆 TOTAL GENERAL</h3>
             <div class="count">${totalCitasFiltradas}</div>
             <div class="supervisora">TOTAL DE CITAS</div>
             <div class="conteo-dia">
-              <div class="titulo">CITAS HOY</div>
-              <div class="valor-dia">${totalCitasHoyFiltradas}</div>
+                <div class="titulo">CITAS HOY</div>
+                <div class="valor-dia">${totalCitasHoyFiltradas}</div>
             </div>
             <div class="eficiencia-indicator eficiencia-excelente">
-              ${totalCitasFiltradas} CITAS EN TOTAL
+                META DEL EQUIPO: 37 CITAS = 100%
             </div>
-          </div>
+        </div>
+    `;
+    
+    supervisorasOrdenadas.forEach((supervisora, index) => {
+        const stats = statsPorSupervisora[supervisora];
+        const esLider = index === 0 && stats.total > 0;
+        const esAbraham = stats.esAbraham;
+        
+        // Destacar tarjeta de Abraham
+        const claseEspecial = esAbraham ? ' style="border-top: 4px solid var(--gold); background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(244, 208, 63, 0.05));"' : '';
+        
+        html += `
+            <div class="stat-card ${esLider ? 'leader' : ''}"${claseEspecial}>
+                <h3>${supervisora} ${esAbraham ? '🎯' : ''}</h3>
+                <div class="count">${stats.total}</div>
+                <div class="supervisora">TOTAL DE CITAS</div>
+                <div class="conteo-dia">
+                    <div class="titulo">CITAS HOY</div>
+                    <div class="valor-dia">${stats.hoy}</div>
+                </div>
+                <div class="eficiencia-indicator ${stats.claseEficiencia}">
+                    ${stats.textoEficiencia}
+                </div>
+                ${esLider ? '<div class="supervisora">🏆 LÍDER DEL DÍA</div>' : ''}
+                ${esAbraham ? '<div class="supervisora" style="color: var(--gold);">META ESPECIAL: 5 CITAS</div>' : ''}
+            </div>
         `;
-        
-        supervisorasOrdenadas.forEach((supervisora, index) => {
-          const stats = statsPorSupervisora[supervisora];
-          const esLider = index === 0 && stats.total > 0;
-          
-          html += `
-            <div class="stat-card ${esLider ? 'leader' : ''}">
-              <h3>${supervisora}</h3>
-              <div class="count">${stats.total}</div>
-              <div class="supervisora">TOTAL DE CITAS</div>
-              <div class="conteo-dia">
-                <div class="titulo">CITAS HOY</div>
-                <div class="valor-dia">${stats.hoy}</div>
-              </div>
-              <div class="eficiencia-indicator ${stats.claseEficiencia}">
-                ${stats.textoEficiencia}
-              </div>
-              ${esLider ? '<div class="supervisora">🏆 LÍDER DEL DÍA</div>' : ''}
-            </div>
-          `;
-        });
-        
-        statsContainer.innerHTML = html || '<div class="sin-datos">NO HAY DATOS DISPONIBLES</div>';
-      }
-
+    });
+    
+    statsContainer.innerHTML = html || '<div class="sin-datos">NO HAY DATOS DISPONIBLES</div>';
+}
       function actualizarGraficoBarras() {
         const graficoContainer = document.getElementById('graficoBarras');
         const filtroFecha = document.getElementById('filtroFecha').value;
