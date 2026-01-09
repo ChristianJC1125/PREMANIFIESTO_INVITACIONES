@@ -1105,15 +1105,26 @@
 
     .cerrar-modal {
       color: var(--gold);
-      font-size: 28px;
+      font-size: 32px;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s ease;
+      background: rgba(30, 41, 59, 0.8);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
     }
 
     .cerrar-modal:hover {
       color: #f4d03f;
-      transform: rotate(90deg);
+      transform: rotate(90deg) scale(1.1);
+      background: rgba(212, 175, 55, 0.2);
+      border-color: #f4d03f;
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
     }
 
     /* Pestañas para las citas del mes */
@@ -1553,6 +1564,7 @@
     let registrosPremanifiesto = [];
     let qDetalles = [];
     let nqDetalles = [];
+    let diaActual = new Date().toDateString(); // Para controlar el cambio de día
 
     document.addEventListener("DOMContentLoaded", function () {
       // --- FUNCIONES PRINCIPALES ---
@@ -1582,6 +1594,25 @@
         return [];
       }
 
+      // --- FUNCIÓN PARA VERIFICAR SI ES UN NUEVO DÍA ---
+      function verificarNuevoDia() {
+          const hoy = new Date().toDateString();
+          
+          if (hoy !== diaActual) {
+              console.log("🔄 ¡NUEVO DÍA DETECTADO! REINICIANDO CONTADORES...");
+              diaActual = hoy;
+              
+              // Actualizar fecha en el filtro
+              const hoyISO = new Date().toISOString().split('T')[0];
+              document.getElementById('filtroFecha').value = hoyISO;
+              
+              mostrarNotificacion("¡NUEVO DÍA! CONTADORES DIARIOS REINICIADOS", 'success');
+              
+              return true;
+          }
+          return false;
+      }
+
       // FUNCIÓN MEJORADA: Configurar Firebase EN TIEMPO REAL
       function configurarFirebase() {
         const database = firebase.database();
@@ -1609,6 +1640,9 @@
             console.log("📝 PRIMER REGISTRO:", registrosPremanifiesto[0]);
             console.log("📝 ÚLTIMO REGISTRO:", registrosPremanifiesto[registrosPremanifiesto.length - 1]);
           }
+          
+          // Verificar si es un nuevo día
+          verificarNuevoDia();
           
           // Actualizar TODAS las secciones del panel automáticamente
           actualizarTodoElPanel();
@@ -1980,15 +2014,37 @@
         const citasHoyPorSupervisora = {};
         let totalCitasHoy = 0;
         
-        listaSupervisoras.forEach(supervisora => {
-            const citasHoy = registrosPremanifiesto.filter(reg => 
-                reg.supervisora === supervisora && 
-                reg.fechaRegistro && 
-                reg.fechaRegistro.toString().includes(hoy)
-            ).length;
+        // Filtrar SOLO citas de hoy
+        const citasDeHoy = registrosPremanifiesto.filter(reg => {
+            if (!reg.fechaRegistro) return false;
             
-            citasHoyPorSupervisora[supervisora] = citasHoy;
-            totalCitasHoy += citasHoy;
+            // Verificar diferentes formatos de fecha
+            const fechaReg = reg.fechaRegistro.toString();
+            const hoyFormateado1 = hoy; // YYYY-MM-DD
+            const hoyFormateado2 = hoy.replace(/-/g, '/'); // YYYY/MM/DD
+            
+            return fechaReg.includes(hoyFormateado1) || 
+                   fechaReg.includes(hoyFormateado2) ||
+                   fechaReg.includes(new Date().getDate().toString()); // Solo el día
+        });
+        
+        console.log(`📅 CITAS DE HOY ENCONTRADAS: ${citasDeHoy.length}`);
+        
+        // Contar por supervisora
+        citasDeHoy.forEach(cita => {
+            const supervisora = cita.supervisora || 'SIN SUPERVISORA';
+            if (!citasHoyPorSupervisora[supervisora]) {
+                citasHoyPorSupervisora[supervisora] = 0;
+            }
+            citasHoyPorSupervisora[supervisora]++;
+            totalCitasHoy++;
+        });
+        
+        // También incluir supervisoras que no tengan citas hoy (mostrar 0)
+        listaSupervisoras.forEach(supervisora => {
+            if (!citasHoyPorSupervisora[supervisora]) {
+                citasHoyPorSupervisora[supervisora] = 0;
+            }
         });
         
         const supervisorasOrdenadas = Object.keys(citasHoyPorSupervisora).sort((a, b) => 
@@ -1997,13 +2053,13 @@
         
         let html = '';
         
-        // Agregar fila para el total
+        // Agregar fila para el total de hoy
         html += `
             <div class="cita-agregada-item" style="border-left: 4px solid var(--gold);">
                 <div class="cita-agregada-supervisora">🏆 TOTAL DE CITAS HOY</div>
                 <div class="cita-agregada-cantidad">${totalCitasHoy} CITAS</div>
                 <div class="cita-agregada-eficiencia eficiencia-excelente">
-                    ${totalCitasHoy} CITAS AGREGADAS HOY
+                    ${new Date().toLocaleDateString('es-MX')}
                 </div>
             </div>
         `;
@@ -2016,6 +2072,7 @@
             
             // Agregar emoji según eficiencia
             let emoji = '❌';
+            if (eficiencia > 0) emoji = '📊';
             if (eficiencia >= 50) emoji = '⚠️';
             if (eficiencia >= 80) emoji = '✅';
             if (eficiencia >= 100) emoji = '🎯';
@@ -3114,6 +3171,9 @@
         
         configurarEventListeners();
         
+        // Configurar verificación diaria periódica (cada hora)
+        setInterval(verificarNuevoDia, 3600000); // 1 hora
+        
         console.log("✅ SISTEMA INICIALIZADO CORRECTAMENTE - LISTO PARA ACTUALIZACIONES EN TIEMPO REAL");
       }
 
@@ -3154,9 +3214,21 @@
         });
         
         limpiarFiltroBtn.addEventListener('click', function() {
-          document.getElementById('filtroFecha').value = new Date().toISOString().split('T')[0];
+          // Establecer fecha de hoy
+          const hoy = new Date().toISOString().split('T')[0];
+          document.getElementById('filtroFecha').value = hoy;
           document.getElementById('filtroSupervisora').value = '';
+          
+          // También limpiar rango de fechas
+          const primerDiaMes = new Date().getDate() === 1 ? 
+            new Date().toISOString().split('T')[0] : 
+            new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+          
+          document.getElementById('fechaInicio').value = primerDiaMes;
+          document.getElementById('fechaFin').value = hoy;
+          
           actualizarTodoElPanel();
+          mostrarNotificacion("FILTROS REINICIADOS A VALORES POR DEFECTO");
         });
         
         exportarBtn.addEventListener("click", function() {
@@ -3174,6 +3246,7 @@
           btnDescargarMes.addEventListener('click', descargarPremanifiestoMesCompleto);
         }
         
+        // CORRECCIÓN DEL BOTÓN CERRAR
         cerrarModal.addEventListener('click', function() {
           modal.style.display = 'none';
         });
