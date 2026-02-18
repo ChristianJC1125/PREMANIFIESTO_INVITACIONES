@@ -885,6 +885,83 @@
       background: linear-gradient(145deg, #b8941f, var(--gold));
     }
 
+    /* NUEVO: Selector de mes para descarga */
+    .mes-selector {
+      background: linear-gradient(145deg, var(--dark-light), var(--dark));
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid var(--gold);
+      position: relative;
+    }
+
+    .mes-selector::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold), #f4d03f);
+    }
+
+    .mes-selector h3 {
+      color: var(--gold);
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mes-selector-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .mes-selector-item {
+      background: rgba(30, 41, 59, 0.8);
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .mes-selector-item select,
+    .mes-selector-item input {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--gold);
+      background: var(--dark-light);
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .mes-selector-item button {
+      background: linear-gradient(145deg, var(--gold), #b8941f);
+      color: var(--text);
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .mes-selector-item button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+    }
+
+    .mes-selector-item button:active {
+      transform: translateY(0);
+    }
+
     .sin-datos {
       text-align: center;
       padding: 50px;
@@ -1431,6 +1508,41 @@
       </div>
     </header>
 
+    <!-- NUEVO: Selector de mes para descargar premanifiestos -->
+    <div class="mes-selector">
+      <h3><i class="fas fa-file-download"></i> DESCARGAR PREMANIFIESTO POR MES</h3>
+      <div class="mes-selector-grid">
+        <div class="mes-selector-item">
+          <label for="mesDescarga">SELECCIONAR MES:</label>
+          <select id="mesDescarga">
+            <option value="0">ENERO</option>
+            <option value="1">FEBRERO</option>
+            <option value="2">MARZO</option>
+            <option value="3">ABRIL</option>
+            <option value="4">MAYO</option>
+            <option value="5">JUNIO</option>
+            <option value="6">JULIO</option>
+            <option value="7">AGOSTO</option>
+            <option value="8">SEPTIEMBRE</option>
+            <option value="9">OCTUBRE</option>
+            <option value="10">NOVIEMBRE</option>
+            <option value="11">DICIEMBRE</option>
+          </select>
+        </div>
+        <div class="mes-selector-item">
+          <label for="añoDescarga">AÑO:</label>
+          <select id="añoDescarga">
+            <!-- Se llenará dinámicamente con JS -->
+          </select>
+        </div>
+        <div class="mes-selector-item">
+          <button id="btnDescargarMesSeleccionado">
+            <i class="fas fa-file-excel"></i> DESCARGAR PREMANIFIESTO
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Resumen General -->
     <section class="resumen-general" id="resumenGeneral">
       <div class="cargando">
@@ -1513,9 +1625,6 @@
           </button>
           <button type="button" id="btnBuscarPorFechas" class="btn-filtro">
             <i class="fas fa-search"></i> BUSCAR POR FECHAS
-          </button>
-          <button type="button" id="btnDescargarMes" class="btn-filtro btn-exportar">
-            <i class="fas fa-file-download"></i> DESCARGAR PREMANIFIESTO MES
           </button>
         </div>
       </div>
@@ -2385,7 +2494,362 @@
         detalleContainer.innerHTML = html || '<div class="sin-datos">NO HAY CITAS PARA MOSTRAR CON LOS FILTROS ACTUALES</div>';
       }
 
-      // --- NUEVAS FUNCIONALIDADES SOLICITADAS ---
+      // --- NUEVAS FUNCIONALIDADES ---
+
+      // FUNCIÓN PARA LLENAR SELECTOR DE AÑOS
+      function llenarSelectorAnios() {
+        const selectAnio = document.getElementById('añoDescarga');
+        const añoActual = new Date().getFullYear();
+        
+        // Generar años desde 2020 hasta añoActual + 1
+        for (let año = 2020; año <= añoActual + 1; año++) {
+          const option = document.createElement('option');
+          option.value = año;
+          option.textContent = año;
+          if (año === añoActual) {
+            option.selected = true;
+          }
+          selectAnio.appendChild(option);
+        }
+      }
+
+      // NUEVA FUNCIÓN: Descargar premanifiesto por mes seleccionado
+      function descargarPremanifiestoPorMes() {
+        const mesSeleccionado = parseInt(document.getElementById('mesDescarga').value);
+        const añoSeleccionado = parseInt(document.getElementById('añoDescarga').value);
+        
+        const meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 
+                       'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+        const nombreMes = meses[mesSeleccionado];
+        
+        console.log(`📅 DESCARGANDO PREMANIFIESTO DE ${nombreMes} ${añoSeleccionado}`);
+        
+        // Obtener todos los registros del mes y año seleccionado
+        const registrosMes = registrosPremanifiesto.filter(registro => {
+          if (!registro.diaEvento) return false;
+          
+          try {
+            const fechaEvento = new Date(registro.diaEvento);
+            // Verificar que la fecha sea válida
+            if (isNaN(fechaEvento.getTime())) return false;
+            
+            return fechaEvento.getMonth() === mesSeleccionado && 
+                   fechaEvento.getFullYear() === añoSeleccionado;
+          } catch (e) {
+            console.warn('Fecha inválida:', registro.diaEvento);
+            return false;
+          }
+        });
+        
+        if (registrosMes.length === 0) {
+          mostrarNotificacion(`NO HAY REGISTROS PARA ${nombreMes} ${añoSeleccionado}`, 'error');
+          return;
+        }
+        
+        // Agrupar por día y excluir lunes
+        const registrosPorDia = {};
+        registrosMes.forEach(registro => {
+          const fecha = registro.diaEvento;
+          if (!fecha) return;
+          
+          try {
+            const fechaObj = new Date(fecha);
+            if (isNaN(fechaObj.getTime())) return;
+            
+            // Excluir lunes (día 1 = lunes)
+            if (fechaObj.getDay() === 1) return;
+            
+            if (!registrosPorDia[fecha]) {
+              registrosPorDia[fecha] = [];
+            }
+            registrosPorDia[fecha].push(registro);
+          } catch (e) {
+            console.warn('Error procesando fecha:', fecha);
+          }
+        });
+        
+        // Ordenar fechas
+        const fechasOrdenadas = Object.keys(registrosPorDia).sort();
+        
+        if (fechasOrdenadas.length === 0) {
+          mostrarNotificacion(`NO HAY REGISTROS PARA DÍAS QUE NO SEAN LUNES EN ${nombreMes} ${añoSeleccionado}`, 'error');
+          return;
+        }
+        
+        // Crear libro de Excel
+        const workbook = new ExcelJS.Workbook();
+        
+        // HOJA 1: RESUMEN GENERAL DEL MES
+        const resumenWorksheet = workbook.addWorksheet("RESUMEN MES");
+        
+        // Título
+        resumenWorksheet.addRow([`PREMANIFIESTO MENSUAL - ${nombreMes} ${añoSeleccionado}`]);
+        resumenWorksheet.mergeCells('A1:M1');
+        const tituloRow = resumenWorksheet.getRow(1);
+        tituloRow.font = { size: 18, bold: true, color: { argb: 'FF1E40AF' } };
+        tituloRow.alignment = { horizontal: 'center' };
+        
+        resumenWorksheet.addRow([`GENERADO EL: ${new Date().toLocaleDateString('es-MX')}`]);
+        resumenWorksheet.mergeCells('A2:M2');
+        const fechaRow = resumenWorksheet.getRow(2);
+        fechaRow.font = { bold: true };
+        fechaRow.alignment = { horizontal: 'center' };
+        
+        resumenWorksheet.addRow([]);
+        
+        // Estadísticas por día
+        resumenWorksheet.addRow(['DÍA', 'FECHA', 'TOTAL CITAS', 'SUPERVISORAS', 'TOTAL PERSONAS', 'PROMEDIO PERSONAS/CITA']);
+        const headerRow = resumenWorksheet.getRow(4);
+        headerRow.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF1E40AF' }
+          };
+          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.alignment = { horizontal: 'center' };
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+        
+        let filaActual = 5;
+        let totalCitasMes = 0;
+        let totalPersonasMes = 0;
+        
+        fechasOrdenadas.forEach((fecha, index) => {
+          const fechaObj = new Date(fecha);
+          const diaNombre = fechaObj.toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase();
+          const diaNumero = fechaObj.getDate();
+          const registrosDelDia = registrosPorDia[fecha];
+          
+          const totalCitas = registrosDelDia.length;
+          const supervisoras = [...new Set(registrosDelDia.map(r => r.supervisora))].length;
+          const totalPersonas = registrosDelDia.reduce((sum, r) => sum + (parseInt(r.numPersonas) || 0), 0);
+          const promedioPersonas = totalPersonas / totalCitas;
+          
+          resumenWorksheet.addRow([
+            diaNombre,
+            fecha,
+            totalCitas,
+            supervisoras,
+            totalPersonas,
+            promedioPersonas.toFixed(1)
+          ]);
+          
+          totalCitasMes += totalCitas;
+          totalPersonasMes += totalPersonas;
+          
+          filaActual++;
+        });
+        
+        // Totales
+        resumenWorksheet.addRow([]);
+        resumenWorksheet.addRow(['TOTAL MES', '', totalCitasMes, '', totalPersonasMes, (totalPersonasMes / totalCitasMes).toFixed(1)]);
+        const totalRow = resumenWorksheet.getRow(filaActual + 2);
+        totalRow.font = { bold: true };
+        totalRow.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFFF3CD' }
+          };
+        });
+        
+        // Estadísticas por supervisora
+        resumenWorksheet.addRow([]);
+        resumenWorksheet.addRow([]);
+        
+        const estadisticasSupervisora = {};
+        registrosMes.forEach(registro => {
+          const supervisora = registro.supervisora || 'SIN SUPERVISORA';
+          if (!estadisticasSupervisora[supervisora]) {
+            estadisticasSupervisora[supervisora] = { citas: 0, personas: 0 };
+          }
+          estadisticasSupervisora[supervisora].citas++;
+          estadisticasSupervisora[supervisora].personas += parseInt(registro.numPersonas) || 0;
+        });
+        
+        resumenWorksheet.addRow(['ESTADÍSTICAS POR SUPERVISORA']);
+        resumenWorksheet.mergeCells(`A${filaActual + 5}:F${filaActual + 5}`);
+        const statsHeader = resumenWorksheet.getRow(filaActual + 5);
+        statsHeader.font = { size: 14, bold: true, color: { argb: 'FF10B981' } };
+        statsHeader.alignment = { horizontal: 'center' };
+        
+        resumenWorksheet.addRow(['SUPERVISORA', 'TOTAL CITAS', 'TOTAL PERSONAS', 'PROMEDIO PERSONAS/CITA', '% DEL TOTAL']);
+        const statsSubHeader = resumenWorksheet.getRow(filaActual + 6);
+        statsSubHeader.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF10B981' }
+          };
+          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.alignment = { horizontal: 'center' };
+        });
+        
+        Object.keys(estadisticasSupervisora).forEach(supervisora => {
+          const stats = estadisticasSupervisora[supervisora];
+          const promedio = stats.personas / stats.citas;
+          const porcentaje = (stats.citas / totalCitasMes * 100).toFixed(1);
+          
+          resumenWorksheet.addRow([
+            supervisora,
+            stats.citas,
+            stats.personas,
+            promedio.toFixed(1),
+            `${porcentaje}%`
+          ]);
+        });
+        
+        // HOJAS POR DÍA (excluyendo lunes)
+        fechasOrdenadas.forEach((fecha, diaIndex) => {
+          const fechaObj = new Date(fecha);
+          const diaNombre = fechaObj.toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase();
+          const diaNumero = fechaObj.getDate();
+          const mesDia = fechaObj.toLocaleDateString('es-MX', { month: 'short' }).toUpperCase().replace('.', '');
+          
+          // Nombre de la hoja: PREMANIFIESTO 01 DIC
+          const nombreHoja = `PREMANIFIESTO ${diaNumero.toString().padStart(2, '0')} ${mesDia}`.substring(0, 31);
+          const worksheet = workbook.addWorksheet(nombreHoja);
+          
+          // Título de la hoja
+          const tituloDia = `PREMANIFIESTO DEL ${diaNombre}, ${diaNumero} DE ${nombreMes} DE ${añoSeleccionado}`;
+          worksheet.addRow([tituloDia]);
+          worksheet.mergeCells('A1:M1');
+          const tituloDiaRow = worksheet.getRow(1);
+          tituloDiaRow.font = { size: 16, bold: true, color: { argb: 'FF1E40AF' } };
+          tituloDiaRow.alignment = { horizontal: 'center' };
+          
+          worksheet.addRow([]);
+          
+          // Encabezados exactos como en la imagen
+          const headers = [
+            'NUM DE CITA', 'FECHA', 'PAX', 'NOMBRES FAMILIA', 'EDAD', 
+            'ESTADO CIVIL', 'TARJETAS', 'ID', 'INGRESOS', 'VENDEDOR', 
+            'OPERADOR', 'GERENTE', 'SPA'
+          ];
+          
+          const headerRowDia = worksheet.addRow(headers);
+          headerRowDia.eachCell((cell) => {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FF0F172A' }
+            };
+            cell.font = {
+              bold: true,
+              color: { argb: 'FFFFFFFF' }
+            };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } }
+            };
+          });
+          
+          // Agregar datos
+          const registrosDelDia = registrosPorDia[fecha];
+          const citasOrdenadas = [...registrosDelDia].sort((a, b) => {
+            const numA = a.citaPorDia || 0;
+            const numB = b.citaPorDia || 0;
+            return numA - numB;
+          });
+          
+          citasOrdenadas.forEach((registro, index) => {
+            const numeroCita = registro.citaPorDia || (index + 1);
+            
+            const rowData = [
+              numeroCita,
+              fecha,
+              registro.numPersonas || '',
+              registro.nombre || '',
+              registro.edad || '',
+              registro.estadoCivil || '',
+              registro.tarjeta || '',
+              '---', // ID siempre como ---
+              registro.ingresos || '',
+              registro.vendedor || '',
+              registro.operador || '',
+              registro.gerente || '',
+              'RESTAURANTE' // SPA siempre como RESTAURANTE
+            ];
+            
+            const row = worksheet.addRow(rowData);
+            
+            // Alternar colores de fila
+            if (index % 2 === 0) {
+              row.eachCell((cell) => {
+                cell.fill = {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  fgColor: { argb: 'FFF8FAFC' }
+                };
+              });
+            }
+            
+            row.eachCell((cell) => {
+              cell.border = {
+                top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+              };
+              cell.alignment = { vertical: 'middle' };
+            });
+          });
+          
+          // Ajustar anchos de columnas
+          worksheet.columns = [
+            { width: 12 }, // NUM DE CITA
+            { width: 12 }, // FECHA
+            { width: 8 },  // PAX
+            { width: 35 }, // NOMBRES FAMILIA
+            { width: 10 }, // EDAD
+            { width: 15 }, // ESTADO CIVIL
+            { width: 15 }, // TARJETAS
+            { width: 10 }, // ID
+            { width: 12 }, // INGRESOS
+            { width: 15 }, // VENDEDOR
+            { width: 15 }, // OPERADOR
+            { width: 15 }, // GERENTE
+            { width: 12 }  // SPA
+          ];
+          
+          // Resumen al final de la hoja
+          const totalCitasDia = registrosDelDia.length;
+          const totalPersonasDia = registrosDelDia.reduce((sum, r) => sum + (parseInt(r.numPersonas) || 0), 0);
+          const supervisorasDia = [...new Set(registrosDelDia.map(r => r.supervisora))].length;
+          
+          worksheet.addRow([]);
+          worksheet.addRow(['RESUMEN DEL DÍA:', '', '', '', '', '', '', '', '', '', '', '', '']);
+          const resumenHeader = worksheet.getRow(worksheet.rowCount);
+          resumenHeader.font = { bold: true, size: 12 };
+          
+          worksheet.addRow(['TOTAL CITAS:', totalCitasDia]);
+          worksheet.addRow(['TOTAL PERSONAS:', totalPersonasDia]);
+          worksheet.addRow(['SUPERVISORAS:', supervisorasDia]);
+          worksheet.addRow(['PROMEDIO PERSONAS/CITA:', (totalPersonasDia / totalCitasDia).toFixed(1)]);
+        });
+        
+        // Generar y descargar archivo
+        workbook.xlsx.writeBuffer().then(buffer => {
+          const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          const nombreMesLower = nombreMes.toLowerCase();
+          const nombreArchivo = `PREMANIFIESTO_${nombreMesLower}_${añoSeleccionado}.xlsx`;
+          
+          saveAs(blob, nombreArchivo);
+          mostrarNotificacion(`✅ PREMANIFIESTO DE ${nombreMes} ${añoSeleccionado} DESCARGADO CORRECTAMENTE (${registrosMes.length} CITAS)`);
+        }).catch(error => {
+          console.error('Error al generar Excel:', error);
+          mostrarNotificacion('ERROR AL GENERAR EL ARCHIVO', 'error');
+        });
+      }
 
       // FUNCIÓN PARA MOSTRAR CITAS POR RANGO DE FECHAS
       function mostrarCitasPorFechas() {
@@ -2460,11 +2924,6 @@
         
         // Generar HTML
         let html = `
-          <div class="modal-header">
-            <h3><i class="fas fa-calendar-alt"></i> PREMANIFIESTO DEL ${inicioFormateada} AL ${finFormateada}</h3>
-            <span class="cerrar-modal">&times;</span>
-          </div>
-          
           <div class="resumen-citas-mes">
             <div class="resumen-mes-item">
               <div class="titulo">TOTAL DE CITAS</div>
@@ -2622,324 +3081,6 @@
             // Mostrar el contenido correspondiente
             document.getElementById(`contenido-${fecha}`).classList.add('activa');
           });
-        });
-      }
-
-      // FUNCIÓN PARA DESCARGAR PREMANIFIESTO DEL MES COMPLETO
-      function descargarPremanifiestoMesCompleto() {
-        const hoy = new Date();
-        const mesActual = hoy.getMonth();
-        const añoActual = hoy.getFullYear();
-        const mesNombre = hoy.toLocaleDateString('es-MX', { month: 'long' }).toUpperCase();
-        
-        // Obtener todos los registros del mes actual
-        const registrosMes = registrosPremanifiesto.filter(registro => {
-          if (!registro.diaEvento) return false;
-          
-          const fechaEvento = new Date(registro.diaEvento);
-          return fechaEvento.getMonth() === mesActual && fechaEvento.getFullYear() === añoActual;
-        });
-        
-        if (registrosMes.length === 0) {
-          mostrarNotificacion('NO HAY REGISTROS PARA EL MES ACTUAL', 'error');
-          return;
-        }
-        
-        // Agrupar por día y excluir lunes
-        const registrosPorDia = {};
-        registrosMes.forEach(registro => {
-          const fecha = registro.diaEvento;
-          const fechaObj = new Date(fecha);
-          
-          // Excluir lunes (día 1 = lunes)
-          if (fechaObj.getDay() === 1) return;
-          
-          if (!registrosPorDia[fecha]) {
-            registrosPorDia[fecha] = [];
-          }
-          registrosPorDia[fecha].push(registro);
-        });
-        
-        // Ordenar fechas
-        const fechasOrdenadas = Object.keys(registrosPorDia).sort();
-        
-        if (fechasOrdenadas.length === 0) {
-          mostrarNotificacion('NO HAY REGISTROS PARA DÍAS QUE NO SEAN LUNES', 'error');
-          return;
-        }
-        
-        // Crear libro de Excel
-        const workbook = new ExcelJS.Workbook();
-        
-        // HOJA 1: RESUMEN GENERAL
-        const resumenWorksheet = workbook.addWorksheet("RESUMEN MES");
-        
-        // Título
-        resumenWorksheet.addRow([`PREMANIFIESTO MENSUAL - ${mesNombre} ${añoActual}`]);
-        resumenWorksheet.mergeCells('A1:M1');
-        const tituloRow = resumenWorksheet.getRow(1);
-        tituloRow.font = { size: 18, bold: true, color: { argb: 'FF1E40AF' } };
-        tituloRow.alignment = { horizontal: 'center' };
-        
-        resumenWorksheet.addRow([`GENERADO EL: ${new Date().toLocaleDateString('es-MX')}`]);
-        resumenWorksheet.mergeCells('A2:M2');
-        const fechaRow = resumenWorksheet.getRow(2);
-        fechaRow.font = { bold: true };
-        fechaRow.alignment = { horizontal: 'center' };
-        
-        resumenWorksheet.addRow([]);
-        
-        // Estadísticas por día
-        resumenWorksheet.addRow(['DÍA', 'FECHA', 'TOTAL CITAS', 'SUPERVISORAS', 'TOTAL PERSONAS', 'PROMEDIO PERSONAS/CITA']);
-        const headerRow = resumenWorksheet.getRow(4);
-        headerRow.eachCell((cell) => {
-          cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FF1E40AF' }
-          };
-          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-          cell.alignment = { horizontal: 'center' };
-          cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
-          };
-        });
-        
-        let filaActual = 5;
-        let totalCitasMes = 0;
-        let totalPersonasMes = 0;
-        
-        fechasOrdenadas.forEach((fecha, index) => {
-          const fechaObj = new Date(fecha);
-          const diaNombre = fechaObj.toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase();
-          const diaNumero = fechaObj.getDate();
-          const registrosDelDia = registrosPorDia[fecha];
-          
-          const totalCitas = registrosDelDia.length;
-          const supervisoras = [...new Set(registrosDelDia.map(r => r.supervisora))].length;
-          const totalPersonas = registrosDelDia.reduce((sum, r) => sum + (parseInt(r.numPersonas) || 0), 0);
-          const promedioPersonas = totalPersonas / totalCitas;
-          
-          resumenWorksheet.addRow([
-            diaNombre,
-            fecha,
-            totalCitas,
-            supervisoras,
-            totalPersonas,
-            promedioPersonas.toFixed(1)
-          ]);
-          
-          totalCitasMes += totalCitas;
-          totalPersonasMes += totalPersonas;
-          
-          filaActual++;
-        });
-        
-        // Totales
-        resumenWorksheet.addRow([]);
-        resumenWorksheet.addRow(['TOTAL MES', '', totalCitasMes, '', totalPersonasMes, (totalPersonasMes / totalCitasMes).toFixed(1)]);
-        const totalRow = resumenWorksheet.getRow(filaActual + 2);
-        totalRow.font = { bold: true };
-        totalRow.eachCell((cell) => {
-          cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFFFF3CD' }
-          };
-        });
-        
-        // Estadísticas por supervisora
-        resumenWorksheet.addRow([]);
-        resumenWorksheet.addRow([]);
-        
-        const estadisticasSupervisora = {};
-        registrosMes.forEach(registro => {
-          const supervisora = registro.supervisora || 'SIN SUPERVISORA';
-          if (!estadisticasSupervisora[supervisora]) {
-            estadisticasSupervisora[supervisora] = { citas: 0, personas: 0 };
-          }
-          estadisticasSupervisora[supervisora].citas++;
-          estadisticasSupervisora[supervisora].personas += parseInt(registro.numPersonas) || 0;
-        });
-        
-        resumenWorksheet.addRow(['ESTADÍSTICAS POR SUPERVISORA']);
-        resumenWorksheet.mergeCells(`A${filaActual + 5}:F${filaActual + 5}`);
-        const statsHeader = resumenWorksheet.getRow(filaActual + 5);
-        statsHeader.font = { size: 14, bold: true, color: { argb: 'FF10B981' } };
-        statsHeader.alignment = { horizontal: 'center' };
-        
-        resumenWorksheet.addRow(['SUPERVISORA', 'TOTAL CITAS', 'TOTAL PERSONAS', 'PROMEDIO PERSONAS/CITA', '% DEL TOTAL']);
-        const statsSubHeader = resumenWorksheet.getRow(filaActual + 6);
-        statsSubHeader.eachCell((cell) => {
-          cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FF10B981' }
-          };
-          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-          cell.alignment = { horizontal: 'center' };
-        });
-        
-        Object.keys(estadisticasSupervisora).forEach(supervisora => {
-          const stats = estadisticasSupervisora[supervisora];
-          const promedio = stats.personas / stats.citas;
-          const porcentaje = (stats.citas / totalCitasMes * 100).toFixed(1);
-          
-          resumenWorksheet.addRow([
-            supervisora,
-            stats.citas,
-            stats.personas,
-            promedio.toFixed(1),
-            `${porcentaje}%`
-          ]);
-        });
-        
-        // HOJAS POR DÍA (excluyendo lunes)
-        fechasOrdenadas.forEach((fecha, diaIndex) => {
-          const fechaObj = new Date(fecha);
-          const diaNombre = fechaObj.toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase();
-          const diaNumero = fechaObj.getDate();
-          const mesDia = fechaObj.toLocaleDateString('es-MX', { month: 'short' }).toUpperCase().replace('.', '');
-          
-          // Nombre de la hoja: PREMANIFIESTO 01 DIC
-          const nombreHoja = `PREMANIFIESTO ${diaNumero.toString().padStart(2, '0')} ${mesDia}`.substring(0, 31);
-          const worksheet = workbook.addWorksheet(nombreHoja);
-          
-          // Título de la hoja
-          const tituloDia = `PREMANIFIESTO DEL ${diaNombre}, ${diaNumero} DE ${mesNombre} DE ${añoActual}`;
-          worksheet.addRow([tituloDia]);
-          worksheet.mergeCells('A1:M1');
-          const tituloDiaRow = worksheet.getRow(1);
-          tituloDiaRow.font = { size: 16, bold: true, color: { argb: 'FF1E40AF' } };
-          tituloDiaRow.alignment = { horizontal: 'center' };
-          
-          worksheet.addRow([]);
-          
-          // Encabezados exactos como en la imagen
-          const headers = [
-            'NUM DE CITA', 'FECHA', 'PAX', 'NOMBRES FAMILIA', 'EDAD', 
-            'ESTADO CIVIL', 'TARJETAS', 'ID', 'INGRESOS', 'VENDEDOR', 
-            'OPERADOR', 'GERENTE', 'SPA'
-          ];
-          
-          const headerRowDia = worksheet.addRow(headers);
-          headerRowDia.eachCell((cell) => {
-            cell.fill = {
-              type: 'pattern',
-              pattern: 'solid',
-              fgColor: { argb: 'FF0F172A' }
-            };
-            cell.font = {
-              bold: true,
-              color: { argb: 'FFFFFFFF' }
-            };
-            cell.alignment = { horizontal: 'center', vertical: 'middle' };
-            cell.border = {
-              top: { style: 'thin', color: { argb: 'FF000000' } },
-              left: { style: 'thin', color: { argb: 'FF000000' } },
-              bottom: { style: 'thin', color: { argb: 'FF000000' } },
-              right: { style: 'thin', color: { argb: 'FF000000' } }
-            };
-          });
-          
-          // Agregar datos
-          const registrosDelDia = registrosPorDia[fecha];
-          const citasOrdenadas = [...registrosDelDia].sort((a, b) => {
-            const numA = a.citaPorDia || 0;
-            const numB = b.citaPorDia || 0;
-            return numA - numB;
-          });
-          
-          citasOrdenadas.forEach((registro, index) => {
-            const numeroCita = registro.citaPorDia || (index + 1);
-            
-            const rowData = [
-              numeroCita,
-              fecha,
-              registro.numPersonas || '',
-              registro.nombre || '',
-              registro.edad || '',
-              registro.estadoCivil || '',
-              registro.tarjeta || '',
-              '---', // ID siempre como ---
-              registro.ingresos || '',
-              registro.vendedor || '',
-              registro.operador || '',
-              registro.gerente || '',
-              'RESTAURANTE' // SPA siempre como RESTAURANTE
-            ];
-            
-            const row = worksheet.addRow(rowData);
-            
-            // Alternar colores de fila
-            if (index % 2 === 0) {
-              row.eachCell((cell) => {
-                cell.fill = {
-                  type: 'pattern',
-                  pattern: 'solid',
-                  fgColor: { argb: 'FFF8FAFC' }
-                };
-              });
-            }
-            
-            row.eachCell((cell) => {
-              cell.border = {
-                top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-                left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-                bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-                right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
-              };
-              cell.alignment = { vertical: 'middle' };
-            });
-          });
-          
-          // Ajustar anchos de columnas
-          worksheet.columns = [
-            { width: 12 }, // NUM DE CITA
-            { width: 12 }, // FECHA
-            { width: 8 },  // PAX
-            { width: 35 }, // NOMBRES FAMILIA
-            { width: 10 }, // EDAD
-            { width: 15 }, // ESTADO CIVIL
-            { width: 15 }, // TARJETAS
-            { width: 10 }, // ID
-            { width: 12 }, // INGRESOS
-            { width: 15 }, // VENDEDOR
-            { width: 15 }, // OPERADOR
-            { width: 15 }, // GERENTE
-            { width: 12 }  // SPA
-          ];
-          
-          // Resumen al final de la hoja
-          const totalCitasDia = registrosDelDia.length;
-          const totalPersonasDia = registrosDelDia.reduce((sum, r) => sum + (parseInt(r.numPersonas) || 0), 0);
-          const supervisorasDia = [...new Set(registrosDelDia.map(r => r.supervisora))].length;
-          
-          worksheet.addRow([]);
-          worksheet.addRow(['RESUMEN DEL DÍA:', '', '', '', '', '', '', '', '', '', '', '', '']);
-          const resumenHeader = worksheet.getRow(worksheet.rowCount);
-          resumenHeader.font = { bold: true, size: 12 };
-          
-          worksheet.addRow(['TOTAL CITAS:', totalCitasDia]);
-          worksheet.addRow(['TOTAL PERSONAS:', totalPersonasDia]);
-          worksheet.addRow(['SUPERVISORAS:', supervisorasDia]);
-          worksheet.addRow(['PROMEDIO PERSONAS/CITA:', (totalPersonasDia / totalCitasDia).toFixed(1)]);
-        });
-        
-        // Generar y descargar archivo
-        workbook.xlsx.writeBuffer().then(buffer => {
-          const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-          const nombreMes = mesNombre.toLowerCase();
-          const nombreArchivo = `PREMANIFIESTO_COMPLETO_${nombreMes}_${añoActual}.xlsx`;
-          
-          saveAs(blob, nombreArchivo);
-          mostrarNotificacion(`PREMANIFIESTO COMPLETO DE ${mesNombre} DESCARGADO CORRECTAMENTE`);
-        }).catch(error => {
-          console.error('Error al generar Excel:', error);
-          mostrarNotificacion('ERROR AL GENERAR EL ARCHIVO', 'error');
         });
       }
 
@@ -3152,6 +3293,9 @@
       function inicializarSistema() {
         console.log("🚀 INICIALIZANDO SISTEMA DE TIEMPO REAL...");
         
+        // Llenar selector de años
+        llenarSelectorAnios();
+        
         configurarFirebase();
         
         const hoy = new Date();
@@ -3184,7 +3328,7 @@
         const limpiarFiltroBtn = document.getElementById('limpiarFiltro');
         const btnCitasMes = document.getElementById('btnCitasMes');
         const btnBuscarPorFechas = document.getElementById('btnBuscarPorFechas');
-        const btnDescargarMes = document.getElementById('btnDescargarMes');
+        const btnDescargarMesSeleccionado = document.getElementById('btnDescargarMesSeleccionado');
         const modal = document.getElementById('modalCitasMes');
         const cerrarModal = document.querySelector('.cerrar-modal');
         
@@ -3242,8 +3386,8 @@
           btnBuscarPorFechas.addEventListener('click', mostrarCitasPorFechas);
         }
         
-        if (btnDescargarMes) {
-          btnDescargarMes.addEventListener('click', descargarPremanifiestoMesCompleto);
+        if (btnDescargarMesSeleccionado) {
+          btnDescargarMesSeleccionado.addEventListener('click', descargarPremanifiestoPorMes);
         }
         
         // CORRECCIÓN DEL BOTÓN CERRAR
