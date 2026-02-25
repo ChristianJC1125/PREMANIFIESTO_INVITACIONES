@@ -2913,398 +2913,8 @@
           mostrarNotificacion("Registro actualizado correctamente");
       });
 
-      // Función para generar PDF desde edición - CON ESTILO NEÓN
-      function generarPDFDesdeEdicion() {
-          const { jsPDF } = window.jspdf;
-
-          const nombre = registroEditando.nombre;
-          const estadoCivil = registroEditando.estadoCivil;
-          const personas = registroEditando.numPersonas;
-          const hora = document.getElementById('editarHora').value;
-          const fecha = registroEditando.diaEvento;
-          const celular = registroEditando.telefono;
-          const codigo = "SF";
-          const hotelSeleccionado = registroEditando.hotel;
-
-          if (!hotelSeleccionado) {
-              alert("Por favor selecciona un hotel.");
-              return;
-          }
-
-          const doc = new jsPDF();
-          
-          const fondoClave = hotelSeleccionado.toLowerCase().includes("sheraton") ? "sheraton" : 
-                            hotelSeleccionado.toLowerCase().includes("fontan") ? "fontan" : 
-                            hotelSeleccionado.toLowerCase().includes("marquis") ? "marquis" : 
-                            hotelSeleccionado.toLowerCase().includes("daikoku") ? "daikoku" : "sheraton";
-          
-          try {
-              if (fondos[fondoClave]) {
-                  doc.addImage(fondos[fondoClave], "PNG", 0, 0, 210, 297);
-              }
-          } catch (error) {
-              console.error("Error al cargar el fondo:", error);
-          }
-
-          const acompanantesInputs = document.querySelectorAll("#acompanantesContainer input");
-          const acompanantes = Array.from(acompanantesInputs)
-              .map(input => input.value.trim())
-              .filter(val => val !== "");
-
-          let saludo = "";
-          const estadosMasculinos = ["soltero", "casado", "unión libre", "divorciado", "viudo"];
-          if (acompanantes.length > 0) {
-              saludo = `ESTIMADOS: ${nombre.toUpperCase()} Y ${acompanantes.join(" Y ").toUpperCase()}`;
-          } else {
-              saludo = estadosMasculinos.includes(estadoCivil.toLowerCase())
-                  ? `ESTIMADO: ${nombre.toUpperCase()}`
-                  : `ESTIMADA: ${nombre.toUpperCase()}`;
-          }
-
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(11);
-          const saludoY = fondoClave === "fontan" ? 70 : 80;
-          
-          // ✅ TEXTO CON EFECTO NEÓN: sombra negra + blanco
-          doc.setTextColor(0, 0, 0); // Negro para sombra
-          doc.text(saludo, 105 + 1, saludoY + 1, { align: "center" });
-          doc.setTextColor(255, 255, 255); // Blanco neón
-          doc.text(saludo, 105, saludoY, { align: "center" });
-
-          doc.setDrawColor(255, 255, 255);
-          doc.setLineWidth(0.5);
-          doc.line(25, saludoY + 4, 160, saludoY + 4);
-
-          doc.setFont("helvetica", "normal");
-
-          let x = fondoClave === "sheraton" ? 20 : 25;
-          let textoMaxWidth = fondoClave === "sheraton" ? 130 : 160;
-          const inicioY = saludoY + 12;
-
-          const horaFormateada = convertirHoraAMPM(hora);
-
-          // ✅ TEXTO CON EFECTO NEÓN (eliminado Estado Civil)
-          const textos = [
-              `Mesa: ${personas.toUpperCase()}`,
-              `Hora de la cita: ${horaFormateada}`,
-              `Día del evento: ${fecha}`
-          ];
-
-          textos.forEach((texto, index) => {
-              doc.setTextColor(0, 0, 0); // Sombra negra
-              doc.text(texto, x + 1, inicioY + (index * 6) + 1);
-              doc.setTextColor(255, 255, 255); // Blanco neón
-              doc.text(texto, x, inicioY + (index * 6));
-          });
-
-          let y = inicioY + 24; // Ajustado porque quitamos una línea
-          let ubicacionHotel = "#";
-          if (fondoClave === "marquis") {
-              ubicacionHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
-          } else if (fondoClave === "fontan") {
-              ubicacionHotel = "https://maps.app.goo.gl/UVjAHobxNAHP5bwu9";
-          } else if (fondoClave === "sheraton") {
-              ubicacionHotel = "https://maps.app.goo.gl/LWt6E1X8cQH2bXrZA";
-          } else if (fondoClave === "daikoku") {
-              ubicacionHotel = "https://maps.app.goo.gl/KMzy9oQ2AMqA3JiZ9"; 
-          }
-
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(fondoClave === "sheraton" ? 10 : 11);
-          const eventoTexto = "En este evento contaremos con:";
-          const eventoWidth = doc.getTextWidth(eventoTexto);
-          
-          // ✅ TEXTO CON EFECTO NEÓN
-          doc.setTextColor(0, 0, 0);
-          doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2 + 1, y + 1);
-          doc.setTextColor(255, 255, 255);
-          doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
-          y += 6;
-
-          doc.setFont("helvetica", "normal");
-          const items = [
-              "Alimentos en cortesía.",
-              "Atención personalizada para cada uno de nuestros invitados.",
-              `Clave de acceso: ${codigo}`
-          ];
-          
-          items.forEach(item => {
-              // Círculos con efecto neón
-              doc.setDrawColor(0, 0, 0);
-              doc.setFillColor(255, 255, 255);
-              doc.circle(x + 1, y - 1, 1.5, "FD");
-              doc.setDrawColor(255, 255, 255);
-              doc.setFillColor(255, 255, 255);
-              doc.circle(x, y - 2, 1.5, "FD");
-              
-              // Texto con efecto
-              doc.setTextColor(0, 0, 0);
-              doc.text(item, x + 9, y + 1);
-              doc.setTextColor(255, 255, 255);
-              doc.text(item, x + 8, y);
-              y += 6;
-          });
-
-          y += 7;
-          doc.setFont("helvetica", "bold");
-          const hotelNombre = hotelSeleccionado;
-          
-          // Texto con efecto
-          doc.setTextColor(0, 0, 0);
-          doc.text(`El evento es patrocinado por Dstination Connect Group en el ${hotelNombre}...`, x + 1, y + 1);
-          doc.setTextColor(255, 255, 255);
-          doc.text(`El evento es patrocinado por Dstination Connect Group en el ${hotelNombre}...`, x, y);
-          y += 5;
-
-          const textoDetalles = [
-              `Ubicación del Hotel: ${ubicacionHotel}`,
-              "Recibirás un certificado de hospedaje vacacional válido por 4 días y 3 noches...",
-              "¡Si no tienes fecha de viaje no te preocupes tienes medio año de vigencia!"
-          ];
-
-          textoDetalles.forEach((t, index) => {
-              const lines = doc.splitTextToSize(t, textoMaxWidth);
-              if (index === 0) {
-                  // Parte fija "Ubicación del Hotel:" con efecto
-                  doc.setTextColor(0, 0, 0);
-                  doc.text("Ubicación del Hotel:", x + 1, y + 1);
-                  doc.setTextColor(255, 255, 255);
-                  doc.text("Ubicación del Hotel:", x, y);
-                  
-                  const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
-                  
-                  // 🔥 ENLACE EN AZUL NEÓN (CIAN)
-                  doc.setTextColor(0, 0, 0);
-                  doc.textWithLink(ubicacionHotel, x + labelWidth + 2, y + 1, { url: ubicacionHotel });
-                  
-                  doc.setTextColor(0, 255, 255); // Cyan neón / Azul brillante
-                  doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
-                  
-                  doc.setTextColor(255, 255, 255); // Restauramos blanco
-                  y += 7;
-              } else {
-                  // Texto normal con efecto
-                  lines.forEach((line, lineIdx) => {
-                      doc.setTextColor(0, 0, 0);
-                      doc.text(line, x + 1, y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7)) + 1);
-                      doc.setTextColor(255, 255, 255);
-                      doc.text(line, x, y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7)));
-                  });
-                  y += lines.length * (fondoClave === "sheraton" ? 5 : 7);
-              }
-          });
-
-          y += 6;
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(fondoClave === "sheraton" ? 9 : 10);
-          y += 6;
-
-          if (fondoClave === "marquis") {
-              const requisitosCol1 = [
-                  "Mostrar cualquier identificación vigente (INE y/o PASAPORTE).",
-                  "Identificarse con tarjeta vigente de crédito y/o débito vigente Visa, MasterCard o AMEX."
-              ];
-              const requisitosCol2 = [
-                  "Contar con el tiempo estimado de 90 minutos.",
-                  "Indispensable en caso de ser casado o vivir en unión libre nos acompañen en pareja."
-              ];
-
-              const col1X = x;
-              const col2X = 110;
-              const lineHeight = 12;
-
-              doc.setFont("helvetica", "normal");
-              doc.setFontSize(10);
-
-              requisitosCol1.forEach((text, i) => {
-                  // Círculo con efecto
-                  doc.setDrawColor(0, 0, 0);
-                  doc.setFillColor(255, 255, 255);
-                  doc.circle(col1X + 1, y + i * lineHeight, 1.5, "FD");
-                  doc.setDrawColor(255, 255, 255);
-                  doc.setFillColor(255, 255, 255);
-                  doc.circle(col1X, y + i * lineHeight - 1, 1.5, "FD");
-                  
-                  const lines = doc.splitTextToSize(text, 75);
-                  lines.forEach((line, lineIdx) => {
-                      doc.setTextColor(0, 0, 0);
-                      doc.text(line, col1X + 9, y + i * lineHeight + (lineIdx * 5) + 1);
-                      doc.setTextColor(255, 255, 255);
-                      doc.text(line, col1X + 8, y + i * lineHeight + (lineIdx * 5));
-                  });
-              });
-
-              requisitosCol2.forEach((text, i) => {
-                  // Círculo con efecto
-                  doc.setDrawColor(0, 0, 0);
-                  doc.setFillColor(255, 255, 255);
-                  doc.circle(col2X + 1, y + i * lineHeight, 1.5, "FD");
-                  doc.setDrawColor(255, 255, 255);
-                  doc.setFillColor(255, 255, 255);
-                  doc.circle(col2X, y + i * lineHeight - 1, 1.5, "FD");
-                  
-                  const lines = doc.splitTextToSize(text, 75);
-                  lines.forEach((line, lineIdx) => {
-                      doc.setTextColor(0, 0, 0);
-                      doc.text(line, col2X + 9, y + i * lineHeight + (lineIdx * 5) + 1);
-                      doc.setTextColor(255, 255, 255);
-                      doc.text(line, col2X + 8, y + i * lineHeight + (lineIdx * 5));
-                  });
-              });
-
-              y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 5;
-          } else {
-              doc.setFont("helvetica", "normal");
-              doc.setFontSize(fondoClave === "sheraton" ? 10 : 11);
-
-              const requisitos = [
-                  ['Mostrar cualquier identificación vigente', '(INE y/o PASAPORTE).'],
-                  ['Contar con el tiempo estimado of 90 minutos.', ''],
-                  ['Identificarse como tarjetahabiente crédito y/o', 'débito vigente Visa, MasterCard o AMEX.'],
-                  ['Indispensable en caso de ser casado o', 'vivir en unión libre', 'nos acompañen en pareja.']
-              ];
-
-              requisitos.forEach(text => {
-                  // Círculo con efecto
-                  doc.setDrawColor(0, 0, 0);
-                  doc.setFillColor(255, 255, 255);
-                  doc.circle(x + 1, y, 1.5, "FD");
-                  doc.setDrawColor(255, 255, 255);
-                  doc.setFillColor(255, 255, 255);
-                  doc.circle(x, y - 1, 1.5, "FD");
-                  
-                  const lines = doc.splitTextToSize(text, textoMaxWidth);
-                  lines.forEach((line, lineIdx) => {
-                      doc.setTextColor(0, 0, 0);
-                      doc.text(line, x + 9, y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7)) + 1);
-                      doc.setTextColor(255, 255, 255);
-                      doc.text(line, x + 8, y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7)));
-                  });
-                  y += lines.length * (fondoClave === "sheraton" ? 5 : 7);
-              });
-          }
-
-          const blob = doc.output('blob');
-          const pdfUrl = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = pdfUrl;
-          a.download = `Invitacion_Actualizada_${nombre.replace(/\s+/g, "_")}.pdf`;
-          a.click();
-
-          alert("Invitación actualizada descargada correctamente.");
-      }
-
-      // --- FUNCIÓN CORREGIDA PARA AGREGAR AL PREMANIFIESTO ---
-      function agregarAlPremanifiesto(esReagendados = false) {
-          const nombre = document.getElementById("nombre").value.trim();
-          const estadoCivil = document.getElementById("estadoCivil").value;
-          const numPersonas = document.getElementById("mesaDescripcion").value;
-          const hora = document.getElementById("horaCita").value;
-          const hotelSeleccionado = document.getElementById("hotel").value;
-          const edad = document.getElementById("edad").value;
-          const tarjeta = document.getElementById("tarjeta").value;
-          const ingresos = document.getElementById("ingresos").value;
-          const operador = document.getElementById("operador").value;
-          const baseDatos = document.getElementById("baseDatos").value;
-          const supervisora = document.getElementById("supervisora").value;
-          const vendedor = document.getElementById("vendedor").value;
-          const calificacionOrigen = document.getElementById("calificacionOrigen").value;
-          const telefono = document.getElementById("celular").value;
-          const diaEventoInput = document.getElementById("diaEvento").value;
-
-          // Validaciones más robustas
-          if (!nombre || !hotelSeleccionado || !supervisora || !telefono || !diaEventoInput) {
-              console.error("Faltan datos esenciales:", {
-                  nombre, hotelSeleccionado, supervisora, telefono, diaEventoInput
-              });
-              alert("Por favor, complete todos los campos requeridos.");
-              return false;
-          }
-
-          // Asegurar que la fecha esté en formato YYYY-MM-DD
-          let diaEvento = diaEventoInput;
-          
-          // Convertir la fecha a formato consistente
-          try {
-              const fechaObj = new Date(diaEventoInput);
-              if (isNaN(fechaObj.getTime())) {
-                  console.error("Fecha inválida:", diaEventoInput);
-                  alert("Fecha del evento inválida. Use formato YYYY-MM-DD");
-                  return false;
-              }
-              diaEvento = fechaObj.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-          } catch (error) {
-              console.error("Error al procesar fecha:", error);
-              // Mantener el formato original si hay error
-          }
-
-          if (verificarDuplicado(nombre, telefono, diaEvento, esReagendados)) {
-              return false;
-          }
-
-          const acompanantesInputs = document.querySelectorAll("#acompanantesContainer input");
-          const acompanantes = Array.from(acompanantesInputs)
-              .map(input => input.value.trim())
-              .filter(val => val !== "");
-          
-          let nombreCompleto = nombre;
-          if (acompanantes.length > 0) {
-              nombreCompleto = nombre + "/" + acompanantes.join("/");
-          }
-
-          if (esReagendados) {
-              nombreCompleto = "[REAGENDADO] " + nombreCompleto;
-          }
-
-          const numeroCitaPorDia = obtenerProximoNumeroCita(diaEvento);
-
-          const registro = {
-              citaPorDia: numeroCitaPorDia,
-              cita: Date.now(),
-              nombre: nombreCompleto,
-              numPersonas: numPersonas,
-              estadoCivil: estadoCivil,
-              hora: convertirHoraAMPM(hora),
-              diaEvento: diaEvento, // Usar fecha formateada consistentemente
-              hotel: hotelSeleccionado,
-              edad: edad,
-              tarjeta: tarjeta,
-              ingresos: ingresos,
-              operador: operador,
-              baseDatos: baseDatos,
-              supervisora: supervisora,
-              vendedor: vendedor,
-              gerente: calificacionOrigen,
-              calificacionOrigen: calificacionOrigen,
-              telefono: telefono,
-              fechaRegistro: new Date().toISOString().split('T')[0],
-              timestamp: new Date().getTime(),
-              id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-              esReagendado: esReagendados
-          };
-
-          console.log("Registro a agregar:", registro);
-          console.log("Fecha almacenada:", registro.diaEvento);
-
-          window.registrosPremanifiesto.push(registro);
-          firebaseUpdateQueue.push(registro);
-          guardarRegistrosEnFirebaseOptimizado();
-          
-          if (premanifiestoVisible) {
-              if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
-                  aplicarFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
-              } else if (busquedaActiva) {
-                  buscarPersonaEnTabla(terminoBusquedaActual);
-              } else {
-                  actualizarTablaPremanifiesto(ultimaFechaFiltro);
-              }
-          }
-          
-          return true;
-      }
-
-      // Función para generar PDF - CON ESTILO NEÓN Y SIN ESTADO CIVIL
-     function generarPDF(esReagendados = false) {
+// Función para generar PDF - CON LETRA MÁS GRANDE Y MÁS NEGRITA
+      function generarPDF(esReagendados = false) {
           const { jsPDF } = window.jspdf;
 
           const nombre = document.getElementById("nombre").value.trim();
@@ -3362,21 +2972,21 @@
                   : `ESTIMADA: ${nombre.toUpperCase()}`;
           }
 
+          // ✅ TAMAÑO DE FUENTE AUMENTADO (de 11 a 14)
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(11);
+          doc.setFontSize(14);
           const saludoY = fondoClave === "fontan" ? 70 : 80;
           
-          // ✅ TEXTO CON EFECTO NEÓN MEJORADO: contorno negro más grueso
-          // Primero dibujamos múltiples sombras negras alrededor para crear contorno grueso
-          for (let offsetX = -1; offsetX <= 1; offsetX++) {
-              for (let offsetY = -1; offsetY <= 1; offsetY++) {
-                  if (offsetX === 0 && offsetY === 0) continue; // Saltamos el centro
+          // ✅ CONTORNO MÁS GRUESO (offsets de -1.5 a 1.5)
+          for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+              for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
+                  if (offsetX === 0 && offsetY === 0) continue;
                   doc.setTextColor(0, 0, 0); // Negro para contorno
                   doc.text(saludo, 105 + offsetX, saludoY + offsetY, { align: "center" });
               }
           }
-          // Luego el texto blanco encima
-          doc.setTextColor(255, 255, 255); // Blanco puro
+          // Texto blanco encima
+          doc.setTextColor(255, 255, 255);
           doc.text(saludo, 105, saludoY, { align: "center" });
 
           doc.setDrawColor(255, 255, 255);
@@ -3391,7 +3001,7 @@
 
           const horaFormateada = convertirHoraAMPM(hora);
 
-          // ✅ TEXTO CON EFECTO NEÓN MEJORADO (eliminado Estado Civil)
+          // ✅ TEXTO MÁS GRANDE Y NEGRITA (eliminado Estado Civil)
           const textos = [
               `Mesa: ${personas.toUpperCase()}`,
               `Hora de la cita: ${horaFormateada}`,
@@ -3399,10 +3009,10 @@
           ];
 
           textos.forEach((texto, index) => {
-              const yPos = inicioY + (index * 6);
-              // Contorno negro más grueso (múltiples desplazamientos)
-              for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                  for (let offsetY = -1; offsetY <= 1; offsetY++) {
+              const yPos = inicioY + (index * 8); // Más separación por tamaño aumentado
+              // Contorno más grueso
+              for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                  for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                       if (offsetX === 0 && offsetY === 0) continue;
                       doc.setTextColor(0, 0, 0);
                       doc.text(texto, x + offsetX, yPos + offsetY);
@@ -3413,7 +3023,7 @@
               doc.text(texto, x, yPos);
           });
 
-          let y = inicioY + 24; // Ajustado porque quitamos una línea
+          let y = inicioY + 32; // Ajustado por tamaño aumentado
           let ubicacionHotel = "#";
           if (fondoClave === "marquis") {
               ubicacionHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
@@ -3425,14 +3035,15 @@
               ubicacionHotel = "https://maps.app.goo.gl/N86NDYRoK8uAPhcKA";
           }
 
+          // ✅ TAMAÑO AUMENTADO (de 10-11 a 13)
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(fondoClave === "sheraton" ? 10 : 11);
+          doc.setFontSize(13);
           const eventoTexto = "En este evento contaremos con:";
           const eventoWidth = doc.getTextWidth(eventoTexto);
           
-          // ✅ TEXTO CON EFECTO NEÓN MEJORADO
-          for (let offsetX = -1; offsetX <= 1; offsetX++) {
-              for (let offsetY = -1; offsetY <= 1; offsetY++) {
+          // Contorno más grueso
+          for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+              for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                   if (offsetX === 0 && offsetY === 0) continue;
                   doc.setTextColor(0, 0, 0);
                   doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2 + offsetX, y + offsetY);
@@ -3440,9 +3051,11 @@
           }
           doc.setTextColor(255, 255, 255);
           doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
-          y += 6;
+          y += 8; // Más espacio
 
           doc.setFont("helvetica", "normal");
+          // ✅ TAMAÑO AUMENTADO (de normal a 12)
+          doc.setFontSize(12);
           const items = [
               "Alimentos en cortesía.",
               "Atención personalizada para cada uno de nuestros invitados.",
@@ -3450,39 +3063,41 @@
           ];
           
           items.forEach(item => {
-              // Círculos con efecto neón mejorado
-              for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                  for (let offsetY = -1; offsetY <= 1; offsetY++) {
+              // Círculos con contorno más grueso
+              for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                  for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                       if (offsetX === 0 && offsetY === 0) continue;
                       doc.setDrawColor(0, 0, 0);
                       doc.setFillColor(0, 0, 0);
-                      doc.circle(x + offsetX, y - 2 + offsetY, 1.8, "FD");
+                      doc.circle(x + offsetX, y - 2 + offsetY, 2, "FD"); // Círculo más grande
                   }
               }
               doc.setDrawColor(255, 255, 255);
               doc.setFillColor(255, 255, 255);
-              doc.circle(x, y - 2, 1.5, "FD");
+              doc.circle(x, y - 2, 1.8, "FD");
               
-              // Texto con efecto mejorado
-              for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                  for (let offsetY = -1; offsetY <= 1; offsetY++) {
+              // Texto con contorno más grueso
+              for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                  for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                       if (offsetX === 0 && offsetY === 0) continue;
                       doc.setTextColor(0, 0, 0);
-                      doc.text(item, x + 8 + offsetX, y + offsetY);
+                      doc.text(item, x + 9 + offsetX, y + offsetY);
                   }
               }
               doc.setTextColor(255, 255, 255);
-              doc.text(item, x + 8, y);
-              y += 6;
+              doc.text(item, x + 9, y);
+              y += 8; // Más espacio
           });
 
-          y += 7;
+          y += 9;
           doc.setFont("helvetica", "bold");
+          // ✅ TAMAÑO AUMENTADO
+          doc.setFontSize(12);
           const hotelNombre = hotelSeleccionado;
           
-          // Texto con efecto mejorado
-          for (let offsetX = -1; offsetX <= 1; offsetX++) {
-              for (let offsetY = -1; offsetY <= 1; offsetY++) {
+          // Texto con contorno más grueso
+          for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+              for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                   if (offsetX === 0 && offsetY === 0) continue;
                   doc.setTextColor(0, 0, 0);
                   doc.text(`El evento es patrocinado por Destination Connect Group en el ${hotelNombre}...`, x + offsetX, y + offsetY);
@@ -3490,7 +3105,7 @@
           }
           doc.setTextColor(255, 255, 255);
           doc.text(`El evento es patrocinado por Destination Connect Group en el ${hotelNombre}...`, x, y);
-          y += 5;
+          y += 7;
 
           const textoDetalles = [
               `Ubicación del Hotel: ${ubicacionHotel}`,
@@ -3501,9 +3116,9 @@
           textoDetalles.forEach((t, index) => {
               const lines = doc.splitTextToSize(t, textoMaxWidth);
               if (index === 0) {
-                  // Parte fija "Ubicación del Hotel:" con efecto mejorado
-                  for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                      for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                  // Parte fija "Ubicación del Hotel:" con contorno más grueso
+                  for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                      for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                           if (offsetX === 0 && offsetY === 0) continue;
                           doc.setTextColor(0, 0, 0);
                           doc.text("Ubicación del Hotel:", x + offsetX, y + offsetY);
@@ -3514,9 +3129,9 @@
                   
                   const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
                   
-                  // 🔥 ENLACE EN AZUL NEÓN CON CONTORNO NEGRO
-                  for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                      for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                  // 🔥 ENLACE EN AZUL NEÓN CON CONTORNO MÁS GRUESO
+                  for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                      for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                           if (offsetX === 0 && offsetY === 0) continue;
                           doc.setTextColor(0, 0, 0);
                           doc.textWithLink(ubicacionHotel, x + labelWidth + 1 + offsetX, y + offsetY, { url: ubicacionHotel });
@@ -3526,13 +3141,13 @@
                   doc.setTextColor(0, 255, 255); // Cyan neón / Azul brillante
                   doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
                   
-                  y += 7;
+                  y += 9; // Más espacio
               } else {
-                  // Texto normal con efecto mejorado
+                  // Texto normal con contorno más grueso
                   lines.forEach((line, lineIdx) => {
-                      const lineY = y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7));
-                      for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                          for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                      const lineY = y + (lineIdx * 8); // Más espacio
+                      for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                          for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                               if (offsetX === 0 && offsetY === 0) continue;
                               doc.setTextColor(0, 0, 0);
                               doc.text(line, x + offsetX, lineY + offsetY);
@@ -3541,13 +3156,13 @@
                       doc.setTextColor(255, 255, 255);
                       doc.text(line, x, lineY);
                   });
-                  y += lines.length * (fondoClave === "sheraton" ? 5 : 7);
+                  y += lines.length * 8;
               }
           });
 
-          y += 6;
+          y += 8;
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(fondoClave === "sheraton" ? 9 : 10);
+          doc.setFontSize(11);
           y += 6;
 
           if (fondoClave === "marquis") {
@@ -3562,75 +3177,75 @@
 
               const col1X = x;
               const col2X = 110;
-              const lineHeight = 12;
+              const lineHeight = 14; // Más alto
 
               doc.setFont("helvetica", "normal");
-              doc.setFontSize(10);
+              doc.setFontSize(11); // Más grande
 
               requisitosCol1.forEach((text, i) => {
                   const circleY = y + i * lineHeight;
-                  // Círculo con efecto mejorado
-                  for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                      for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                  // Círculo con contorno más grueso
+                  for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                      for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                           if (offsetX === 0 && offsetY === 0) continue;
                           doc.setDrawColor(0, 0, 0);
                           doc.setFillColor(0, 0, 0);
-                          doc.circle(col1X + offsetX, circleY - 1 + offsetY, 1.8, "FD");
+                          doc.circle(col1X + offsetX, circleY - 1 + offsetY, 2, "FD");
                       }
                   }
                   doc.setDrawColor(255, 255, 255);
                   doc.setFillColor(255, 255, 255);
-                  doc.circle(col1X, circleY - 1, 1.5, "FD");
+                  doc.circle(col1X, circleY - 1, 1.8, "FD");
                   
                   const lines = doc.splitTextToSize(text, 75);
                   lines.forEach((line, lineIdx) => {
-                      const lineY = circleY + (lineIdx * 5);
-                      for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                          for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                      const lineY = circleY + (lineIdx * 6);
+                      for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                          for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                               if (offsetX === 0 && offsetY === 0) continue;
                               doc.setTextColor(0, 0, 0);
-                              doc.text(line, col1X + 8 + offsetX, lineY + offsetY);
+                              doc.text(line, col1X + 9 + offsetX, lineY + offsetY);
                           }
                       }
                       doc.setTextColor(255, 255, 255);
-                      doc.text(line, col1X + 8, lineY);
+                      doc.text(line, col1X + 9, lineY);
                   });
               });
 
               requisitosCol2.forEach((text, i) => {
                   const circleY = y + i * lineHeight;
-                  // Círculo con efecto mejorado
-                  for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                      for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                  // Círculo con contorno más grueso
+                  for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                      for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                           if (offsetX === 0 && offsetY === 0) continue;
                           doc.setDrawColor(0, 0, 0);
                           doc.setFillColor(0, 0, 0);
-                          doc.circle(col2X + offsetX, circleY - 1 + offsetY, 1.8, "FD");
+                          doc.circle(col2X + offsetX, circleY - 1 + offsetY, 2, "FD");
                       }
                   }
                   doc.setDrawColor(255, 255, 255);
                   doc.setFillColor(255, 255, 255);
-                  doc.circle(col2X, circleY - 1, 1.5, "FD");
+                  doc.circle(col2X, circleY - 1, 1.8, "FD");
                   
                   const lines = doc.splitTextToSize(text, 75);
                   lines.forEach((line, lineIdx) => {
-                      const lineY = circleY + (lineIdx * 5);
-                      for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                          for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                      const lineY = circleY + (lineIdx * 6);
+                      for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                          for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                               if (offsetX === 0 && offsetY === 0) continue;
                               doc.setTextColor(0, 0, 0);
-                              doc.text(line, col2X + 8 + offsetX, lineY + offsetY);
+                              doc.text(line, col2X + 9 + offsetX, lineY + offsetY);
                           }
                       }
                       doc.setTextColor(255, 255, 255);
-                      doc.text(line, col2X + 8, lineY);
+                      doc.text(line, col2X + 9, lineY);
                   });
               });
 
               y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 5;
           } else {
               doc.setFont("helvetica", "normal");
-              doc.setFontSize(fondoClave === "sheraton" ? 10 : 11);
+              doc.setFontSize(12); // Más grande
 
               const requisitos = [
                   ['Mostrar cualquier identificación vigente', '(INE y/o PASAPORTE).'],
@@ -3640,33 +3255,33 @@
               ];
 
               requisitos.forEach(text => {
-                  // Círculo con efecto mejorado
-                  for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                      for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                  // Círculo con contorno más grueso
+                  for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                      for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                           if (offsetX === 0 && offsetY === 0) continue;
                           doc.setDrawColor(0, 0, 0);
                           doc.setFillColor(0, 0, 0);
-                          doc.circle(x + offsetX, y - 1 + offsetY, 1.8, "FD");
+                          doc.circle(x + offsetX, y - 1 + offsetY, 2, "FD");
                       }
                   }
                   doc.setDrawColor(255, 255, 255);
                   doc.setFillColor(255, 255, 255);
-                  doc.circle(x, y - 1, 1.5, "FD");
+                  doc.circle(x, y - 1, 1.8, "FD");
                   
                   const lines = doc.splitTextToSize(text, textoMaxWidth);
                   lines.forEach((line, lineIdx) => {
-                      const lineY = y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7));
-                      for (let offsetX = -1; offsetX <= 1; offsetX++) {
-                          for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                      const lineY = y + (lineIdx * 8);
+                      for (let offsetX = -1.5; offsetX <= 1.5; offsetX += 1) {
+                          for (let offsetY = -1.5; offsetY <= 1.5; offsetY += 1) {
                               if (offsetX === 0 && offsetY === 0) continue;
                               doc.setTextColor(0, 0, 0);
-                              doc.text(line, x + 8 + offsetX, lineY + offsetY);
+                              doc.text(line, x + 9 + offsetX, lineY + offsetY);
                           }
                       }
                       doc.setTextColor(255, 255, 255);
-                      doc.text(line, x + 8, lineY);
+                      doc.text(line, x + 9, lineY);
                   });
-                  y += lines.length * (fondoClave === "sheraton" ? 5 : 7);
+                  y += lines.length * 8;
               });
           }
 
