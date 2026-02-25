@@ -3304,7 +3304,7 @@
       }
 
       // Función para generar PDF - CON ESTILO NEÓN Y SIN ESTADO CIVIL
-      function generarPDF(esReagendados = false) {
+     function generarPDF(esReagendados = false) {
           const { jsPDF } = window.jspdf;
 
           const nombre = document.getElementById("nombre").value.trim();
@@ -3366,10 +3366,17 @@
           doc.setFontSize(11);
           const saludoY = fondoClave === "fontan" ? 70 : 80;
           
-          // ✅ TEXTO CON EFECTO NEÓN: sombra negra + blanco
-          doc.setTextColor(0, 0, 0); // Negro para sombra
-          doc.text(saludo, 105 + 1, saludoY + 1, { align: "center" });
-          doc.setTextColor(255, 255, 255); // Blanco neón
+          // ✅ TEXTO CON EFECTO NEÓN MEJORADO: contorno negro más grueso
+          // Primero dibujamos múltiples sombras negras alrededor para crear contorno grueso
+          for (let offsetX = -1; offsetX <= 1; offsetX++) {
+              for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                  if (offsetX === 0 && offsetY === 0) continue; // Saltamos el centro
+                  doc.setTextColor(0, 0, 0); // Negro para contorno
+                  doc.text(saludo, 105 + offsetX, saludoY + offsetY, { align: "center" });
+              }
+          }
+          // Luego el texto blanco encima
+          doc.setTextColor(255, 255, 255); // Blanco puro
           doc.text(saludo, 105, saludoY, { align: "center" });
 
           doc.setDrawColor(255, 255, 255);
@@ -3384,7 +3391,7 @@
 
           const horaFormateada = convertirHoraAMPM(hora);
 
-          // ✅ TEXTO CON EFECTO NEÓN (eliminado Estado Civil)
+          // ✅ TEXTO CON EFECTO NEÓN MEJORADO (eliminado Estado Civil)
           const textos = [
               `Mesa: ${personas.toUpperCase()}`,
               `Hora de la cita: ${horaFormateada}`,
@@ -3392,10 +3399,18 @@
           ];
 
           textos.forEach((texto, index) => {
-              doc.setTextColor(0, 0, 0); // Sombra negra
-              doc.text(texto, x + 1, inicioY + (index * 6) + 1);
-              doc.setTextColor(255, 255, 255); // Blanco neón
-              doc.text(texto, x, inicioY + (index * 6));
+              const yPos = inicioY + (index * 6);
+              // Contorno negro más grueso (múltiples desplazamientos)
+              for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                  for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                      if (offsetX === 0 && offsetY === 0) continue;
+                      doc.setTextColor(0, 0, 0);
+                      doc.text(texto, x + offsetX, yPos + offsetY);
+                  }
+              }
+              // Texto blanco encima
+              doc.setTextColor(255, 255, 255);
+              doc.text(texto, x, yPos);
           });
 
           let y = inicioY + 24; // Ajustado porque quitamos una línea
@@ -3415,9 +3430,14 @@
           const eventoTexto = "En este evento contaremos con:";
           const eventoWidth = doc.getTextWidth(eventoTexto);
           
-          // ✅ TEXTO CON EFECTO NEÓN
-          doc.setTextColor(0, 0, 0);
-          doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2 + 1, y + 1);
+          // ✅ TEXTO CON EFECTO NEÓN MEJORADO
+          for (let offsetX = -1; offsetX <= 1; offsetX++) {
+              for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                  if (offsetX === 0 && offsetY === 0) continue;
+                  doc.setTextColor(0, 0, 0);
+                  doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2 + offsetX, y + offsetY);
+              }
+          }
           doc.setTextColor(255, 255, 255);
           doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
           y += 6;
@@ -3430,17 +3450,27 @@
           ];
           
           items.forEach(item => {
-              // Círculos con efecto neón
-              doc.setDrawColor(0, 0, 0);
-              doc.setFillColor(255, 255, 255);
-              doc.circle(x + 1, y - 1, 1.5, "FD");
+              // Círculos con efecto neón mejorado
+              for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                  for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                      if (offsetX === 0 && offsetY === 0) continue;
+                      doc.setDrawColor(0, 0, 0);
+                      doc.setFillColor(0, 0, 0);
+                      doc.circle(x + offsetX, y - 2 + offsetY, 1.8, "FD");
+                  }
+              }
               doc.setDrawColor(255, 255, 255);
               doc.setFillColor(255, 255, 255);
               doc.circle(x, y - 2, 1.5, "FD");
               
-              // Texto con efecto
-              doc.setTextColor(0, 0, 0);
-              doc.text(item, x + 9, y + 1);
+              // Texto con efecto mejorado
+              for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                  for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                      if (offsetX === 0 && offsetY === 0) continue;
+                      doc.setTextColor(0, 0, 0);
+                      doc.text(item, x + 8 + offsetX, y + offsetY);
+                  }
+              }
               doc.setTextColor(255, 255, 255);
               doc.text(item, x + 8, y);
               y += 6;
@@ -3450,9 +3480,14 @@
           doc.setFont("helvetica", "bold");
           const hotelNombre = hotelSeleccionado;
           
-          // Texto con efecto
-          doc.setTextColor(0, 0, 0);
-          doc.text(`El evento es patrocinado por Destination Connect Group en el ${hotelNombre}...`, x + 1, y + 1);
+          // Texto con efecto mejorado
+          for (let offsetX = -1; offsetX <= 1; offsetX++) {
+              for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                  if (offsetX === 0 && offsetY === 0) continue;
+                  doc.setTextColor(0, 0, 0);
+                  doc.text(`El evento es patrocinado por Destination Connect Group en el ${hotelNombre}...`, x + offsetX, y + offsetY);
+              }
+          }
           doc.setTextColor(255, 255, 255);
           doc.text(`El evento es patrocinado por Destination Connect Group en el ${hotelNombre}...`, x, y);
           y += 5;
@@ -3466,30 +3501,45 @@
           textoDetalles.forEach((t, index) => {
               const lines = doc.splitTextToSize(t, textoMaxWidth);
               if (index === 0) {
-                  // Parte fija "Ubicación del Hotel:" con efecto
-                  doc.setTextColor(0, 0, 0);
-                  doc.text("Ubicación del Hotel:", x + 1, y + 1);
+                  // Parte fija "Ubicación del Hotel:" con efecto mejorado
+                  for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                      for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                          if (offsetX === 0 && offsetY === 0) continue;
+                          doc.setTextColor(0, 0, 0);
+                          doc.text("Ubicación del Hotel:", x + offsetX, y + offsetY);
+                      }
+                  }
                   doc.setTextColor(255, 255, 255);
                   doc.text("Ubicación del Hotel:", x, y);
                   
                   const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
                   
-                  // 🔥 ENLACE EN AZUL NEÓN (CIAN)
-                  doc.setTextColor(0, 0, 0);
-                  doc.textWithLink(ubicacionHotel, x + labelWidth + 2, y + 1, { url: ubicacionHotel });
+                  // 🔥 ENLACE EN AZUL NEÓN CON CONTORNO NEGRO
+                  for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                      for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                          if (offsetX === 0 && offsetY === 0) continue;
+                          doc.setTextColor(0, 0, 0);
+                          doc.textWithLink(ubicacionHotel, x + labelWidth + 1 + offsetX, y + offsetY, { url: ubicacionHotel });
+                      }
+                  }
                   
                   doc.setTextColor(0, 255, 255); // Cyan neón / Azul brillante
                   doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
                   
-                  doc.setTextColor(255, 255, 255); // Restauramos blanco
                   y += 7;
               } else {
-                  // Texto normal con efecto
+                  // Texto normal con efecto mejorado
                   lines.forEach((line, lineIdx) => {
-                      doc.setTextColor(0, 0, 0);
-                      doc.text(line, x + 1, y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7)) + 1);
+                      const lineY = y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7));
+                      for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                          for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                              if (offsetX === 0 && offsetY === 0) continue;
+                              doc.setTextColor(0, 0, 0);
+                              doc.text(line, x + offsetX, lineY + offsetY);
+                          }
+                      }
                       doc.setTextColor(255, 255, 255);
-                      doc.text(line, x, y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7)));
+                      doc.text(line, x, lineY);
                   });
                   y += lines.length * (fondoClave === "sheraton" ? 5 : 7);
               }
@@ -3518,38 +3568,62 @@
               doc.setFontSize(10);
 
               requisitosCol1.forEach((text, i) => {
-                  // Círculo con efecto
-                  doc.setDrawColor(0, 0, 0);
-                  doc.setFillColor(255, 255, 255);
-                  doc.circle(col1X + 1, y + i * lineHeight, 1.5, "FD");
+                  const circleY = y + i * lineHeight;
+                  // Círculo con efecto mejorado
+                  for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                      for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                          if (offsetX === 0 && offsetY === 0) continue;
+                          doc.setDrawColor(0, 0, 0);
+                          doc.setFillColor(0, 0, 0);
+                          doc.circle(col1X + offsetX, circleY - 1 + offsetY, 1.8, "FD");
+                      }
+                  }
                   doc.setDrawColor(255, 255, 255);
                   doc.setFillColor(255, 255, 255);
-                  doc.circle(col1X, y + i * lineHeight - 1, 1.5, "FD");
+                  doc.circle(col1X, circleY - 1, 1.5, "FD");
                   
                   const lines = doc.splitTextToSize(text, 75);
                   lines.forEach((line, lineIdx) => {
-                      doc.setTextColor(0, 0, 0);
-                      doc.text(line, col1X + 9, y + i * lineHeight + (lineIdx * 5) + 1);
+                      const lineY = circleY + (lineIdx * 5);
+                      for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                          for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                              if (offsetX === 0 && offsetY === 0) continue;
+                              doc.setTextColor(0, 0, 0);
+                              doc.text(line, col1X + 8 + offsetX, lineY + offsetY);
+                          }
+                      }
                       doc.setTextColor(255, 255, 255);
-                      doc.text(line, col1X + 8, y + i * lineHeight + (lineIdx * 5));
+                      doc.text(line, col1X + 8, lineY);
                   });
               });
 
               requisitosCol2.forEach((text, i) => {
-                  // Círculo con efecto
-                  doc.setDrawColor(0, 0, 0);
-                  doc.setFillColor(255, 255, 255);
-                  doc.circle(col2X + 1, y + i * lineHeight, 1.5, "FD");
+                  const circleY = y + i * lineHeight;
+                  // Círculo con efecto mejorado
+                  for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                      for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                          if (offsetX === 0 && offsetY === 0) continue;
+                          doc.setDrawColor(0, 0, 0);
+                          doc.setFillColor(0, 0, 0);
+                          doc.circle(col2X + offsetX, circleY - 1 + offsetY, 1.8, "FD");
+                      }
+                  }
                   doc.setDrawColor(255, 255, 255);
                   doc.setFillColor(255, 255, 255);
-                  doc.circle(col2X, y + i * lineHeight - 1, 1.5, "FD");
+                  doc.circle(col2X, circleY - 1, 1.5, "FD");
                   
                   const lines = doc.splitTextToSize(text, 75);
                   lines.forEach((line, lineIdx) => {
-                      doc.setTextColor(0, 0, 0);
-                      doc.text(line, col2X + 9, y + i * lineHeight + (lineIdx * 5) + 1);
+                      const lineY = circleY + (lineIdx * 5);
+                      for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                          for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                              if (offsetX === 0 && offsetY === 0) continue;
+                              doc.setTextColor(0, 0, 0);
+                              doc.text(line, col2X + 8 + offsetX, lineY + offsetY);
+                          }
+                      }
                       doc.setTextColor(255, 255, 255);
-                      doc.text(line, col2X + 8, y + i * lineHeight + (lineIdx * 5));
+                      doc.text(line, col2X + 8, lineY);
                   });
               });
 
@@ -3566,20 +3640,31 @@
               ];
 
               requisitos.forEach(text => {
-                  // Círculo con efecto
-                  doc.setDrawColor(0, 0, 0);
-                  doc.setFillColor(255, 255, 255);
-                  doc.circle(x + 1, y, 1.5, "FD");
+                  // Círculo con efecto mejorado
+                  for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                      for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                          if (offsetX === 0 && offsetY === 0) continue;
+                          doc.setDrawColor(0, 0, 0);
+                          doc.setFillColor(0, 0, 0);
+                          doc.circle(x + offsetX, y - 1 + offsetY, 1.8, "FD");
+                      }
+                  }
                   doc.setDrawColor(255, 255, 255);
                   doc.setFillColor(255, 255, 255);
                   doc.circle(x, y - 1, 1.5, "FD");
                   
                   const lines = doc.splitTextToSize(text, textoMaxWidth);
                   lines.forEach((line, lineIdx) => {
-                      doc.setTextColor(0, 0, 0);
-                      doc.text(line, x + 9, y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7)) + 1);
+                      const lineY = y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7));
+                      for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                          for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                              if (offsetX === 0 && offsetY === 0) continue;
+                              doc.setTextColor(0, 0, 0);
+                              doc.text(line, x + 8 + offsetX, lineY + offsetY);
+                          }
+                      }
                       doc.setTextColor(255, 255, 255);
-                      doc.text(line, x + 8, y + (lineIdx * (fondoClave === "sheraton" ? 5 : 7)));
+                      doc.text(line, x + 8, lineY);
                   });
                   y += lines.length * (fondoClave === "sheraton" ? 5 : 7);
               });
