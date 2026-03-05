@@ -3207,6 +3207,7 @@
       }
 
 // Función para generar PDF - CON TEXTO BLANCO, NEGRITAS Y MÁS GRANDE PARA SHERATON
+// Función para generar PDF - CON TEXTO BLANCO, NEGRITAS Y AÚN MÁS GRANDE PARA SHERATON Y FONTAN
      function generarPDF(esReagendados = false) {
           const { jsPDF } = window.jspdf;
 
@@ -3267,31 +3268,33 @@
 
           // Configurar según el hotel
           const esDaikoku = fondoClave === "daikoku";
+          const esFontan = fondoClave === "fontan";
 
-          // *** CAMBIOS PARA SHERATON: TEXTO BLANCO, NEGRITAS Y MÁS GRANDE ***
+          // *** CAMBIOS: TEXTO BLANCO, NEGRITAS Y MÁS GRANDE ***
           doc.setFont("helvetica", "bold"); // NEGRITAS para todos
           
-          // SALUDO PRINCIPAL - MÁS GRANDE (tamaño 14)
-          const saludoY = fondoClave === "fontan" ? 70 : 80;
+          // SALUDO PRINCIPAL - MÁS ABAJO PARA FONTAN
+          let saludoY;
+          if (esFontan) {
+              saludoY = 85; // BAJADO para Fontan (antes era 70)
+          } else {
+              saludoY = 80; // Sheraton, Marquis, etc.
+          }
 
           if (esDaikoku) {
               // Para Daikoku (texto negro)
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(14);
+              doc.setFontSize(18);
               doc.text(saludo, 105, saludoY, { align: "center" });
           } else {
-              // Para SHERATON y otros hoteles: TEXTO BLANCO EN NEGRITAS Y GRANDE
-              doc.setFontSize(14); // Tamaño aumentado
+              // Para SHERATON, FONTAN y otros hoteles: TEXTO BLANCO
+              doc.setFontSize(18);
               doc.setTextColor(255, 255, 255); // BLANCO
               doc.text(saludo, 105, saludoY, { align: "center" });
-              
-              // ELIMINADOS LOS BUCLES DE SOMBRAS NEGRAS
-              // Ya no se dibujan múltiples capas de texto negro
           }
 
           doc.setDrawColor(255, 255, 255);
           doc.setLineWidth(0.5);
-          //doc.line(25, saludoY + 4, 160, saludoY + 4);
 
           doc.setFont("helvetica", "bold"); // Mantener negritas
 
@@ -3301,7 +3304,7 @@
 
           const horaFormateada = convertirHoraAMPM(hora);
 
-          // TEXTOS DE INFORMACIÓN - TAMAÑO 12 (más grande)
+          // TEXTOS DE INFORMACIÓN - TAMAÑO 16
           const textos = [
               `Mesa: ${personas} ${personas == 1 ? 'persona' : 'personas'}`,
               `Hora de la cita: ${horaFormateada}`,
@@ -3309,19 +3312,17 @@
           ];
 
           textos.forEach((texto, index) => {
-              const yPos = inicioY + (index * 8);
+              const yPos = inicioY + (index * 10);
               
               if (esDaikoku) {
                   doc.setTextColor(0, 0, 0);
-                  doc.setFontSize(12);
+                  doc.setFontSize(16);
                   doc.text(texto, x, yPos);
               } else {
-                  // SHERATON: texto blanco, negritas, tamaño 12
-                  doc.setFontSize(12);
+                  // SHERATON, FONTAN: texto blanco
+                  doc.setFontSize(16);
                   doc.setTextColor(255, 255, 255);
                   doc.text(texto, x, yPos);
-                  
-                  // ELIMINADOS LOS BUCLES DE SOMBRAS NEGRAS
               }
           });
 
@@ -3337,26 +3338,24 @@
               ubicacionHotel = "https://maps.app.goo.gl/N86NDYRoK8uAPhcKA";
           }
 
-          // TÍTULO "En este evento contaremos con:" - TAMAÑO 12
+          // TÍTULO "En este evento contaremos con:" - TAMAÑO 16
           doc.setFont("helvetica", "bold");
           const eventoTexto = "En este evento contaremos con:";
           const eventoWidth = doc.getTextWidth(eventoTexto);
 
           if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(12);
+              doc.setFontSize(16);
               doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
           } else {
-              // SHERATON: texto blanco, negritas, tamaño 12
-              doc.setFontSize(12);
+              // SHERATON, FONTAN: texto blanco
+              doc.setFontSize(16);
               doc.setTextColor(255, 255, 255);
               doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
-              
-              // ELIMINADOS LOS BUCLES DE SOMBRAS NEGRAS
           }
-          y += 6;
+          y += 8;
 
-          // ITEMS DE LA LISTA (alimentos, atención, clave) - TAMAÑO 11
+          // ITEMS DE LA LISTA - TAMAÑO 14
           doc.setFont("helvetica", "normal");
           const items = [
               "Alimentos en cortesía.",
@@ -3368,47 +3367,43 @@
               if (esDaikoku) {
                   doc.setDrawColor(0, 0, 0);
                   doc.setFillColor(0, 0, 0);
-                  doc.circle(x, y - 2, 1.5, "FD");
+                  doc.circle(x, y - 2, 2, "FD");
                   
                   doc.setTextColor(0, 0, 0);
-                  doc.setFontSize(11);
-                  doc.text(item, x + 8, y);
+                  doc.setFontSize(14);
+                  doc.text(item, x + 10, y);
               } else {
-                  // SHERATON: círculos blancos, texto blanco
+                  // SHERATON, FONTAN: círculos blancos, texto blanco
                   doc.setDrawColor(255, 255, 255);
                   doc.setFillColor(255, 255, 255);
-                  doc.circle(x, y - 2, 1.5, "FD");
+                  doc.circle(x, y - 2, 2, "FD");
                   
-                  doc.setFontSize(11);
+                  doc.setFontSize(14);
                   doc.setTextColor(255, 255, 255);
-                  doc.text(item, x + 8, y);
-                  
-                  // ELIMINADOS LOS BUCLES DE SOMBRAS NEGRAS
+                  doc.text(item, x + 10, y);
               }
-              y += 6;
+              y += 8;
           });
 
-          y += 7;
+          y += 9;
           
-          // TEXTO DEL HOTEL - TAMAÑO 11
+          // TEXTO DEL HOTEL - TAMAÑO 14
           doc.setFont("helvetica", "bold");
           const hotelNombre = hotelSeleccionado;
 
           if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(11);
+              doc.setFontSize(14);
               doc.text(`El evento es patrocinado por Destination Connect Group en el ${hotelNombre}...`, x, y);
           } else {
-              // SHERATON: texto blanco
-              doc.setFontSize(11);
+              // SHERATON, FONTAN: texto blanco
+              doc.setFontSize(14);
               doc.setTextColor(255, 255, 255);
               doc.text(`El evento es patrocinado por Destination Connect Group en el ${hotelNombre}...`, x, y);
-              
-              // ELIMINADOS LOS BUCLES DE SOMBRAS NEGRAS
           }
-          y += 5;
+          y += 7;
 
-          // DETALLES ADICIONALES (ubicación, certificado, vigencia)
+          // DETALLES ADICIONALES - TAMAÑO 13
           const textoDetalles = [
               `Ubicación del Hotel: ${ubicacionHotel}`,
               "Recibirás un certificado de hospedaje vacacional válido por 4 días y 3 noches...",
@@ -3421,61 +3416,57 @@
                   // Línea de ubicación con enlace
                   if (esDaikoku) {
                       doc.setTextColor(0, 0, 0);
-                      doc.setFontSize(10);
+                      doc.setFontSize(13);
                       doc.text("Ubicación del Hotel:", x, y);
                       
                       const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
                       doc.setTextColor(0, 0, 255);
+                      doc.setFontSize(13);
                       doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
                   } else {
-                      // SHERATON: texto blanco para la etiqueta
-                      doc.setFontSize(10);
+                      // SHERATON, FONTAN: texto blanco
+                      doc.setFontSize(13);
                       doc.setTextColor(255, 255, 255);
                       doc.text("Ubicación del Hotel:", x, y);
                       
                       const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
-                      doc.setTextColor(0, 255, 255); // Celeste para el enlace
+                      doc.setTextColor(0, 255, 255); // Celeste
+                      doc.setFontSize(13);
                       doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
-                      
-                      // ELIMINADOS LOS BUCLES DE SOMBRAS NEGRAS
                   }
-                  y += 7;
+                  y += 9;
               } else {
                   if (esDaikoku) {
                       doc.setTextColor(0, 0, 0);
-                      doc.setFontSize(10);
+                      doc.setFontSize(13);
                       doc.text(lines, x, y);
                   } else {
-                      // SHERATON: texto blanco
-                      doc.setFontSize(10);
+                      // SHERATON, FONTAN: texto blanco
+                      doc.setFontSize(13);
                       doc.setTextColor(255, 255, 255);
                       doc.text(lines, x, y);
-                      
-                      // ELIMINADOS LOS BUCLES DE SOMBRAS NEGRAS
                   }
-                  y += lines.length * (fondoClave === "sheraton" ? 5 : 7);
+                  y += lines.length * 7;
               }
           });
 
-          y += 6;
+          y += 8;
           
-          // TEXTO "Para acceder al evento..." - TAMAÑO 10
+          // TEXTO "Para acceder al evento..." - TAMAÑO 14
           doc.setFont("helvetica", "bold");
           if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(10);
+              doc.setFontSize(14);
               doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
           } else {
-              // SHERATON: texto blanco
-              doc.setFontSize(10);
+              // SHERATON, FONTAN: texto blanco
+              doc.setFontSize(14);
               doc.setTextColor(255, 255, 255);
               doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
-              
-              // ELIMINADOS LOS BUCLES DE SOMBRAS NEGRAS
           }
-          y += 6;
+          y += 8;
 
-          // REQUISITOS - TAMAÑO 10
+          // REQUISITOS - TAMAÑO 13
           if (fondoClave === "marquis") {
               const requisitosCol1 = [
                   "Mostrar cualquier identificación vigente (INE y/o PASAPORTE).",
@@ -3488,10 +3479,10 @@
 
               const col1X = x;
               const col2X = 110;
-              const lineHeight = 12;
+              const lineHeight = 14;
 
               doc.setFont("helvetica", "normal");
-              doc.setFontSize(10);
+              doc.setFontSize(13);
 
               const procesarRequisitos = (textos, colX) => {
                   textos.forEach((text, i) => {
@@ -3500,27 +3491,27 @@
                       if (esDaikoku) {
                           doc.setDrawColor(0, 0, 0);
                           doc.setFillColor(0, 0, 0);
-                          doc.circle(colX, circleY - 1, 1.5, "FD");
+                          doc.circle(colX, circleY - 1, 2, "FD");
                           
                           const lines = doc.splitTextToSize(text, 75);
                           lines.forEach((line, lineIdx) => {
                               doc.setTextColor(0, 0, 0);
-                              doc.text(line, colX + 8, circleY + (lineIdx * 5));
+                              doc.setFontSize(13);
+                              doc.text(line, colX + 10, circleY + (lineIdx * 6));
                           });
                       } else {
-                          // SHERATON: círculos blancos, texto blanco
+                          // SHERATON, FONTAN: círculos blancos, texto blanco
                           doc.setDrawColor(255, 255, 255);
                           doc.setFillColor(255, 255, 255);
-                          doc.circle(colX, circleY - 1, 1.5, "FD");
+                          doc.circle(colX, circleY - 1, 2, "FD");
                           
                           const lines = doc.splitTextToSize(text, 75);
                           lines.forEach((line, lineIdx) => {
-                              const lineY = circleY + (lineIdx * 5);
+                              const lineY = circleY + (lineIdx * 6);
                               doc.setTextColor(255, 255, 255);
-                              doc.text(line, colX + 8, lineY);
+                              doc.setFontSize(13);
+                              doc.text(line, colX + 10, lineY);
                           });
-                          
-                          // ELIMINADOS LOS BUCLES DE SOMBRAS NEGRAS
                       }
                   });
               };
@@ -3528,10 +3519,10 @@
               procesarRequisitos(requisitosCol1, col1X);
               procesarRequisitos(requisitosCol2, col2X);
 
-              y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 5;
+              y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 8;
           } else {
               doc.setFont("helvetica", "normal");
-              doc.setFontSize(10);
+              doc.setFontSize(13);
 
               const requisitos = [
                   ['Mostrar cualquier identificación vigente', '(INE y/o PASAPORTE).'],
@@ -3544,29 +3535,29 @@
                   if (esDaikoku) {
                       doc.setDrawColor(0, 0, 0);
                       doc.setFillColor(0, 0, 0);
-                      doc.circle(x, y - 1, 1.5, "FD");
+                      doc.circle(x, y - 1, 2, "FD");
                       
                       const lines = doc.splitTextToSize(text, textoMaxWidth);
                       lines.forEach((line, lineIdx) => {
                           doc.setTextColor(0, 0, 0);
-                          doc.text(line, x + 8, y + (lineIdx * 5));
+                          doc.setFontSize(13);
+                          doc.text(line, x + 10, y + (lineIdx * 6));
                       });
-                      y += lines.length * 5;
+                      y += lines.length * 6;
                   } else {
-                      // SHERATON: círculos blancos, texto blanco
+                      // SHERATON, FONTAN: círculos blancos, texto blanco
                       doc.setDrawColor(255, 255, 255);
                       doc.setFillColor(255, 255, 255);
-                      doc.circle(x, y - 1, 1.5, "FD");
+                      doc.circle(x, y - 1, 2, "FD");
                       
                       const lines = doc.splitTextToSize(text, textoMaxWidth);
                       lines.forEach((line, lineIdx) => {
-                          const lineY = y + (lineIdx * 5);
+                          const lineY = y + (lineIdx * 6);
                           doc.setTextColor(255, 255, 255);
-                          doc.text(line, x + 8, lineY);
+                          doc.setFontSize(13);
+                          doc.text(line, x + 10, lineY);
                       });
-                      y += lines.length * 5;
-                      
-                      // ELIMINADOS LOS BUCLES DE SOMBRAS NEGRAS
+                      y += lines.length * 6;
                   }
               });
           }
