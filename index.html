@@ -1375,8 +1375,8 @@
         </section>
       </div>
 
-      <!-- Botones en orden -->
-      <button type="submit">Generar Invitación</button>
+      <!-- Botones en orden - MODIFICADO para iPhone (cambiados a type="button") -->
+      <button type="button" id="generarInvitacionBtn">Generar Invitación</button>
       <button type="button" id="reagendadosBtn">Generar Invitación Reagendados</button>
       <button type="button" id="verPremafiesto">Ver Premanifiesto</button>
       
@@ -1513,6 +1513,9 @@
 
     // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
+
+    // Limpiar flag de WebSocket para evitar errores
+    localStorage.removeItem('firebase:previous_websocket_failure');
 
     // --- GESTIÓN DE SUPERVISORAS ---
     let listaSupervisoras = ['ABRAHAM ROLDAN','LUIS COLULA', 'MACARENA ZAMORA', 'THALIA PINEDA', 'YARET NAJERA', 'MISAEL NAVARRO'];
@@ -2556,6 +2559,7 @@
       const btnDescargarCitasSupervisor = document.getElementById('descargarCitasSupervisor');
       const btnPaginaAnterior = document.getElementById('btnPaginaAnterior');
       const btnPaginaSiguiente = document.getElementById('btnPaginaSiguiente');
+      const generarInvitacionBtn = document.getElementById('generarInvitacionBtn');
 
       // Manejo del botón de regresar (premanifiesto general)
       btnRegresar.addEventListener('click', function() {
@@ -3070,7 +3074,6 @@
 
           doc.setDrawColor(255, 255, 255);
           doc.setLineWidth(0.5);
-          //doc.line(25, saludoY + 4, 160, saludoY + 4);
 
           doc.setFont("helvetica", "normal");
 
@@ -3206,9 +3209,8 @@
           alert("Invitación actualizada descargada correctamente.");
       }
 
-// Función para generar PDF - CON TEXTO BLANCO, NEGRITAS Y MÁS GRANDE PARA SHERATON
-// Función para generar PDF - CON TEXTO BLANCO, NEGRITAS Y AÚN MÁS GRANDE PARA SHERATON Y FONTAN
-     function generarPDF(esReagendados = false) {
+      // Función para generar PDF - CON TEXTOS GRANDES, NEGRITAS, BLANCO PARA SHERATON/FONTAN Y NEGRO PARA DAIKOKU
+      function generarPDF(esReagendados = false) {
           const { jsPDF } = window.jspdf;
 
           const nombre = document.getElementById("nombre").value.trim();
@@ -3270,26 +3272,26 @@
           const esDaikoku = fondoClave === "daikoku";
           const esFontan = fondoClave === "fontan";
 
-          // *** CAMBIOS: TEXTO BLANCO, NEGRITAS Y MÁS GRANDE ***
+          // *** TEXTOS GRANDES Y NEGRITAS PARA TODOS LOS HOTELES ***
           doc.setFont("helvetica", "bold"); // NEGRITAS para todos
           
-          // SALUDO PRINCIPAL - MÁS ABAJO PARA FONTAN
+          // SALUDO PRINCIPAL - MÁS ABAJO PARA FONTAN Y DAIKOKU
           let saludoY;
-          if (esFontan) {
-              saludoY = 85; // BAJADO para Fontan (antes era 70)
+          if (esFontan || esDaikoku) {
+              saludoY = 85; // BAJADO para Fontan y Daikoku
           } else {
               saludoY = 80; // Sheraton, Marquis, etc.
           }
 
           if (esDaikoku) {
-              // Para Daikoku (texto negro)
+              // DAIKOKU: TEXTO NEGRO
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(18);
+              doc.setFontSize(20);
               doc.text(saludo, 105, saludoY, { align: "center" });
           } else {
-              // Para SHERATON, FONTAN y otros hoteles: TEXTO BLANCO
-              doc.setFontSize(18);
-              doc.setTextColor(255, 255, 255); // BLANCO
+              // SHERATON, FONTAN, MARQUIS: TEXTO BLANCO
+              doc.setFontSize(20);
+              doc.setTextColor(255, 255, 255);
               doc.text(saludo, 105, saludoY, { align: "center" });
           }
 
@@ -3304,7 +3306,7 @@
 
           const horaFormateada = convertirHoraAMPM(hora);
 
-          // TEXTOS DE INFORMACIÓN - TAMAÑO 16
+          // TEXTOS DE INFORMACIÓN (Mesa, Hora, Día) - TAMAÑO 18
           const textos = [
               `Mesa: ${personas} ${personas == 1 ? 'persona' : 'personas'}`,
               `Hora de la cita: ${horaFormateada}`,
@@ -3312,22 +3314,21 @@
           ];
 
           textos.forEach((texto, index) => {
-              const yPos = inicioY + (index * 10);
+              const yPos = inicioY + (index * 11);
               
               if (esDaikoku) {
                   doc.setTextColor(0, 0, 0);
-                  doc.setFontSize(16);
+                  doc.setFontSize(18);
                   doc.text(texto, x, yPos);
               } else {
                   // SHERATON, FONTAN: texto blanco
-                  doc.setFontSize(16);
+                  doc.setFontSize(18);
                   doc.setTextColor(255, 255, 255);
                   doc.text(texto, x, yPos);
               }
           });
 
-          let y = inicioY + 34;
-
+          let y = inicioY + 24;
           let ubicacionHotel = "#";
           if (fondoClave === "marquis") {
               ubicacionHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
@@ -3339,24 +3340,27 @@
               ubicacionHotel = "https://maps.app.goo.gl/N86NDYRoK8uAPhcKA";
           }
 
-          // TÍTULO "En este evento contaremos con:" - TAMAÑO 16
+          // BAJAR EL TEXTO "En este evento contaremos con:" PARA QUE NO SE AMONTONE
+          y = y + 8; // Aumentar espacio antes del título
+
+          // TÍTULO "En este evento contaremos con:" - TAMAÑO 18
           doc.setFont("helvetica", "bold");
           const eventoTexto = "En este evento contaremos con:";
           const eventoWidth = doc.getTextWidth(eventoTexto);
 
           if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(16);
+              doc.setFontSize(18);
               doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
           } else {
               // SHERATON, FONTAN: texto blanco
-              doc.setFontSize(16);
+              doc.setFontSize(18);
               doc.setTextColor(255, 255, 255);
               doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
           }
-          y += 8;
+          y += 9;
 
-          // ITEMS DE LA LISTA - TAMAÑO 14
+          // ITEMS DE LA LISTA - TAMAÑO 16
           doc.setFont("helvetica", "normal");
           const items = [
               "Alimentos en cortesía.",
@@ -3366,45 +3370,46 @@
 
           items.forEach(item => {
               if (esDaikoku) {
+                  // DAIKOKU: círculos NEGROS, texto NEGRO
                   doc.setDrawColor(0, 0, 0);
                   doc.setFillColor(0, 0, 0);
-                  doc.circle(x, y - 2, 2, "FD");
+                  doc.circle(x, y - 2, 2.2, "FD");
                   
                   doc.setTextColor(0, 0, 0);
-                  doc.setFontSize(14);
-                  doc.text(item, x + 10, y);
+                  doc.setFontSize(16);
+                  doc.text(item, x + 12, y);
               } else {
-                  // SHERATON, FONTAN: círculos blancos, texto blanco
+                  // SHERATON, FONTAN: círculos BLANCOS, texto BLANCO
                   doc.setDrawColor(255, 255, 255);
                   doc.setFillColor(255, 255, 255);
-                  doc.circle(x, y - 2, 2, "FD");
+                  doc.circle(x, y - 2, 2.2, "FD");
                   
-                  doc.setFontSize(14);
+                  doc.setFontSize(16);
                   doc.setTextColor(255, 255, 255);
-                  doc.text(item, x + 10, y);
+                  doc.text(item, x + 12, y);
               }
-              y += 8;
+              y += 9;
           });
 
           y += 9;
           
-          // TEXTO DEL HOTEL - TAMAÑO 14
+          // TEXTO DEL HOTEL - TAMAÑO 16
           doc.setFont("helvetica", "bold");
           const hotelNombre = hotelSeleccionado;
 
           if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(14);
+              doc.setFontSize(16);
               doc.text(`El evento es patrocinado por Destination Connect Group en el ${hotelNombre}...`, x, y);
           } else {
               // SHERATON, FONTAN: texto blanco
-              doc.setFontSize(14);
+              doc.setFontSize(16);
               doc.setTextColor(255, 255, 255);
               doc.text(`El evento es patrocinado por Destination Connect Group en el ${hotelNombre}...`, x, y);
           }
           y += 7;
 
-          // DETALLES ADICIONALES - TAMAÑO 13
+          // DETALLES ADICIONALES - TAMAÑO 15
           const textoDetalles = [
               `Ubicación del Hotel: ${ubicacionHotel}`,
               "Recibirás un certificado de hospedaje vacacional válido por 4 días y 3 noches...",
@@ -3417,57 +3422,57 @@
                   // Línea de ubicación con enlace
                   if (esDaikoku) {
                       doc.setTextColor(0, 0, 0);
-                      doc.setFontSize(13);
+                      doc.setFontSize(15);
                       doc.text("Ubicación del Hotel:", x, y);
                       
                       const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
                       doc.setTextColor(0, 0, 255);
-                      doc.setFontSize(13);
+                      doc.setFontSize(15);
                       doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
                   } else {
                       // SHERATON, FONTAN: texto blanco
-                      doc.setFontSize(13);
+                      doc.setFontSize(15);
                       doc.setTextColor(255, 255, 255);
                       doc.text("Ubicación del Hotel:", x, y);
                       
                       const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
                       doc.setTextColor(0, 255, 255); // Celeste
-                      doc.setFontSize(13);
+                      doc.setFontSize(15);
                       doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
                   }
-                  y += 9;
+                  y += 10;
               } else {
                   if (esDaikoku) {
                       doc.setTextColor(0, 0, 0);
-                      doc.setFontSize(13);
+                      doc.setFontSize(15);
                       doc.text(lines, x, y);
                   } else {
                       // SHERATON, FONTAN: texto blanco
-                      doc.setFontSize(13);
+                      doc.setFontSize(15);
                       doc.setTextColor(255, 255, 255);
                       doc.text(lines, x, y);
                   }
-                  y += lines.length * 7;
+                  y += lines.length * 8;
               }
           });
 
           y += 8;
           
-          // TEXTO "Para acceder al evento..." - TAMAÑO 14
+          // TEXTO "Para acceder al evento..." - TAMAÑO 16
           doc.setFont("helvetica", "bold");
           if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(14);
+              doc.setFontSize(16);
               doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
           } else {
               // SHERATON, FONTAN: texto blanco
-              doc.setFontSize(14);
+              doc.setFontSize(16);
               doc.setTextColor(255, 255, 255);
               doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
           }
-          y += 8;
+          y += 9;
 
-          // REQUISITOS - TAMAÑO 13
+          // REQUISITOS - TAMAÑO 15
           if (fondoClave === "marquis") {
               const requisitosCol1 = [
                   "Mostrar cualquier identificación vigente (INE y/o PASAPORTE).",
@@ -3480,10 +3485,10 @@
 
               const col1X = x;
               const col2X = 110;
-              const lineHeight = 14;
+              const lineHeight = 16;
 
               doc.setFont("helvetica", "normal");
-              doc.setFontSize(13);
+              doc.setFontSize(15);
 
               const procesarRequisitos = (textos, colX) => {
                   textos.forEach((text, i) => {
@@ -3492,26 +3497,26 @@
                       if (esDaikoku) {
                           doc.setDrawColor(0, 0, 0);
                           doc.setFillColor(0, 0, 0);
-                          doc.circle(colX, circleY - 1, 2, "FD");
+                          doc.circle(colX, circleY - 1, 2.2, "FD");
                           
                           const lines = doc.splitTextToSize(text, 75);
                           lines.forEach((line, lineIdx) => {
                               doc.setTextColor(0, 0, 0);
-                              doc.setFontSize(13);
-                              doc.text(line, colX + 10, circleY + (lineIdx * 6));
+                              doc.setFontSize(15);
+                              doc.text(line, colX + 12, circleY + (lineIdx * 7));
                           });
                       } else {
                           // SHERATON, FONTAN: círculos blancos, texto blanco
                           doc.setDrawColor(255, 255, 255);
                           doc.setFillColor(255, 255, 255);
-                          doc.circle(colX, circleY - 1, 2, "FD");
+                          doc.circle(colX, circleY - 1, 2.2, "FD");
                           
                           const lines = doc.splitTextToSize(text, 75);
                           lines.forEach((line, lineIdx) => {
-                              const lineY = circleY + (lineIdx * 6);
+                              const lineY = circleY + (lineIdx * 7);
                               doc.setTextColor(255, 255, 255);
-                              doc.setFontSize(13);
-                              doc.text(line, colX + 10, lineY);
+                              doc.setFontSize(15);
+                              doc.text(line, colX + 12, lineY);
                           });
                       }
                   });
@@ -3523,7 +3528,7 @@
               y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 8;
           } else {
               doc.setFont("helvetica", "normal");
-              doc.setFontSize(13);
+              doc.setFontSize(15);
 
               const requisitos = [
                   ['Mostrar cualquier identificación vigente', '(INE y/o PASAPORTE).'],
@@ -3534,31 +3539,32 @@
 
               requisitos.forEach(text => {
                   if (esDaikoku) {
+                      // DAIKOKU: círculos NEGROS, texto NEGRO
                       doc.setDrawColor(0, 0, 0);
                       doc.setFillColor(0, 0, 0);
-                      doc.circle(x, y - 1, 2, "FD");
+                      doc.circle(x, y - 1, 2.2, "FD");
                       
                       const lines = doc.splitTextToSize(text, textoMaxWidth);
                       lines.forEach((line, lineIdx) => {
                           doc.setTextColor(0, 0, 0);
-                          doc.setFontSize(13);
-                          doc.text(line, x + 10, y + (lineIdx * 6));
+                          doc.setFontSize(15);
+                          doc.text(line, x + 12, y + (lineIdx * 7));
                       });
-                      y += lines.length * 6;
+                      y += lines.length * 7;
                   } else {
-                      // SHERATON, FONTAN: círculos blancos, texto blanco
+                      // SHERATON, FONTAN: círculos BLANCOS, texto BLANCO
                       doc.setDrawColor(255, 255, 255);
                       doc.setFillColor(255, 255, 255);
-                      doc.circle(x, y - 1, 2, "FD");
+                      doc.circle(x, y - 1, 2.2, "FD");
                       
                       const lines = doc.splitTextToSize(text, textoMaxWidth);
                       lines.forEach((line, lineIdx) => {
-                          const lineY = y + (lineIdx * 6);
+                          const lineY = y + (lineIdx * 7);
                           doc.setTextColor(255, 255, 255);
-                          doc.setFontSize(13);
-                          doc.text(line, x + 10, lineY);
+                          doc.setFontSize(15);
+                          doc.text(line, x + 12, lineY);
                       });
-                      y += lines.length * 6;
+                      y += lines.length * 7;
                   }
               });
           }
@@ -3596,10 +3602,8 @@
           document.getElementById("acompanantesContainer").innerHTML = "";
       }
 
-      // Evento para botón principal
-      form.addEventListener("submit", function (e) {
-          e.preventDefault();
-          
+      // Evento para botón principal - MODIFICADO PARA IPHONE
+      generarInvitacionBtn.addEventListener('click', function() {
           const requiredFields = form.querySelectorAll("[required]");
           let valid = true;
           
@@ -3627,7 +3631,7 @@
           generarPDF(false);
       });
 
-      // Evento para botón de reagendados
+      // Evento para botón de reagendados - MODIFICADO PARA IPHONE
       document.getElementById('reagendadosBtn').addEventListener('click', function() {
           const requiredFields = form.querySelectorAll("[required]");
           let valid = true;
