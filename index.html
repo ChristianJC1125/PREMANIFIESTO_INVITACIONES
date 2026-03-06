@@ -3027,7 +3027,7 @@
           mostrarNotificacion("Registro actualizado correctamente");
       });
 
-           // Función para generar PDF desde edición
+        // Función para generar PDF desde edición
       function generarPDFDesdeEdicion() {
           const { jsPDF } = window.jspdf;
 
@@ -3303,7 +3303,12 @@
               doc.text(saludo, 105, saludoY, { align: "center" });
           } else {
               // SHERATON, FONTAN, MARQUIS: TEXTO BLANCO
-              doc.setFontSize(22);
+              // *** MODIFICACIÓN: TAMAÑO REDUCIDO PARA SHERATON ***
+              if (esSheraton) {
+                  doc.setFontSize(20); // REDUCIDO de 22 a 20 para Sheraton
+              } else {
+                  doc.setFontSize(22); // Tamaño normal para Fontan y Marquis
+              }
               doc.setTextColor(255, 255, 255);
               doc.text(saludo, 105, saludoY, { align: "center" });
           }
