@@ -3312,7 +3312,7 @@
       }
 
      // *** FUNCIÓN PRINCIPAL CORREGIDA PARA GENERAR PDF ***
-// *** CON AJUSTES FINALES DE POSICIÓN Y TAMAÑO ***
+// *** CON AJUSTES FINALES - ESPACIOS REDUCIDOS Y SALUDO MÁS PEQUEÑO ***
 function generarPDF(esReagendados = false) {
     const { jsPDF } = window.jspdf;
 
@@ -3396,10 +3396,10 @@ function generarPDF(esReagendados = false) {
         textoMaxWidth = 130;
     }
 
-    // *** SALUDO - MÁS ABAJO (90 en lugar de 75) ***
+    // *** SALUDO - MÁS ABAJO PERO MÁS PEQUEÑO ***
     let saludoY;
     if (esDaikoku) {
-        saludoY = 90; // BAJADO a 90 (antes 75)
+        saludoY = 75; // BAJADO a 75 (antes 90) - para que no se salga del fondo
     } else if (fondoClave === "fontan") {
         saludoY = 100;
     } else if (fondoClave === "sheraton") {
@@ -3408,12 +3408,12 @@ function generarPDF(esReagendados = false) {
         saludoY = 85;
     }
 
-    // *** SALUDO PRINCIPAL - TAMAÑO 18 (un poco más grande) ***
+    // *** SALUDO PRINCIPAL - TAMAÑO 16 (más pequeño) ***
     doc.setFont("helvetica", "bold");
     
     if (esDaikoku) {
         doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(18); // TAMAÑO 18 (antes 16)
+        doc.setFontSize(16); // TAMAÑO 16 (antes 18) - MÁS PEQUEÑO
         doc.text(saludo, 105, saludoY, { align: "center" });
     } else {
         doc.setFontSize(22);
@@ -3426,12 +3426,12 @@ function generarPDF(esReagendados = false) {
 
     doc.setFont("helvetica", "bold");
 
-    // Espacio después del saludo - MENOR PARA SUBIR TODO
-    const inicioY = saludoY + 18; // MENOS espacio (antes 20)
+    // Espacio después del saludo - REDUCIDO
+    const inicioY = saludoY + 15; // REDUCIDO (antes 18)
 
     const horaFormateada = convertirHoraAMPM(hora);
 
-    // *** TEXTOS DE INFORMACIÓN (Mesa, Hora, Día) - TAMAÑO 14 ***
+    // *** TEXTOS DE INFORMACIÓN (Mesa, Hora, Día) - TAMAÑO 13 ***
     const textos = [
         `Mesa: ${personas} ${personas == 1 ? 'persona' : 'personas'}`,
         `Hora de la cita: ${horaFormateada}`,
@@ -3439,11 +3439,11 @@ function generarPDF(esReagendados = false) {
     ];
 
     textos.forEach((texto, index) => {
-        const yPos = inicioY + (index * 10); // Espaciado de 10
+        const yPos = inicioY + (index * 9); // Espaciado REDUCIDO a 9 (antes 10)
         
         if (esDaikoku) {
             doc.setTextColor(0, 0, 0); // NEGRO
-            doc.setFontSize(14); // TAMAÑO 14 (antes 12)
+            doc.setFontSize(13); // TAMAÑO 13 (antes 14)
             doc.text(texto, x, yPos);
         } else {
             doc.setFontSize(20);
@@ -3452,7 +3452,7 @@ function generarPDF(esReagendados = false) {
         }
     });
 
-    let y = inicioY + 30; // MENOS espacio (antes 35) - PARA SUBIR TODO
+    let y = inicioY + 25; // REDUCIDO (antes 30)
     let ubicacionHotel = "#";
     if (fondoClave === "marquis") {
         ubicacionHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
@@ -3464,25 +3464,25 @@ function generarPDF(esReagendados = false) {
         ubicacionHotel = "https://maps.app.goo.gl/N86NDYRoK8uAPhcKA";
     }
 
-    y = y + 5;
+    y = y + 3; // REDUCIDO (antes 5)
 
-    // *** TÍTULO "En este evento contaremos con:" - SUBIDO (menos espacio) ***
+    // *** TÍTULO "En este evento contaremos con:" - TAMAÑO 14 ***
     doc.setFont("helvetica", "bold");
     const eventoTexto = "En este evento contaremos con:";
     const eventoWidth = doc.getTextWidth(eventoTexto);
 
     if (esDaikoku) {
         doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(16); // TAMAÑO 16 (antes 14)
+        doc.setFontSize(14); // TAMAÑO 14 (antes 16)
         doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
     } else {
         doc.setFontSize(20);
         doc.setTextColor(255, 255, 255);
         doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
     }
-    y += 9; // MENOS espacio (antes 10)
+    y += 8; // REDUCIDO (antes 9)
 
-    // *** ITEMS DE LA LISTA - TAMAÑO 13 ***
+    // *** ITEMS DE LA LISTA - TAMAÑO 12 ***
     doc.setFont("helvetica", "normal");
     const items = [
         "Alimentos en cortesía.",
@@ -3498,7 +3498,7 @@ function generarPDF(esReagendados = false) {
             doc.circle(x, y - 1.5, 1.5, "FD");
             
             doc.setTextColor(0, 0, 0); // NEGRO
-            doc.setFontSize(13); // TAMAÑO 13 (antes 11)
+            doc.setFontSize(12); // TAMAÑO 12 (antes 13)
             doc.text(item, x + 10, y);
         } else {
             doc.setDrawColor(255, 255, 255);
@@ -3509,12 +3509,12 @@ function generarPDF(esReagendados = false) {
             doc.setTextColor(255, 255, 255);
             doc.text(item, x + 15, y);
         }
-        y += 8; // MENOS espacio (antes 9)
+        y += 7; // REDUCIDO (antes 8)
     });
 
-    y += 6; // MENOS espacio (antes 8)
+    y += 4; // REDUCIDO (antes 6)
     
-    // *** TEXTO DEL HOTEL - SUBIDO (menos espacio) ***
+    // *** TEXTO DEL HOTEL - TAMAÑO 12 ***
     doc.setFont("helvetica", "bold");
     const hotelNombre = hotelSeleccionado;
 
@@ -3522,16 +3522,16 @@ function generarPDF(esReagendados = false) {
     
     if (esDaikoku) {
         doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(13); // TAMAÑO 13 (antes 11)
+        doc.setFontSize(12); // TAMAÑO 12 (antes 13)
         doc.text(hotelTexto, x, y);
     } else {
         doc.setFontSize(18);
         doc.setTextColor(255, 255, 255);
         doc.text(hotelTexto, x, y);
     }
-    y += 8; // MENOS espacio (antes 9)
+    y += 6; // REDUCIDO (antes 8)
 
-    // *** DETALLES ADICIONALES - TAMAÑO 12 ***
+    // *** DETALLES ADICIONALES - TAMAÑO 11 ***
     const textoDetalles = [
         `Ubicación del Hotel: ${ubicacionHotel}`,
         "Recibirás un certificado de hospedaje vacacional válido por 4 días y 3 noches...",
@@ -3545,13 +3545,13 @@ function generarPDF(esReagendados = false) {
             if (esDaikoku) {
                 doc.setTextColor(0, 0, 0); // NEGRO
                 doc.setFont("helvetica", "bold");
-                doc.setFontSize(13); // TAMAÑO 13 (antes 11)
+                doc.setFontSize(12); // TAMAÑO 12 (antes 13)
                 doc.text("Ubicación del Hotel:", x, y);
                 
                 const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
                 doc.setTextColor(0, 0, 255); // AZUL FUERTE
                 doc.setFont("helvetica", "bold"); // NEGRITAS
-                doc.setFontSize(13);
+                doc.setFontSize(12);
                 doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
             } else if (fondoClave === "sheraton" || fondoClave === "fontan") {
                 doc.setTextColor(255, 255, 255);
@@ -3572,38 +3572,38 @@ function generarPDF(esReagendados = false) {
                 doc.setFontSize(16);
                 doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
             }
-            y += 11; // MENOS espacio (antes 12)
+            y += 10; // REDUCIDO (antes 11)
         } else {
             if (esDaikoku) {
                 doc.setTextColor(0, 0, 0); // NEGRO
                 doc.setFont("helvetica", "normal");
-                doc.setFontSize(12); // TAMAÑO 12 (antes 10)
+                doc.setFontSize(11); // TAMAÑO 11 (antes 12)
                 doc.text(lines, x, y);
             } else {
                 doc.setFontSize(16);
                 doc.setTextColor(255, 255, 255);
                 doc.text(lines, x, y);
             }
-            y += lines.length * 9; // MENOS espacio (antes 10)
+            y += lines.length * 8; // REDUCIDO (antes 9)
         }
     });
 
-    y += 6; // MENOS espacio (antes 8)
+    y += 4; // REDUCIDO (antes 6)
     
-    // *** TEXTO "Para acceder al evento..." - SUBIDO (menos espacio) ***
+    // *** TEXTO "Para acceder al evento..." - TAMAÑO 13 ***
     doc.setFont("helvetica", "bold");
     if (esDaikoku) {
         doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(14); // TAMAÑO 14 (antes 12)
+        doc.setFontSize(13); // TAMAÑO 13 (antes 14)
         doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
     } else {
         doc.setFontSize(18);
         doc.setTextColor(255, 255, 255);
         doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
     }
-    y += 9; // MENOS espacio (antes 10)
+    y += 8; // REDUCIDO (antes 9)
 
-    // *** REQUISITOS - TAMAÑO 12 ***
+    // *** REQUISITOS - TAMAÑO 11 CON ESPACIADO MUY REDUCIDO ***
     if (fondoClave === "marquis") {
         const requisitosCol1 = [
             "Mostrar cualquier identificación vigente (INE y/o PASAPORTE).",
@@ -3616,10 +3616,10 @@ function generarPDF(esReagendados = false) {
 
         const col1X = x;
         const col2X = 110;
-        const lineHeight = 13; // MENOS espacio (antes 14)
+        const lineHeight = 11; // REDUCIDO (antes 13)
 
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(esDaikoku ? 13 : 16);
+        doc.setFontSize(esDaikoku ? 12 : 16);
 
         const procesarRequisitos = (textos, colX) => {
             textos.forEach((text, i) => {
@@ -3633,8 +3633,8 @@ function generarPDF(esReagendados = false) {
                     const lines = doc.splitTextToSize(text, 75);
                     lines.forEach((line, lineIdx) => {
                         doc.setTextColor(0, 0, 0); // NEGRO
-                        doc.setFontSize(12); // TAMAÑO 12 (antes 10)
-                        doc.text(line, colX + 10, circleY + (lineIdx * 6)); // MENOS espacio
+                        doc.setFontSize(11); // TAMAÑO 11 (antes 12)
+                        doc.text(line, colX + 10, circleY + (lineIdx * 5)); // ESPACIADO REDUCIDO
                     });
                 } else {
                     doc.setDrawColor(255, 255, 255);
@@ -3655,10 +3655,10 @@ function generarPDF(esReagendados = false) {
         procesarRequisitos(requisitosCol1, col1X);
         procesarRequisitos(requisitosCol2, col2X);
 
-        y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 6;
+        y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 4;
     } else {
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(esDaikoku ? 13 : 16);
+        doc.setFontSize(esDaikoku ? 12 : 16);
 
         const requisitos = [
             ['Mostrar cualquier identificación vigente', '(INE y/o PASAPORTE).'],
@@ -3676,10 +3676,10 @@ function generarPDF(esReagendados = false) {
                 const lines = doc.splitTextToSize(text, textoMaxWidth);
                 lines.forEach((line, lineIdx) => {
                     doc.setTextColor(0, 0, 0); // NEGRO
-                    doc.setFontSize(12); // TAMAÑO 12 (antes 10)
-                    doc.text(line, x + 10, y + (lineIdx * 6));
+                    doc.setFontSize(11); // TAMAÑO 11
+                    doc.text(line, x + 10, y + (lineIdx * 5)); // ESPACIADO REDUCIDO
                 });
-                y += lines.length * 7; // MENOS espacio (antes 8)
+                y += lines.length * 6; // REDUCIDO (antes 7)
             } else {
                 doc.setDrawColor(255, 255, 255);
                 doc.setFillColor(255, 255, 255);
