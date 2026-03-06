@@ -3448,13 +3448,13 @@
                   doc.setFontSize(10); // REDUCIDO de 20 a 16
                   doc.text(texto, x, yPos);
               } else {
-                  doc.setFontSize(20);
+                  doc.setFontSize(10);
                   doc.setTextColor(255, 255, 255);
                   doc.text(texto, x, yPos);
               }
           });
 
-          let y = inicioY + (esDaikoku ? 15 : 20); // Menor espacio para Daikoku
+          let y = inicioY + (esDaikoku ? 10 : 10); // Menor espacio para Daikoku
           let ubicacionHotel = "#";
           if (fondoClave === "marquis") {
               ubicacionHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
@@ -3482,7 +3482,7 @@
               doc.setTextColor(255, 255, 255);
               doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
           }
-          y += (esDaikoku ? 10 : 12); // Espaciado más compacto
+          y += (esDaikoku ? 10 : 10); // Espaciado más compacto
 
           // ITEMS DE LA LISTA
           doc.setFont("helvetica", "normal");
@@ -3500,7 +3500,7 @@
                   doc.circle(x, y - 2, 2, "FD"); // Círculo más pequeño
                   
                   doc.setTextColor(0, 0, 0);
-                  doc.setFontSize(12); // REDUCIDO de 18 a 14
+                  doc.setFontSize(9); // REDUCIDO de 18 a 14
                   doc.text(item, x + 9, y); // Menor espacio después del círculo
               } else {
                   doc.setDrawColor(255, 255, 255);
@@ -3511,7 +3511,7 @@
                   doc.setTextColor(255, 255, 255);
                   doc.text(item, x + 15, y);
               }
-              y += (esDaikoku ? 10 : 12); // Espaciado más compacto
+              y += (esDaikoku ? 9 : 10); // Espaciado más compacto
           });
 
           y += (esDaikoku ? 8 : 10);
