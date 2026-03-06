@@ -3311,9 +3311,9 @@
           alert("Invitación actualizada descargada correctamente.");
       }
 
-     // *** FUNCIÓN PRINCIPAL CORREGIDA PARA GENERAR PDF ***
-// *** CON TODO EL TEXTO EN NEGRO PARA DAIKOKU ***
-function generarPDF(esReagendados = false) {
+      // *** FUNCIÓN PRINCIPAL CORREGIDA PARA GENERAR PDF ***
+      // *** CON TEXTOS MÁS PEQUEÑOS Y MÁRGENES CORREGIDOS PARA DAIKOKU ***
+     function generarPDF(esReagendados = false) {
     const { jsPDF } = window.jspdf;
 
     const nombre = document.getElementById("nombre").value.trim();
@@ -3330,163 +3330,73 @@ function generarPDF(esReagendados = false) {
         return;
     }
 
-    // Formatear fecha para el PDF
-    let fecha = fechaInput;
-    try {
-        const partes = fechaInput.split('-');
-        if (partes.length === 3) {
-            const año = parseInt(partes[0]);
-            const mes = parseInt(partes[1]) - 1;
-            const dia = parseInt(partes[2]);
-            
-            const fechaObj = new Date(año, mes, dia, 12, 0, 0);
-            
-            if (!isNaN(fechaObj.getTime())) {
-                const meses = [
-                    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-                ];
-                const mesNombre = meses[mes];
-                fecha = `${dia.toString().padStart(2, '0')} de ${mesNombre} ${año}`;
-            }
-        }
-    } catch (error) {
-        console.error("Error al formatear fecha en PDF:", error);
-    }
-
     const doc = new jsPDF();
-    
-    const fondoClave = hotelSeleccionado.toLowerCase().includes("sheraton") ? "sheraton" : 
-                      hotelSeleccionado.toLowerCase().includes("fontan") ? "fontan" : 
-                      hotelSeleccionado.toLowerCase().includes("marquis") ? "marquis" : 
-                      hotelSeleccionado.toLowerCase().includes("daikoku") ? "daikoku" : "sheraton";
-    
-    try {
-        if (fondos[fondoClave]) {
-            doc.addImage(fondos[fondoClave], "PNG", 0, 0, 210, 297);
-        }
-    } catch (error) {
-        console.error("Error al cargar el fondo:", error);
+
+    const fondoClave =
+        hotelSeleccionado.toLowerCase().includes("sheraton") ? "sheraton" :
+        hotelSeleccionado.toLowerCase().includes("fontan") ? "fontan" :
+        hotelSeleccionado.toLowerCase().includes("marquis") ? "marquis" :
+        hotelSeleccionado.toLowerCase().includes("daikoku") ? "daikoku" : "sheraton";
+
+    if (fondos[fondoClave]) {
+        doc.addImage(fondos[fondoClave], "PNG", 0, 0, 210, 297);
     }
 
-    const acompanantesInputs = document.querySelectorAll("#acompanantesContainer input");
-    const acompanantes = Array.from(acompanantesInputs)
-        .map(input => input.value.trim())
-        .filter(val => val !== "");
-
-    let saludo = "";
-    const estadosMasculinos = ["soltero", "casado", "unión libre", "divorciado", "viudo"];
-    if (acompanantes.length > 0) {
-        saludo = `ESTIMADOS: ${nombre.toUpperCase()} Y ${acompanantes.join(" Y ").toUpperCase()}`;
-    } else {
-        saludo = estadosMasculinos.includes(estadoCivil.toLowerCase())
-            ? `ESTIMADO: ${nombre.toUpperCase()}`
-            : `ESTIMADA: ${nombre.toUpperCase()}`;
-    }
-
-    // Configurar según el hotel
     const esDaikoku = fondoClave === "daikoku";
 
-    // *** Márgenes estándar para todos ***
-    let x = 25;
-    let textoMaxWidth = 160;
-    
-    if (fondoClave === "sheraton") {
-        x = 20;
-        textoMaxWidth = 130;
+    const x = 20; // Mismo margen para todos
+    const textoMaxWidth = 170;
+
+    let y = esDaikoku ? 70 : 85;
+
+    /* FORMATEAR FECHA */
+    let fecha = fechaInput;
+    const partes = fechaInput.split("-");
+    if (partes.length === 3) {
+        const meses = [
+            "enero","febrero","marzo","abril","mayo","junio",
+            "julio","agosto","septiembre","octubre","noviembre","diciembre"
+        ];
+        fecha = `${parseInt(partes[2])} de ${meses[parseInt(partes[1])-1]} ${partes[0]}`;
     }
 
-    // Posición Y del saludo
-    let saludoY;
-    if (esDaikoku) {
-        saludoY = 70;
-    } else if (fondoClave === "fontan") {
-        saludoY = 100;
-    } else if (fondoClave === "sheraton") {
-        saludoY = 90;
-    } else {
-        saludoY = 85;
-    }
+    /* SALUDO */
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(esDaikoku ? 18 : 22);
+    doc.setTextColor(esDaikoku ? 0 : 255, esDaikoku ? 0 : 255, esDaikoku ? 0 : 255);
 
-    // *** PARA DAIKOKU: TODO EL TEXTO EN NEGRO SIEMPRE ***
-    if (esDaikoku) {
-        doc.setTextColor(0, 0, 0); // NEGRO para todo
-    } else {
-        doc.setTextColor(255, 255, 255); // BLANCO para otros hoteles
-    }
+    const saludo = `ESTIMADO: ${nombre.toUpperCase()}`;
+    doc.text(saludo, 105, y, { align: "center" });
+    y += 12;
 
-    // *** SALUDO PRINCIPAL ***
-    doc.setFont("helvetica", "bold");
-    
-    if (esDaikoku) {
-        doc.setFontSize(18);
-        doc.text(saludo, 105, saludoY, { align: "center" });
-    } else {
-        doc.setFontSize(22);
-        doc.text(saludo, 105, saludoY, { align: "center" });
-    }
+    /* ESTADO CIVIL - ESTO FALTABA */
+    doc.setFontSize(esDaikoku ? 14 : 18);
+    doc.text(`Estado Civil: ${estadoCivil}`, x, y);
+    y += 7;
 
-    doc.setDrawColor(255, 255, 255);
-    doc.setLineWidth(0.5);
-
-    doc.setFont("helvetica", "bold");
-
-    // Espacio después del saludo
-    const inicioY = saludoY + 18;
-
+    /* DATOS DE MESA, HORA Y FECHA */
     const horaFormateada = convertirHoraAMPM(hora);
-
-    // *** ESTADO CIVIL Y MESA - TEXTO NEGRO PARA DAIKOKU ***
-    if (esDaikoku) {
-        doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(14);
-        doc.text(`Estado Civil: ${estadoCivil}`, x, inicioY);
-        doc.text(`Mesa: ${personas}`, x, inicioY + 8);
-        doc.text(`Hora de la cita: ${horaFormateada}`, x, inicioY + 16);
-        doc.text(`Día del evento: ${fecha}`, x, inicioY + 24);
-    } else {
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(20);
-        doc.text(`Estado Civil: ${estadoCivil}`, x, inicioY);
-        doc.text(`Mesa: ${personas}`, x, inicioY + 6);
-        doc.text(`Hora de la cita: ${horaFormateada}`, x, inicioY + 12);
-        doc.text(`Día del evento: ${fecha}`, x, inicioY + 18);
-    }
-
-    let y = inicioY + (esDaikoku ? 38 : 30);
-    let ubicacionHotel = "#";
-    if (fondoClave === "marquis") {
-        ubicacionHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
-    } else if (fondoClave === "fontan") {
-        ubicacionHotel = "https://maps.app.goo.gl/UVjAHobxNAHP5bwu9";
-    } else if (fondoClave === "sheraton") {
-        ubicacionHotel = "https://maps.app.goo.gl/LWt6E1X8cQH2bXrZA";
-    } else if (fondoClave === "daikoku") {
-        ubicacionHotel = "https://maps.app.goo.gl/N86NDYRoK8uAPhcKA";
-    }
-
-    y = y + 5;
-
-    // *** TÍTULO "En este evento contaremos con:" - NEGRO PARA DAIKOKU ***
-    if (esDaikoku) {
-        doc.setTextColor(0, 0, 0); // NEGRO
-    }
+    const mesaTexto = `Mesa: ${personas} ${personas == 1 ? 'persona' : 'personas'}`;
     
-    doc.setFont("helvetica", "bold");
-    const eventoTexto = "En este evento contaremos con:";
-    const eventoWidth = doc.getTextWidth(eventoTexto);
+    doc.text(mesaTexto, x, y);
+    y += 7;
+    
+    doc.text(`Hora de la cita: ${horaFormateada}`, x, y);
+    y += 7;
+    
+    doc.text(`Día del evento: ${fecha}`, x, y);
+    y += 12;
 
-    if (esDaikoku) {
-        doc.setFontSize(16);
-        doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
-    } else {
-        doc.setFontSize(20);
-        doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
-    }
+    /* TÍTULO EVENTO */
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(esDaikoku ? 16 : 20);
+    doc.text("En este evento contaremos con:", 105, y, { align: "center" });
     y += 10;
 
-    // *** ITEMS DE LA LISTA - NEGRO PARA DAIKOKU ***
-    doc.setFont("helvetica", "normal");
+    /* LISTA EVENTO CON VIÑETAS */
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(esDaikoku ? 13 : 16);
+    
     const items = [
         "Alimentos en cortesía.",
         "Atención personalizada para cada uno de nuestros invitados.",
@@ -3494,236 +3404,118 @@ function generarPDF(esReagendados = false) {
     ];
 
     items.forEach(item => {
-        if (esDaikoku) {
-            doc.setDrawColor(0, 0, 0);
-            doc.setFillColor(0, 0, 0);
-            doc.circle(x, y - 1.5, 1.5, "FD");
-            
-            doc.setTextColor(0, 0, 0); // NEGRO
-            doc.setFontSize(14);
-            doc.text(item, x + 10, y);
-        } else {
-            doc.setDrawColor(255, 255, 255);
-            doc.setFillColor(255, 255, 255);
-            doc.circle(x, y - 2, 2.5, "FD");
-            
-            doc.setFontSize(18);
-            doc.setTextColor(255, 255, 255);
-            doc.text(item, x + 15, y);
-        }
-        y += 9;
+        // Viñeta
+        doc.setDrawColor(esDaikoku ? 0 : 255, esDaikoku ? 0 : 255, esDaikoku ? 0 : 255);
+        doc.setFillColor(esDaikoku ? 0 : 255, esDaikoku ? 0 : 255, esDaikoku ? 0 : 255);
+        doc.circle(x, y-2, esDaikoku ? 1.5 : 2, "FD");
+        
+        // Texto
+        doc.text(item, x + 8, y);
+        y += 8;
     });
-
-    y += 8;
     
-    // *** TEXTO DEL HOTEL - NEGRO PARA DAIKOKU ***
+    y += 4;
+
+    /* HOTEL */
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(esDaikoku ? 13 : 16);
+    
+    const hotelTexto = `El evento es patrocinado por Destination Connect Group en el ${hotelSeleccionado}`;
+    const hotelLines = doc.splitTextToSize(hotelTexto, textoMaxWidth);
+    doc.text(hotelLines, x, y);
+    y += hotelLines.length * 6 + 4;
+
+    /* UBICACIÓN CON ENLACE */
+    const ubicaciones = {
+        marquis: "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7",
+        fontan: "https://maps.app.goo.gl/UVjAHobxNAHP5bwu9",
+        sheraton: "https://maps.app.goo.gl/LWt6E1X8cQH2bXrZA",
+        daikoku: "https://maps.app.goo.gl/N86NDYRoK8uAPhcKA"
+    };
+    const ubicacionHotel = ubicaciones[fondoClave];
+
+    doc.setFontSize(esDaikoku ? 12 : 14);
+    doc.text("Ubicación del Hotel:", x, y);
+    
+    const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
+    doc.setTextColor(0, 0, 255);
     doc.setFont("helvetica", "bold");
-    const hotelNombre = hotelSeleccionado;
-
-    let hotelTexto = `El evento es patrocinado por Destination Connect Group en el ${hotelNombre}`;
+    doc.textWithLink(ubicacionHotel, x + labelWidth, y, { url: ubicacionHotel });
     
-    if (esDaikoku) {
-        doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(14);
-        doc.text(hotelTexto, x, y);
-    } else {
-        doc.setFontSize(18);
-        doc.setTextColor(255, 255, 255);
-        doc.text(hotelTexto, x, y);
-    }
-    y += 9;
+    // Restaurar color
+    doc.setTextColor(esDaikoku ? 0 : 255, esDaikoku ? 0 : 255, esDaikoku ? 0 : 255);
+    y += 8;
 
-    // *** DETALLES ADICIONALES - NEGRO PARA DAIKOKU CON ENLACE AZUL ***
-    const textoDetalles = [
-        `Ubicación del Hotel: ${ubicacionHotel}`,
+    /* CERTIFICADO */
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(esDaikoku ? 12 : 14);
+    
+    const infoTexto = [
         "Recibirás un certificado de hospedaje vacacional válido por 4 días y 3 noches...",
         "¡Si no tienes fecha de viaje no te preocupes tienes medio año de vigencia!"
     ];
 
-    textoDetalles.forEach((t, index) => {
+    infoTexto.forEach(t => {
         const lines = doc.splitTextToSize(t, textoMaxWidth);
-        if (index === 0) {
-            if (esDaikoku) {
-                doc.setTextColor(0, 0, 0); // NEGRO
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(14);
-                doc.text("Ubicación del Hotel:", x, y);
-                
-                const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
-                doc.setTextColor(0, 0, 255); // AZUL FUERTE solo para el enlace
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(14);
-                doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
-                
-                // Volver a NEGRO para el resto
-                doc.setTextColor(0, 0, 0);
-            } else {
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(16);
-                doc.text("Ubicación del Hotel:", x, y);
-                
-                const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
-                doc.setTextColor(0, 102, 204);
-                doc.setFontSize(16);
-                doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
-                doc.setTextColor(255, 255, 255);
-            }
-            y += 12;
-        } else {
-            if (esDaikoku) {
-                doc.setTextColor(0, 0, 0); // NEGRO
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(13);
-                doc.text(lines, x, y);
-            } else {
-                doc.setFontSize(16);
-                doc.setTextColor(255, 255, 255);
-                doc.text(lines, x, y);
-            }
-            y += lines.length * 10;
-        }
+        doc.text(lines, x, y);
+        y += lines.length * 6;
+    });
+    
+    y += 4;
+
+    /* ACCESO */
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(esDaikoku ? 13 : 16);
+    
+    const accesoTexto = "Para acceder al evento y recoger su obsequio es indispensable:";
+    const accesoLines = doc.splitTextToSize(accesoTexto, textoMaxWidth);
+    doc.text(accesoLines, x, y);
+    y += accesoLines.length * 7 + 4;
+
+    /* REQUISITOS CON VIÑETAS */
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(esDaikoku ? 12 : 14);
+    
+    const requisitos = [
+        "Mostrar cualquier identificación vigente (INE y/o PASAPORTE).",
+        "Contar con el tiempo estimado de 90 minutos.",
+        "Identificarse como tarjetahabiente crédito y/o débito vigente Visa, MasterCard o AMEX.",
+        "Indispensable en caso de ser casado o vivir en unión libre nos acompañen en pareja."
+    ];
+
+    requisitos.forEach(req => {
+        // Viñeta
+        doc.setDrawColor(esDaikoku ? 0 : 255, esDaikoku ? 0 : 255, esDaikoku ? 0 : 255);
+        doc.setFillColor(esDaikoku ? 0 : 255, esDaikoku ? 0 : 255, esDaikoku ? 0 : 255);
+        doc.circle(x, y-2, esDaikoku ? 1.5 : 2, "FD");
+        
+        // Texto
+        const lines = doc.splitTextToSize(req, textoMaxWidth - 10);
+        doc.text(lines, x + 8, y);
+        y += lines.length * 6 + 2;
     });
 
-    y += 8;
-    
-    // *** TEXTO "Para acceder al evento..." - NEGRO PARA DAIKOKU ***
-    doc.setFont("helvetica", "bold");
-    if (esDaikoku) {
-        doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(15);
-        doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
-    } else {
-        doc.setFontSize(18);
-        doc.setTextColor(255, 255, 255);
-        doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
-    }
-    y += 10;
-
-    // *** REQUISITOS - NEGRO PARA DAIKOKU ***
-    if (fondoClave === "marquis") {
-        const requisitosCol1 = [
-            "Mostrar cualquier identificación vigente (INE y/o PASAPORTE).",
-            "Identificarse con tarjeta vigente de crédito y/o débito vigente Visa, MasterCard o AMEX."
-        ];
-        const requisitosCol2 = [
-            "Contar con el tiempo estimado de 90 minutos.",
-            "Indispensable en caso de ser casado o vivir en unión libre nos acompañen en pareja."
-        ];
-
-        const col1X = x;
-        const col2X = 110;
-        const lineHeight = 14;
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(esDaikoku ? 14 : 16);
-
-        const procesarRequisitos = (textos, colX) => {
-            textos.forEach((text, i) => {
-                const circleY = y + i * lineHeight;
-                
-                if (esDaikoku) {
-                    doc.setDrawColor(0, 0, 0);
-                    doc.setFillColor(0, 0, 0);
-                    doc.circle(colX, circleY - 1, 1.5, "FD");
-                    
-                    const lines = doc.splitTextToSize(text, 75);
-                    lines.forEach((line, lineIdx) => {
-                        doc.setTextColor(0, 0, 0); // NEGRO
-                        doc.setFontSize(13);
-                        doc.text(line, colX + 10, circleY + (lineIdx * 7));
-                    });
-                } else {
-                    doc.setDrawColor(255, 255, 255);
-                    doc.setFillColor(255, 255, 255);
-                    doc.circle(colX, circleY - 1, 2.5, "FD");
-                    
-                    const lines = doc.splitTextToSize(text, 75);
-                    lines.forEach((line, lineIdx) => {
-                        const lineY = circleY + (lineIdx * 9);
-                        doc.setTextColor(255, 255, 255);
-                        doc.setFontSize(16);
-                        doc.text(line, colX + 15, lineY);
-                    });
-                }
-            });
-        };
-
-        procesarRequisitos(requisitosCol1, col1X);
-        procesarRequisitos(requisitosCol2, col2X);
-
-        y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 5;
-    } else {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(esDaikoku ? 14 : 16);
-
-        const requisitos = [
-            ['Mostrar cualquier identificación vigente', '(INE y/o PASAPORTE).'],
-            ['Contar con el tiempo estimado de 90 minutos.', ''],
-            ['Identificarse como tarjetahabiente crédito y/o', 'débito vigente Visa, MasterCard o AMEX.'],
-            ['Indispensable en caso de ser casado o', 'vivir en unión libre', 'nos acompañen en pareja.']
-        ];
-
-        requisitos.forEach(text => {
-            if (esDaikoku) {
-                doc.setDrawColor(0, 0, 0);
-                doc.setFillColor(0, 0, 0);
-                doc.circle(x, y - 1, 1.5, "FD");
-                
-                const lines = doc.splitTextToSize(text, textoMaxWidth);
-                lines.forEach((line, lineIdx) => {
-                    doc.setTextColor(0, 0, 0); // NEGRO
-                    doc.setFontSize(13);
-                    doc.text(line, x + 10, y + (lineIdx * 7));
-                });
-                y += lines.length * 8;
-            } else {
-                doc.setDrawColor(255, 255, 255);
-                doc.setFillColor(255, 255, 255);
-                doc.circle(x, y - 1, 2.5, "FD");
-                
-                const lines = doc.splitTextToSize(text, textoMaxWidth);
-                lines.forEach((line, lineIdx) => {
-                    const lineY = y + (lineIdx * 9);
-                    doc.setTextColor(255, 255, 255);
-                    doc.setFontSize(16);
-                    doc.text(line, x + 15, lineY);
-                });
-                y += lines.length * 11;
-            }
-        });
-    }
-
+    /* DESCARGA */
     const blob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = pdfUrl;
-    
-    if (esReagendados) {
-        a.download = `Invitacion_Reagendados_${nombre.replace(/\s+/g, "_")}.pdf`;
-    } else {
-        a.download = `Invitacion_${nombre.replace(/\s+/g, "_")}.pdf`;
-    }
-    
+    a.download = `Invitacion_${nombre.replace(/\s+/g, "_")}.pdf`;
     a.click();
 
-    let mensaje;
-    if (esReagendados) {
-        mensaje = `Hola ${nombre}, confirmamos tu reagendación para el evento del ${fecha} a las ${horaFormateada} en el ${hotelNombre}. ¡Te esperamos!`;
-    } else {
-        mensaje = `Estimado(a) ${nombre}, Reciba un cordial saludo de Destination Connect Group.Tenemos el gusto de recibirle el día ${fecha} a las ${horaFormateada} en el ${hotelNombre},En su invitación encontrará la ubicación exacta del hotel y los detalles del evento.¡Te esperamos para vivir una gran experiencia.!`;
-    }
+    /* WHATSAPP */
+    const mensaje = esReagendados 
+        ? `Hola ${nombre}, confirmamos tu reagendación para el evento del ${fecha} a las ${horaFormateada} en el ${hotelSeleccionado}. ¡Te esperamos!`
+        : `Estimado(a) ${nombre}, Reciba un cordial saludo de Destination Connect Group. Tenemos el gusto de recibirle el día ${fecha} a las ${horaFormateada} en el ${hotelSeleccionado}. En su invitación encontrará la ubicación exacta del hotel y los detalles del evento. ¡Te esperamos para vivir una gran experiencia!`;
     
     const whatsappURL = `https://wa.me/52${celular}?text=${encodeURIComponent(mensaje)}`;
     window.open(whatsappURL, 'whatsappWindow', 'width=800,height=600');
-
-    if (esReagendados) {
-        alert("Invitación de reagendados generada correctamente y agregada al premanifiesto.");
-    } else {
-        alert("Invitación generada correctamente y agregada al premanifiesto.");
-    }
     
-    form.reset();
-    document.getElementById("acompanantesContainer").innerHTML = "";
+    if (esReagendados) {
+        alert("Invitación de reagendados generada correctamente.");
+    } else {
+        alert("Invitación generada correctamente.");
+    }
 }
       // Evento para botón principal - MODIFICADO PARA IPHONE
       generarInvitacionBtn.addEventListener('click', function() {
