@@ -3027,7 +3027,7 @@
           mostrarNotificacion("Registro actualizado correctamente");
       });
 
-      // Función para generar PDF desde edición
+      // *** FUNCIÓN PARA GENERAR PDF DESDE EDICIÓN - CORREGIDA ***
       function generarPDFDesdeEdicion() {
           const { jsPDF } = window.jspdf;
 
@@ -3035,7 +3035,7 @@
           const estadoCivil = registroEditando.estadoCivil;
           const personas = registroEditando.numPersonas;
           const hora = document.getElementById('editarHora').value;
-          const fecha = registroEditando.diaEvento;
+          const fechaInput = registroEditando.diaEvento;
           const celular = registroEditando.telefono;
           const codigo = "SF";
           const hotelSeleccionado = registroEditando.hotel;
@@ -3043,6 +3043,30 @@
           if (!hotelSeleccionado) {
               alert("Por favor selecciona un hotel.");
               return;
+          }
+
+          // CORREGIDO: Formatear fecha para el PDF desde edición
+          let fecha = fechaInput;
+          try {
+              const partes = fechaInput.split('-');
+              if (partes.length === 3) {
+                  const año = parseInt(partes[0]);
+                  const mes = parseInt(partes[1]) - 1;
+                  const dia = parseInt(partes[2]);
+                  
+                  const fechaObj = new Date(año, mes, dia, 12, 0, 0);
+                  
+                  if (!isNaN(fechaObj.getTime())) {
+                      const meses = [
+                          'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                          'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+                      ];
+                      const mesNombre = meses[mes];
+                      fecha = `${dia.toString().padStart(2, '0')} de ${mesNombre} ${año}`;
+                  }
+              }
+          } catch (error) {
+              console.error("Error al formatear fecha en PDF desde edición:", error);
           }
 
           const doc = new jsPDF();
@@ -3059,7 +3083,7 @@
           } catch (error) {
               console.error("Error al cargar el fondo:", error);
           }
-          
+
           doc.setTextColor(255, 255, 255);
 
           let saludo = "";
@@ -3069,27 +3093,45 @@
               : `ESTIMADA: ${nombre.toUpperCase()}`;
 
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(11);
-          const saludoY = fondoClave === "fontan" ? 70 : 80;
-          doc.text(saludo, 105, saludoY, { align: "center" });
+          
+          // CORREGIDO: Ajustar para Daikoku en edición
+          const esDaikoku = fondoClave === "daikoku";
+          
+          if (esDaikoku) {
+              doc.setTextColor(0, 0, 0);
+              doc.setFontSize(18);
+              const saludoY = 75;
+              doc.text(saludo, 105, saludoY, { align: "center" });
+          } else {
+              doc.setFontSize(11);
+              const saludoY = fondoClave === "fontan" ? 70 : 80;
+              doc.text(saludo, 105, saludoY, { align: "center" });
+          }
 
           doc.setDrawColor(255, 255, 255);
           doc.setLineWidth(0.5);
 
           doc.setFont("helvetica", "normal");
 
-          let x = fondoClave === "sheraton" ? 20 : 25;
-          let textoMaxWidth = fondoClave === "sheraton" ? 130 : 160;
-          const inicioY = saludoY + 14;
+          let x = esDaikoku ? 20 : (fondoClave === "sheraton" ? 20 : 25);
+          let textoMaxWidth = esDaikoku ? 170 : (fondoClave === "sheraton" ? 130 : 160);
+          const inicioY = esDaikoku ? 88 : (fondoClave === "fontan" ? 84 : 94);
 
           const horaFormateada = convertirHoraAMPM(hora);
 
+          if (esDaikoku) {
+              doc.setTextColor(0, 0, 0);
+              doc.setFontSize(16);
+          } else {
+              doc.setFontSize(11);
+          }
+          
           doc.text(`Estado Civil: ${estadoCivil}`, x, inicioY);
-          doc.text(`Mesa: ${personas}`, x, inicioY + 6);
-          doc.text(`Hora de la cita: ${horaFormateada}`, x, inicioY + 12);
-          doc.text(`Día del evento: ${fecha}`, x, inicioY + 18);
+          doc.text(`Mesa: ${personas}`, x, inicioY + (esDaikoku ? 12 : 6));
+          doc.text(`Hora de la cita: ${horaFormateada}`, x, inicioY + (esDaikoku ? 24 : 12));
+          doc.text(`Día del evento: ${fecha}`, x, inicioY + (esDaikoku ? 36 : 18));
 
-          let y = inicioY + 24;
+          let y = inicioY + (esDaikoku ? 48 : 24);
           let ubicacionHotel = "#";
           if (fondoClave === "marquis") {
               ubicacionHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
@@ -3102,29 +3144,48 @@
           }
 
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(fondoClave === "sheraton" ? 10 : 11);
+          
+          if (esDaikoku) {
+              doc.setTextColor(0, 0, 0);
+              doc.setFontSize(16);
+          } else {
+              doc.setFontSize(fondoClave === "sheraton" ? 10 : 11);
+          }
+          
           const eventoTexto = "En este evento contaremos con:";
           const eventoWidth = doc.getTextWidth(eventoTexto);
           doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
-          y += 6;
+          y += esDaikoku ? 12 : 6;
 
           doc.setFont("helvetica", "normal");
+          
+          if (esDaikoku) {
+              doc.setFontSize(14);
+          }
+          
           const items = [
               "Alimentos en cortesía.",
               "Atención personalizada para cada uno de nuestros invitados.",
               `Clave de acceso: ${codigo}`
           ];
           items.forEach(item => {
-              doc.circle(x, y - 2, 1.5, "F");
-              doc.text(item, x + 8, y);
-              y += 6;
+              if (esDaikoku) {
+                  doc.setDrawColor(0, 0, 0);
+                  doc.setFillColor(0, 0, 0);
+                  doc.circle(x, y - 2, 2, "FD");
+                  doc.setTextColor(0, 0, 0);
+              } else {
+                  doc.circle(x, y - 2, 1.5, "F");
+              }
+              doc.text(item, x + (esDaikoku ? 12 : 8), y);
+              y += esDaikoku ? 10 : 6;
           });
 
-          y += 7;
+          y += esDaikoku ? 10 : 7;
           doc.setFont("helvetica", "bold");
           const hotelNombre = hotelSeleccionado;
           doc.text(`El evento es patrocinado por Dstination Connect Group en el ${hotelNombre}...`, x, y);
-          y += 5;
+          y += esDaikoku ? 8 : 5;
 
           const textoDetalles = [
               `Ubicación del Hotel: ${ubicacionHotel}`,
@@ -3135,23 +3196,43 @@
           textoDetalles.forEach((t, index) => {
               const lines = doc.splitTextToSize(t, textoMaxWidth);
               if (index === 0) {
-                  doc.setTextColor(255, 255, 255);
-                  doc.text("Ubicación del Hotel:", x, y);
-                  const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
-                  doc.setTextColor(0, 102, 204);
-                  doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
-                  doc.setTextColor(255, 255, 255);
-                  y += 7;
+                  if (esDaikoku) {
+                      doc.setTextColor(0, 0, 0);
+                      doc.setFontSize(14);
+                      doc.text("Ubicación del Hotel:", x, y);
+                      
+                      const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
+                      doc.setTextColor(0, 0, 255);
+                      doc.setFontSize(14);
+                      doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
+                      doc.setTextColor(255, 255, 255);
+                  } else {
+                      doc.setTextColor(255, 255, 255);
+                      doc.text("Ubicación del Hotel:", x, y);
+                      const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
+                      doc.setTextColor(0, 102, 204);
+                      doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
+                      doc.setTextColor(255, 255, 255);
+                  }
+                  y += esDaikoku ? 10 : 7;
               } else {
                   doc.text(lines, x, y);
-                  y += lines.length * (fondoClave === "sheraton" ? 5 : 7);
+                  y += lines.length * (esDaikoku ? 8 : (fondoClave === "sheraton" ? 5 : 7));
               }
           });
 
-          y += 6;
+          y += esDaikoku ? 8 : 6;
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(fondoClave === "sheraton" ? 9 : 10);
-          y += 6;
+          
+          if (esDaikoku) {
+              doc.setFontSize(14);
+              doc.setTextColor(0, 0, 0);
+              doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
+          } else {
+              doc.setFontSize(fondoClave === "sheraton" ? 9 : 10);
+              doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
+          }
+          y += esDaikoku ? 12 : 6;
 
           if (fondoClave === "marquis") {
               const requisitosCol1 = [
@@ -3165,25 +3246,37 @@
 
               const col1X = x;
               const col2X = 110;
-              const lineHeight = 12;
+              const lineHeight = esDaikoku ? 16 : 12;
 
               doc.setFont("helvetica", "normal");
-              doc.setFontSize(10);
+              doc.setFontSize(esDaikoku ? 12 : 10);
 
               requisitosCol1.forEach((text, i) => {
-                  doc.circle(col1X, y + i * lineHeight - 1, 1.5, "F");
-                  doc.text(doc.splitTextToSize(text, 75), col1X + 8, y + i * lineHeight);
+                  if (esDaikoku) {
+                      doc.setDrawColor(0, 0, 0);
+                      doc.setFillColor(0, 0, 0);
+                      doc.circle(col1X, y + i * lineHeight - 1, 2, "FD");
+                  } else {
+                      doc.circle(col1X, y + i * lineHeight - 1, 1.5, "F");
+                  }
+                  doc.text(doc.splitTextToSize(text, 75), col1X + (esDaikoku ? 12 : 8), y + i * lineHeight);
               });
 
               requisitosCol2.forEach((text, i) => {
-                  doc.circle(col2X, y + i * lineHeight - 1, 1.5, "F");
-                  doc.text(doc.splitTextToSize(text, 75), col2X + 8, y + i * lineHeight);
+                  if (esDaikoku) {
+                      doc.setDrawColor(0, 0, 0);
+                      doc.setFillColor(0, 0, 0);
+                      doc.circle(col2X, y + i * lineHeight - 1, 2, "FD");
+                  } else {
+                      doc.circle(col2X, y + i * lineHeight - 1, 1.5, "F");
+                  }
+                  doc.text(doc.splitTextToSize(text, 75), col2X + (esDaikoku ? 12 : 8), y + i * lineHeight);
               });
 
               y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 5;
           } else {
               doc.setFont("helvetica", "normal");
-              doc.setFontSize(fondoClave === "sheraton" ? 10 : 11);
+              doc.setFontSize(esDaikoku ? 12 : (fondoClave === "sheraton" ? 10 : 11));
 
               const requisitos = [
                   ['Mostrar cualquier identificación vigente', '(INE y/o PASAPORTE).'],
@@ -3193,10 +3286,18 @@
               ];
 
               requisitos.forEach(text => {
-                  doc.circle(x, y - 1, 1.5, "F");
+                  if (esDaikoku) {
+                      doc.setDrawColor(0, 0, 0);
+                      doc.setFillColor(0, 0, 0);
+                      doc.circle(x, y - 1, 2, "FD");
+                      doc.setTextColor(0, 0, 0);
+                  } else {
+                      doc.circle(x, y - 1, 1.5, "F");
+                      doc.setTextColor(255, 255, 255);
+                  }
                   const lines = doc.splitTextToSize(text, textoMaxWidth);
-                  doc.text(lines, x + 8, y);
-                  y += lines.length * (fondoClave === "sheraton" ? 5 : 7);
+                  doc.text(lines, x + (esDaikoku ? 12 : 8), y);
+                  y += lines.length * (esDaikoku ? 9 : (fondoClave === "sheraton" ? 5 : 7));
               });
           }
 
@@ -3211,7 +3312,7 @@
       }
 
       // *** FUNCIÓN PRINCIPAL CORREGIDA PARA GENERAR PDF ***
-      // *** CON TEXTOS GRANDES, NEGRITAS, BLANCO PARA SHERATON/FONTAN Y NEGRO PARA DAIKOKU ***
+      // *** CON TEXTOS MÁS PEQUEÑOS Y MÁRGENES CORREGIDOS PARA DAIKOKU ***
       function generarPDF(esReagendados = false) {
           const { jsPDF } = window.jspdf;
 
@@ -3229,20 +3330,25 @@
               return;
           }
 
-          // Formatear fecha para el PDF - CORREGIDO para que se vea como "07 de marzo 2026"
+          // CORREGIDO: Formatear fecha para el PDF sin problemas de zona horaria
           let fecha = fechaInput;
           try {
-              const fechaObj = new Date(fechaInput + 'T12:00:00'); // Agregar hora para evitar problemas de zona horaria
-              if (!isNaN(fechaObj.getTime())) {
-                  // Formato: "07 de marzo 2026"
-                  const dia = fechaObj.getDate().toString().padStart(2, '0');
-                  const meses = [
-                      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-                  ];
-                  const mes = meses[fechaObj.getMonth()];
-                  const año = fechaObj.getFullYear();
-                  fecha = `${dia} de ${mes} ${año}`;
+              const partes = fechaInput.split('-');
+              if (partes.length === 3) {
+                  const año = parseInt(partes[0]);
+                  const mes = parseInt(partes[1]) - 1; // Los meses en JS son 0-11
+                  const dia = parseInt(partes[2]);
+                  
+                  const fechaObj = new Date(año, mes, dia, 12, 0, 0); // Mediodía para evitar cambios de día
+                  
+                  if (!isNaN(fechaObj.getTime())) {
+                      const meses = [
+                          'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                          'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+                      ];
+                      const mesNombre = meses[mes];
+                      fecha = `${dia.toString().padStart(2, '0')} de ${mesNombre} ${año}`;
+                  }
               }
           } catch (error) {
               console.error("Error al formatear fecha en PDF:", error);
@@ -3280,29 +3386,39 @@
 
           // Configurar según el hotel
           const esDaikoku = fondoClave === "daikoku";
-          const esFontan = fondoClave === "fontan";
-          const esSheraton = fondoClave === "sheraton";
 
-          // *** TEXTOS GRANDES Y NEGRITAS PARA TODOS LOS HOTELES ***
-          doc.setFont("helvetica", "bold"); // NEGRITAS para todos
+          // *** CORREGIDO: Ajustar márgenes para Daikoku ***
+          let x;
+          let textoMaxWidth;
           
-          // SALUDO PRINCIPAL - MÁS ABAJO PARA FONTAN Y DAIKOKU (EVITAR AMONTONAMIENTO)
-          let saludoY;
-          if (esFontan || esDaikoku) {
-              saludoY = 100; // BAJADO AÚN MÁS para Fontan y Daikoku
-          } else if (esSheraton) {
-              saludoY = 90; // BAJADO para Sheraton
+          if (esDaikoku) {
+              x = 20; // MÁS PEGADO AL BORDE para Daikoku (antes era 25)
+              textoMaxWidth = 170; // MÁS ANCHO para aprovechar el espacio
           } else {
-              saludoY = 85; // Para Marquis
+              x = fondoClave === "sheraton" ? 20 : 25;
+              textoMaxWidth = fondoClave === "sheraton" ? 130 : 160;
           }
 
+          // *** CORREGIDO: Ajustar posición Y inicial para Daikoku ***
+          let saludoY;
           if (esDaikoku) {
-              // DAIKOKU: TEXTO NEGRO
+              saludoY = 75; // MÁS ARRIBA para Daikoku para tener más espacio abajo
+          } else if (fondoClave === "fontan") {
+              saludoY = 100;
+          } else if (fondoClave === "sheraton") {
+              saludoY = 90;
+          } else {
+              saludoY = 85;
+          }
+
+          // *** CORREGIDO: Tamaños de texto más pequeños para Daikoku ***
+          doc.setFont("helvetica", "bold");
+          
+          if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(22);
+              doc.setFontSize(18); // REDUCIDO de 22 a 18
               doc.text(saludo, 105, saludoY, { align: "center" });
           } else {
-              // SHERATON, FONTAN, MARQUIS: TEXTO BLANCO
               doc.setFontSize(22);
               doc.setTextColor(255, 255, 255);
               doc.text(saludo, 105, saludoY, { align: "center" });
@@ -3311,37 +3427,34 @@
           doc.setDrawColor(255, 255, 255);
           doc.setLineWidth(0.5);
 
-          doc.setFont("helvetica", "bold"); // Mantener negritas
+          doc.setFont("helvetica", "bold");
 
-          let x = fondoClave === "sheraton" ? 20 : 25;
-          let textoMaxWidth = fondoClave === "sheraton" ? 130 : 160;
-          const inicioY = saludoY + 20; // AUMENTADO ESPACIO
+          const inicioY = saludoY + (esDaikoku ? 18 : 20); // Menor espacio para Daikoku
 
           const horaFormateada = convertirHoraAMPM(hora);
 
-          // TEXTOS DE INFORMACIÓN (Mesa, Hora, Día) - TAMAÑO 20
+          // TEXTOS DE INFORMACIÓN (Mesa, Hora, Día)
           const textos = [
               `Mesa: ${personas} ${personas == 1 ? 'persona' : 'personas'}`,
               `Hora de la cita: ${horaFormateada}`,
-              `Día del evento: ${fecha}` // Ahora muestra "07 de marzo 2026"
+              `Día del evento: ${fecha}`
           ];
 
           textos.forEach((texto, index) => {
-              const yPos = inicioY + (index * 15); // AUMENTADO ESPACIADO
+              const yPos = inicioY + (index * (esDaikoku ? 12 : 15)); // Espaciado más compacto para Daikoku
               
               if (esDaikoku) {
                   doc.setTextColor(0, 0, 0);
-                  doc.setFontSize(20);
+                  doc.setFontSize(16); // REDUCIDO de 20 a 16
                   doc.text(texto, x, yPos);
               } else {
-                  // SHERATON, FONTAN: texto blanco
                   doc.setFontSize(20);
                   doc.setTextColor(255, 255, 255);
                   doc.text(texto, x, yPos);
               }
           });
 
-          let y = inicioY + 30; // AUMENTADO ESPACIO
+          let y = inicioY + (esDaikoku ? 25 : 30); // Menor espacio para Daikoku
           let ubicacionHotel = "#";
           if (fondoClave === "marquis") {
               ubicacionHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
@@ -3353,27 +3466,25 @@
               ubicacionHotel = "https://maps.app.goo.gl/N86NDYRoK8uAPhcKA";
           }
 
-          // BAJAR EL TEXTO "En este evento contaremos con:" PARA QUE NO SE AMONTONE
-          y = y + 10; // Aumentar espacio antes del título
+          y = y + (esDaikoku ? 8 : 10); // Ajuste fino
 
-          // TÍTULO "En este evento contaremos con:" - TAMAÑO 20
+          // TÍTULO "En este evento contaremos con:"
           doc.setFont("helvetica", "bold");
           const eventoTexto = "En este evento contaremos con:";
           const eventoWidth = doc.getTextWidth(eventoTexto);
 
           if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(20);
+              doc.setFontSize(16); // REDUCIDO de 20 a 16
               doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
           } else {
-              // SHERATON, FONTAN: texto blanco
               doc.setFontSize(20);
               doc.setTextColor(255, 255, 255);
               doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
           }
-          y += 12; // AUMENTADO ESPACIADO
+          y += (esDaikoku ? 10 : 12); // Espaciado más compacto
 
-          // ITEMS DE LA LISTA - TAMAÑO 18
+          // ITEMS DE LA LISTA
           doc.setFont("helvetica", "normal");
           const items = [
               "Alimentos en cortesía.",
@@ -3386,13 +3497,12 @@
                   // DAIKOKU: círculos NEGROS, texto NEGRO
                   doc.setDrawColor(0, 0, 0);
                   doc.setFillColor(0, 0, 0);
-                  doc.circle(x, y - 2, 2.5, "FD");
+                  doc.circle(x, y - 2, 2, "FD"); // Círculo más pequeño
                   
                   doc.setTextColor(0, 0, 0);
-                  doc.setFontSize(18);
-                  doc.text(item, x + 15, y);
+                  doc.setFontSize(14); // REDUCIDO de 18 a 14
+                  doc.text(item, x + 12, y); // Menor espacio después del círculo
               } else {
-                  // SHERATON, FONTAN: círculos BLANCOS, texto BLANCO
                   doc.setDrawColor(255, 255, 255);
                   doc.setFillColor(255, 255, 255);
                   doc.circle(x, y - 2, 2.5, "FD");
@@ -3401,31 +3511,29 @@
                   doc.setTextColor(255, 255, 255);
                   doc.text(item, x + 15, y);
               }
-              y += 12; // AUMENTADO ESPACIADO
+              y += (esDaikoku ? 10 : 12); // Espaciado más compacto
           });
 
-          y += 10;
+          y += (esDaikoku ? 8 : 10);
           
-          // TEXTO DEL HOTEL - TAMAÑO 18
+          // TEXTO DEL HOTEL
           doc.setFont("helvetica", "bold");
           const hotelNombre = hotelSeleccionado;
 
-          // CORREGIR el texto del hotel para que no se corte
           let hotelTexto = `El evento es patrocinado por Destination Connect Group en el ${hotelNombre}`;
           
           if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(18);
+              doc.setFontSize(14); // REDUCIDO de 18 a 14
               doc.text(hotelTexto, x, y);
           } else {
-              // SHERATON, FONTAN: texto blanco
               doc.setFontSize(18);
               doc.setTextColor(255, 255, 255);
               doc.text(hotelTexto, x, y);
           }
-          y += 12;
+          y += (esDaikoku ? 10 : 12);
 
-          // DETALLES ADICIONALES - TAMAÑO 16
+          // DETALLES ADICIONALES
           const textoDetalles = [
               `Ubicación del Hotel: ${ubicacionHotel}`,
               "Recibirás un certificado de hospedaje vacacional válido por 4 días y 3 noches...",
@@ -3435,29 +3543,25 @@
           textoDetalles.forEach((t, index) => {
               const lines = doc.splitTextToSize(t, textoMaxWidth);
               if (index === 0) {
-                  // Línea de ubicación con enlace - COLORES ESPECÍFICOS POR HOTEL
                   if (esDaikoku) {
-                      // DAIKOKU: Texto negro, enlace azul fuerte
                       doc.setTextColor(0, 0, 0);
-                      doc.setFontSize(16);
+                      doc.setFontSize(13); // REDUCIDO de 16 a 13
                       doc.text("Ubicación del Hotel:", x, y);
                       
                       const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
-                      doc.setTextColor(0, 0, 255); // Azul fuerte (RGB: 0,0,255)
-                      doc.setFontSize(16);
+                      doc.setTextColor(0, 0, 255);
+                      doc.setFontSize(13);
                       doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
-                  } else if (esSheraton || esFontan) {
-                      // SHERATON, FONTAN: Texto blanco, enlace azul claro
-                      doc.setTextColor(255, 255, 255); // Blanco
+                  } else if (fondoClave === "sheraton" || fondoClave === "fontan") {
+                      doc.setTextColor(255, 255, 255);
                       doc.setFontSize(16);
                       doc.text("Ubicación del Hotel:", x, y);
                       
                       const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
-                      doc.setTextColor(0, 255, 255); // Azul claro (RGB: 0,255,255)
+                      doc.setTextColor(0, 255, 255);
                       doc.setFontSize(16);
                       doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
                   } else {
-                      // OTROS (Marquis, etc.) - Mantener estilo original (blanco con enlace celeste)
                       doc.setTextColor(255, 255, 255);
                       doc.setFontSize(16);
                       doc.text("Ubicación del Hotel:", x, y);
@@ -3467,39 +3571,37 @@
                       doc.setFontSize(16);
                       doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
                   }
-                  y += 14;
+                  y += (esDaikoku ? 12 : 14);
               } else {
                   if (esDaikoku) {
                       doc.setTextColor(0, 0, 0);
-                      doc.setFontSize(16);
+                      doc.setFontSize(12); // REDUCIDO de 16 a 12
                       doc.text(lines, x, y);
                   } else {
-                      // SHERATON, FONTAN: texto blanco
                       doc.setFontSize(16);
                       doc.setTextColor(255, 255, 255);
                       doc.text(lines, x, y);
                   }
-                  y += lines.length * 12;
+                  y += lines.length * (esDaikoku ? 8 : 12); // Espaciado más compacto
               }
           });
 
-          y += 12;
+          y += (esDaikoku ? 8 : 12);
           
-          // TEXTO "Para acceder al evento..." - TAMAÑO 18
+          // TEXTO "Para acceder al evento..."
           doc.setFont("helvetica", "bold");
           if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(18);
+              doc.setFontSize(14); // REDUCIDO de 18 a 14
               doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
           } else {
-              // SHERATON, FONTAN: texto blanco
               doc.setFontSize(18);
               doc.setTextColor(255, 255, 255);
               doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
           }
-          y += 14;
+          y += (esDaikoku ? 12 : 14);
 
-          // REQUISITOS - TAMAÑO 16
+          // REQUISITOS
           if (fondoClave === "marquis") {
               const requisitosCol1 = [
                   "Mostrar cualquier identificación vigente (INE y/o PASAPORTE).",
@@ -3512,10 +3614,10 @@
 
               const col1X = x;
               const col2X = 110;
-              const lineHeight = 20;
+              const lineHeight = esDaikoku ? 16 : 20;
 
               doc.setFont("helvetica", "normal");
-              doc.setFontSize(16);
+              doc.setFontSize(esDaikoku ? 12 : 16);
 
               const procesarRequisitos = (textos, colX) => {
                   textos.forEach((text, i) => {
@@ -3524,16 +3626,15 @@
                       if (esDaikoku) {
                           doc.setDrawColor(0, 0, 0);
                           doc.setFillColor(0, 0, 0);
-                          doc.circle(colX, circleY - 1, 2.5, "FD");
+                          doc.circle(colX, circleY - 1, 2, "FD");
                           
                           const lines = doc.splitTextToSize(text, 75);
                           lines.forEach((line, lineIdx) => {
                               doc.setTextColor(0, 0, 0);
-                              doc.setFontSize(16);
-                              doc.text(line, colX + 15, circleY + (lineIdx * 9));
+                              doc.setFontSize(12);
+                              doc.text(line, colX + 12, circleY + (lineIdx * 7));
                           });
                       } else {
-                          // SHERATON, FONTAN: círculos blancos, texto blanco
                           doc.setDrawColor(255, 255, 255);
                           doc.setFillColor(255, 255, 255);
                           doc.circle(colX, circleY - 1, 2.5, "FD");
@@ -3552,10 +3653,10 @@
               procesarRequisitos(requisitosCol1, col1X);
               procesarRequisitos(requisitosCol2, col2X);
 
-              y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 14;
+              y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + (esDaikoku ? 10 : 14);
           } else {
               doc.setFont("helvetica", "normal");
-              doc.setFontSize(16);
+              doc.setFontSize(esDaikoku ? 12 : 16);
 
               const requisitos = [
                   ['Mostrar cualquier identificación vigente', '(INE y/o PASAPORTE).'],
@@ -3566,20 +3667,18 @@
 
               requisitos.forEach(text => {
                   if (esDaikoku) {
-                      // DAIKOKU: círculos NEGROS, texto NEGRO
                       doc.setDrawColor(0, 0, 0);
                       doc.setFillColor(0, 0, 0);
-                      doc.circle(x, y - 1, 2.5, "FD");
+                      doc.circle(x, y - 1, 2, "FD");
                       
                       const lines = doc.splitTextToSize(text, textoMaxWidth);
                       lines.forEach((line, lineIdx) => {
                           doc.setTextColor(0, 0, 0);
-                          doc.setFontSize(16);
-                          doc.text(line, x + 15, y + (lineIdx * 9));
+                          doc.setFontSize(12);
+                          doc.text(line, x + 12, y + (lineIdx * 7));
                       });
-                      y += lines.length * 11;
+                      y += lines.length * 9;
                   } else {
-                      // SHERATON, FONTAN: círculos BLANCOS, texto BLANCO
                       doc.setDrawColor(255, 255, 255);
                       doc.setFillColor(255, 255, 255);
                       doc.circle(x, y - 1, 2.5, "FD");
