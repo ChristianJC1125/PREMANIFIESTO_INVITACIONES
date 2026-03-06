@@ -3429,7 +3429,7 @@
 
           doc.setFont("helvetica", "bold");
 
-          const inicioY = saludoY + (esDaikoku ? 12 : 13); // Menor espacio para Daikoku
+          const inicioY = saludoY + (esDaikoku ? 9 : 10); // Menor espacio para Daikoku
 
           const horaFormateada = convertirHoraAMPM(hora);
 
@@ -3441,7 +3441,7 @@
           ];
 
           textos.forEach((texto, index) => {
-              const yPos = inicioY + (index * (esDaikoku ? 12 : 15)); // Espaciado más compacto para Daikoku
+              const yPos = inicioY + (index * (esDaikoku ? 9 : 10)); // Espaciado más compacto para Daikoku
               
               if (esDaikoku) {
                   doc.setTextColor(0, 0, 0);
@@ -3524,10 +3524,10 @@
           
           if (esDaikoku) {
               doc.setTextColor(0, 0, 0);
-              doc.setFontSize(14); // REDUCIDO de 18 a 14
+              doc.setFontSize(10); // REDUCIDO de 18 a 14
               doc.text(hotelTexto, x, y);
           } else {
-              doc.setFontSize(18);
+              doc.setFontSize(10);
               doc.setTextColor(255, 255, 255);
               doc.text(hotelTexto, x, y);
           }
@@ -3545,12 +3545,12 @@
               if (index === 0) {
                   if (esDaikoku) {
                       doc.setTextColor(0, 0, 0);
-                      doc.setFontSize(13); // REDUCIDO de 16 a 13
+                      doc.setFontSize(10); // REDUCIDO de 16 a 13
                       doc.text("Ubicación del Hotel:", x, y);
                       
                       const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
                       doc.setTextColor(0, 0, 255);
-                      doc.setFontSize(13);
+                      doc.setFontSize(10);
                       doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
                   } else if (fondoClave === "sheraton" || fondoClave === "fontan") {
                       doc.setTextColor(255, 255, 255);
