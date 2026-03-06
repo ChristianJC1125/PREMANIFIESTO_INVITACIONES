@@ -3312,7 +3312,7 @@
       }
 
      // *** FUNCIÓN PRINCIPAL CORREGIDA PARA GENERAR PDF ***
-// *** CON TEXTOS IGUAL A LA IMAGEN, NEGRO PARA DAIKOKU Y ENLACE AZUL FUERTE ***
+// *** CON TEXTOS DEL TAMAÑO CORRECTO (MÁS PEQUEÑOS) ***
 function generarPDF(esReagendados = false) {
     const { jsPDF } = window.jspdf;
 
@@ -3387,22 +3387,19 @@ function generarPDF(esReagendados = false) {
     // Configurar según el hotel
     const esDaikoku = fondoClave === "daikoku";
 
-    // *** AJUSTES PARA DAIKOKU SEGÚN LA IMAGEN ***
-    let x;
-    let textoMaxWidth;
+    // *** Márgenes estándar para todos ***
+    let x = 25;
+    let textoMaxWidth = 160;
     
-    if (esDaikoku) {
-        x = 25; // Margen estándar
-        textoMaxWidth = 160; // Ancho estándar
-    } else {
-        x = fondoClave === "sheraton" ? 20 : 25;
-        textoMaxWidth = fondoClave === "sheraton" ? 130 : 160;
+    if (fondoClave === "sheraton") {
+        x = 20;
+        textoMaxWidth = 130;
     }
 
-    // Posición Y del saludo - MÁS ABAJO PARA QUE NO SE AMONTONE
+    // Posición Y del saludo - BIEN POSICIONADO
     let saludoY;
     if (esDaikoku) {
-        saludoY = 85; // BAJADO A 85 (antes 70)
+        saludoY = 75; // Posición adecuada
     } else if (fondoClave === "fontan") {
         saludoY = 100;
     } else if (fondoClave === "sheraton") {
@@ -3411,12 +3408,12 @@ function generarPDF(esReagendados = false) {
         saludoY = 85;
     }
 
-    // *** SALUDO PRINCIPAL - TAMAÑO GRANDE COMO EN LA IMAGEN ***
+    // *** SALUDO PRINCIPAL - TAMAÑO 16 (más pequeño) ***
     doc.setFont("helvetica", "bold");
     
     if (esDaikoku) {
         doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(24); // TAMAÑO GRANDE PARA EL SALUDO
+        doc.setFontSize(16); // TAMAÑO REDUCIDO
         doc.text(saludo, 105, saludoY, { align: "center" });
     } else {
         doc.setFontSize(22);
@@ -3429,12 +3426,12 @@ function generarPDF(esReagendados = false) {
 
     doc.setFont("helvetica", "bold");
 
-    // Espacio después del saludo - IGUAL QUE EN LA IMAGEN
-    const inicioY = saludoY + 25; // Espacio estándar
+    // Espacio después del saludo
+    const inicioY = saludoY + 20;
 
     const horaFormateada = convertirHoraAMPM(hora);
 
-    // *** TEXTOS DE INFORMACIÓN (Mesa, Hora, Día) - TAMAÑO MEDIANO COMO EN LA IMAGEN ***
+    // *** TEXTOS DE INFORMACIÓN (Mesa, Hora, Día) - TAMAÑO 12 ***
     const textos = [
         `Mesa: ${personas} ${personas == 1 ? 'persona' : 'personas'}`,
         `Hora de la cita: ${horaFormateada}`,
@@ -3442,11 +3439,11 @@ function generarPDF(esReagendados = false) {
     ];
 
     textos.forEach((texto, index) => {
-        const yPos = inicioY + (index * 14); // Espaciado estándar
+        const yPos = inicioY + (index * 10); // Espaciado de 10
         
         if (esDaikoku) {
             doc.setTextColor(0, 0, 0); // NEGRO
-            doc.setFontSize(18); // TAMAÑO MEDIANO
+            doc.setFontSize(12); // TAMAÑO 12
             doc.text(texto, x, yPos);
         } else {
             doc.setFontSize(20);
@@ -3455,7 +3452,7 @@ function generarPDF(esReagendados = false) {
         }
     });
 
-    let y = inicioY + 45; // Espacio antes del título
+    let y = inicioY + 35; // Espacio antes del título
     let ubicacionHotel = "#";
     if (fondoClave === "marquis") {
         ubicacionHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
@@ -3467,25 +3464,25 @@ function generarPDF(esReagendados = false) {
         ubicacionHotel = "https://maps.app.goo.gl/N86NDYRoK8uAPhcKA";
     }
 
-    y = y + 5; // Ajuste fino
+    y = y + 5;
 
-    // *** TÍTULO "En este evento contaremos con:" - TAMAÑO MEDIANO COMO EN LA IMAGEN ***
+    // *** TÍTULO "En este evento contaremos con:" - TAMAÑO 14 ***
     doc.setFont("helvetica", "bold");
     const eventoTexto = "En este evento contaremos con:";
     const eventoWidth = doc.getTextWidth(eventoTexto);
 
     if (esDaikoku) {
         doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(18); // TAMAÑO MEDIANO
+        doc.setFontSize(14); // TAMAÑO 14
         doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
     } else {
         doc.setFontSize(20);
         doc.setTextColor(255, 255, 255);
         doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
     }
-    y += 14; // Espaciado estándar
+    y += 10;
 
-    // *** ITEMS DE LA LISTA - TAMAÑO NORMAL COMO EN LA IMAGEN ***
+    // *** ITEMS DE LA LISTA - TAMAÑO 11 ***
     doc.setFont("helvetica", "normal");
     const items = [
         "Alimentos en cortesía.",
@@ -3498,11 +3495,11 @@ function generarPDF(esReagendados = false) {
             // DAIKOKU: círculos NEGROS, texto NEGRO
             doc.setDrawColor(0, 0, 0);
             doc.setFillColor(0, 0, 0);
-            doc.circle(x, y - 2, 2, "FD"); // Círculo tamaño estándar
+            doc.circle(x, y - 1.5, 1.5, "FD"); // Círculo más pequeño
             
             doc.setTextColor(0, 0, 0); // NEGRO
-            doc.setFontSize(16); // TAMAÑO NORMAL
-            doc.text(item, x + 12, y);
+            doc.setFontSize(11); // TAMAÑO 11
+            doc.text(item, x + 10, y);
         } else {
             doc.setDrawColor(255, 255, 255);
             doc.setFillColor(255, 255, 255);
@@ -3512,12 +3509,12 @@ function generarPDF(esReagendados = false) {
             doc.setTextColor(255, 255, 255);
             doc.text(item, x + 15, y);
         }
-        y += 12; // Espaciado estándar
+        y += 9; // Espaciado de 9
     });
 
-    y += 10;
+    y += 8;
     
-    // *** TEXTO DEL HOTEL - TAMAÑO NORMAL COMO EN LA IMAGEN ***
+    // *** TEXTO DEL HOTEL - TAMAÑO 11 ***
     doc.setFont("helvetica", "bold");
     const hotelNombre = hotelSeleccionado;
 
@@ -3525,16 +3522,16 @@ function generarPDF(esReagendados = false) {
     
     if (esDaikoku) {
         doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(16); // TAMAÑO NORMAL
+        doc.setFontSize(11); // TAMAÑO 11
         doc.text(hotelTexto, x, y);
     } else {
         doc.setFontSize(18);
         doc.setTextColor(255, 255, 255);
         doc.text(hotelTexto, x, y);
     }
-    y += 12;
+    y += 9;
 
-    // *** DETALLES ADICIONALES - TAMAÑO NORMAL CON ENLACE AZUL FUERTE ***
+    // *** DETALLES ADICIONALES - TAMAÑO 10 CON ENLACE AZUL FUERTE ***
     const textoDetalles = [
         `Ubicación del Hotel: ${ubicacionHotel}`,
         "Recibirás un certificado de hospedaje vacacional válido por 4 días y 3 noches...",
@@ -3548,13 +3545,13 @@ function generarPDF(esReagendados = false) {
             if (esDaikoku) {
                 doc.setTextColor(0, 0, 0); // NEGRO
                 doc.setFont("helvetica", "bold");
-                doc.setFontSize(16); // TAMAÑO NORMAL
+                doc.setFontSize(11); // TAMAÑO 11
                 doc.text("Ubicación del Hotel:", x, y);
                 
                 const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
-                doc.setTextColor(0, 0, 255); // AZUL FUERTE (RGB: 0,0,255)
+                doc.setTextColor(0, 0, 255); // AZUL FUERTE
                 doc.setFont("helvetica", "bold"); // NEGRITAS
-                doc.setFontSize(16);
+                doc.setFontSize(11);
                 doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
             } else if (fondoClave === "sheraton" || fondoClave === "fontan") {
                 doc.setTextColor(255, 255, 255);
@@ -3575,38 +3572,38 @@ function generarPDF(esReagendados = false) {
                 doc.setFontSize(16);
                 doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
             }
-            y += 14;
+            y += 12;
         } else {
             if (esDaikoku) {
                 doc.setTextColor(0, 0, 0); // NEGRO
                 doc.setFont("helvetica", "normal");
-                doc.setFontSize(15); // TAMAÑO NORMAL LIGERAMENTE MÁS PEQUEÑO
+                doc.setFontSize(10); // TAMAÑO 10
                 doc.text(lines, x, y);
             } else {
                 doc.setFontSize(16);
                 doc.setTextColor(255, 255, 255);
                 doc.text(lines, x, y);
             }
-            y += lines.length * 12;
+            y += lines.length * 10;
         }
     });
 
-    y += 10;
+    y += 8;
     
-    // *** TEXTO "Para acceder al evento..." - TAMAÑO MEDIANO ***
+    // *** TEXTO "Para acceder al evento..." - TAMAÑO 12 ***
     doc.setFont("helvetica", "bold");
     if (esDaikoku) {
         doc.setTextColor(0, 0, 0); // NEGRO
-        doc.setFontSize(17); // TAMAÑO MEDIANO
+        doc.setFontSize(12); // TAMAÑO 12
         doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
     } else {
         doc.setFontSize(18);
         doc.setTextColor(255, 255, 255);
         doc.text("Para acceder al evento y recoger su obsequio es indispensable:", x, y);
     }
-    y += 14;
+    y += 10;
 
-    // *** REQUISITOS - TAMAÑO NORMAL ***
+    // *** REQUISITOS - TAMAÑO 10 ***
     if (fondoClave === "marquis") {
         const requisitosCol1 = [
             "Mostrar cualquier identificación vigente (INE y/o PASAPORTE).",
@@ -3619,10 +3616,10 @@ function generarPDF(esReagendados = false) {
 
         const col1X = x;
         const col2X = 110;
-        const lineHeight = 16;
+        const lineHeight = 14;
 
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(esDaikoku ? 14 : 16);
+        doc.setFontSize(esDaikoku ? 11 : 16);
 
         const procesarRequisitos = (textos, colX) => {
             textos.forEach((text, i) => {
@@ -3631,13 +3628,13 @@ function generarPDF(esReagendados = false) {
                 if (esDaikoku) {
                     doc.setDrawColor(0, 0, 0);
                     doc.setFillColor(0, 0, 0);
-                    doc.circle(colX, circleY - 1, 2, "FD");
+                    doc.circle(colX, circleY - 1, 1.5, "FD");
                     
                     const lines = doc.splitTextToSize(text, 75);
                     lines.forEach((line, lineIdx) => {
                         doc.setTextColor(0, 0, 0); // NEGRO
-                        doc.setFontSize(14);
-                        doc.text(line, colX + 12, circleY + (lineIdx * 8));
+                        doc.setFontSize(10); // TAMAÑO 10
+                        doc.text(line, colX + 10, circleY + (lineIdx * 7));
                     });
                 } else {
                     doc.setDrawColor(255, 255, 255);
@@ -3658,10 +3655,10 @@ function generarPDF(esReagendados = false) {
         procesarRequisitos(requisitosCol1, col1X);
         procesarRequisitos(requisitosCol2, col2X);
 
-        y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 10;
+        y += Math.max(requisitosCol1.length, requisitosCol2.length) * lineHeight + 8;
     } else {
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(esDaikoku ? 15 : 16);
+        doc.setFontSize(esDaikoku ? 11 : 16);
 
         const requisitos = [
             ['Mostrar cualquier identificación vigente', '(INE y/o PASAPORTE).'],
@@ -3674,15 +3671,15 @@ function generarPDF(esReagendados = false) {
             if (esDaikoku) {
                 doc.setDrawColor(0, 0, 0);
                 doc.setFillColor(0, 0, 0);
-                doc.circle(x, y - 1, 2, "FD");
+                doc.circle(x, y - 1, 1.5, "FD");
                 
                 const lines = doc.splitTextToSize(text, textoMaxWidth);
                 lines.forEach((line, lineIdx) => {
                     doc.setTextColor(0, 0, 0); // NEGRO
-                    doc.setFontSize(14);
-                    doc.text(line, x + 12, y + (lineIdx * 8));
+                    doc.setFontSize(10); // TAMAÑO 10
+                    doc.text(line, x + 10, y + (lineIdx * 7));
                 });
-                y += lines.length * 10;
+                y += lines.length * 8;
             } else {
                 doc.setDrawColor(255, 255, 255);
                 doc.setFillColor(255, 255, 255);
