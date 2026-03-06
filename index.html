@@ -2404,7 +2404,7 @@
               const headerRow = worksheet.addRow(headers);
               
               const meses = [
-                  'ENERO', 'FEBRERO', 'MARZO', 'ABRERO', 'MAYO', 'JUNIO',
+                  'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
                   'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
               ];
               const mesActual = new Date(fechaInicioFiltro).getMonth();
@@ -3027,7 +3027,7 @@
           mostrarNotificacion("Registro actualizado correctamente");
       });
 
-        // Función para generar PDF desde edición
+      // Función para generar PDF desde edición
       function generarPDFDesdeEdicion() {
           const { jsPDF } = window.jspdf;
 
@@ -3303,12 +3303,7 @@
               doc.text(saludo, 105, saludoY, { align: "center" });
           } else {
               // SHERATON, FONTAN, MARQUIS: TEXTO BLANCO
-              // *** MODIFICACIÓN: TAMAÑO REDUCIDO PARA SHERATON ***
-              if (esSheraton) {
-                  doc.setFontSize(20); // REDUCIDO de 22 a 20 para Sheraton
-              } else {
-                  doc.setFontSize(22); // Tamaño normal para Fontan y Marquis
-              }
+              doc.setFontSize(22);
               doc.setTextColor(255, 255, 255);
               doc.text(saludo, 105, saludoY, { align: "center" });
           }
@@ -3440,24 +3435,35 @@
           textoDetalles.forEach((t, index) => {
               const lines = doc.splitTextToSize(t, textoMaxWidth);
               if (index === 0) {
-                  // Línea de ubicación con enlace
+                  // Línea de ubicación con enlace - COLORES ESPECÍFICOS POR HOTEL
                   if (esDaikoku) {
+                      // DAIKOKU: Texto negro, enlace azul fuerte
                       doc.setTextColor(0, 0, 0);
                       doc.setFontSize(16);
                       doc.text("Ubicación del Hotel:", x, y);
                       
                       const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
-                      doc.setTextColor(0, 0, 255);
+                      doc.setTextColor(0, 0, 255); // Azul fuerte (RGB: 0,0,255)
                       doc.setFontSize(16);
                       doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
-                  } else {
-                      // SHERATON, FONTAN: texto blanco
+                  } else if (esSheraton || esFontan) {
+                      // SHERATON, FONTAN: Texto blanco, enlace azul claro
+                      doc.setTextColor(255, 255, 255); // Blanco
                       doc.setFontSize(16);
-                      doc.setTextColor(255, 255, 255);
                       doc.text("Ubicación del Hotel:", x, y);
                       
                       const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
-                      doc.setTextColor(0, 255, 255); // Celeste
+                      doc.setTextColor(0, 255, 255); // Azul claro (RGB: 0,255,255)
+                      doc.setFontSize(16);
+                      doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
+                  } else {
+                      // OTROS (Marquis, etc.) - Mantener estilo original (blanco con enlace celeste)
+                      doc.setTextColor(255, 255, 255);
+                      doc.setFontSize(16);
+                      doc.text("Ubicación del Hotel:", x, y);
+                      
+                      const labelWidth = doc.getTextWidth("Ubicación del Hotel: ");
+                      doc.setTextColor(0, 102, 204);
                       doc.setFontSize(16);
                       doc.textWithLink(ubicacionHotel, x + labelWidth + 1, y, { url: ubicacionHotel });
                   }
