@@ -3341,7 +3341,7 @@
               }
           });
 
-          let y = inicioY + 40; // AUMENTADO ESPACIO
+          let y = inicioY + 30; // AUMENTADO ESPACIO
           let ubicacionHotel = "#";
           if (fondoClave === "marquis") {
               ubicacionHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
@@ -3371,7 +3371,7 @@
               doc.setTextColor(255, 255, 255);
               doc.text(eventoTexto, (doc.internal.pageSize.getWidth() - eventoWidth) / 2, y);
           }
-          y += 14; // AUMENTADO ESPACIADO
+          y += 12; // AUMENTADO ESPACIADO
 
           // ITEMS DE LA LISTA - TAMAÑO 18
           doc.setFont("helvetica", "normal");
@@ -3401,7 +3401,7 @@
                   doc.setTextColor(255, 255, 255);
                   doc.text(item, x + 15, y);
               }
-              y += 14; // AUMENTADO ESPACIADO
+              y += 12; // AUMENTADO ESPACIADO
           });
 
           y += 10;
