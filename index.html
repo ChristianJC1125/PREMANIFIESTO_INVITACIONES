@@ -75,10 +75,15 @@
       box-shadow: 
         0 10px 40px rgba(212, 175, 55, 0.15),
         inset 0 1px 0 rgba(212, 175, 55, 0.1);
-      animation: slideUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      animation: slideUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), borderGlow 3s ease-in-out infinite;
       border: 1px solid rgba(212, 175, 55, 0.2);
       position: relative;
       overflow: hidden;
+    }
+
+    @keyframes borderGlow {
+      0%, 100% { border-color: rgba(212, 175, 55, 0.2); }
+      50% { border-color: rgba(212, 175, 55, 0.5); }
     }
 
     .container::before {
@@ -118,10 +123,11 @@
       padding-bottom: 12px;
       border-bottom: 2px solid;
       border-image: linear-gradient(135deg, #d4af37, #f4d03f, #d4af37) 1;
+      border-image-slice: 1;
       font-size: 1.8rem;
       font-weight: 700;
       text-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
-      animation: titleGlow 3s ease-in-out infinite alternate;
+      animation: titleGlow 3s ease-in-out infinite alternate, borderFlow 4s linear infinite;
     }
 
     @keyframes titleGlow {
@@ -131,6 +137,12 @@
       100% {
         text-shadow: 0 2px 20px rgba(212, 175, 55, 0.6);
       }
+    }
+
+    @keyframes borderFlow {
+      0% { border-image-source: linear-gradient(90deg, #d4af37, #f4d03f, #d4af37); }
+      50% { border-image-source: linear-gradient(90deg, #f4d03f, #d4af37, #f4d03f); }
+      100% { border-image-source: linear-gradient(90deg, #d4af37, #f4d03f, #d4af37); }
     }
 
     .main-wrapper {
@@ -217,11 +229,24 @@
 
     input:invalid {
       border-color: #e74c3c;
-      box-shadow: 0 0 5px rgba(231, 76, 60, 0.3);
+      box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2), 0 0 0 4px rgba(212, 175, 55, 0.1);
+      background: rgba(231, 76, 60, 0.05);
+    }
+
+    input:focus:invalid {
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.3), 0 0 0 5px rgba(212, 175, 55, 0.15);
     }
 
     input:valid {
       border-color: #2ecc71;
+    }
+
+    /* Estilo para checkboxes y radios (si se usan) */
+    input[type="checkbox"], input[type="radio"] {
+      accent-color: #d4af37;
+      width: 18px;
+      height: 18px;
+      transform: translateY(2px);
     }
 
     /* Botones principales con efecto dorado */
@@ -472,12 +497,6 @@
       justify-content: center;
       padding: 20px;
       text-align: center;
-      animation: float 6s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-10px) rotate(1deg); }
     }
 
     .logo-img-container {
@@ -495,6 +514,18 @@
       overflow: hidden;
       transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       position: relative;
+      animation: logoPop 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55), float 6s ease-in-out infinite 0.6s;
+    }
+
+    @keyframes logoPop {
+      0% { transform: scale(0.8) rotate(-5deg); opacity: 0; }
+      80% { transform: scale(1.1) rotate(2deg); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(1deg); }
     }
 
     .logo-img-container:hover {
@@ -579,6 +610,31 @@
       will-change: transform;
     }
 
+    /* Personalización de la barra de desplazamiento */
+    .tabla-container::-webkit-scrollbar,
+    .modal-edicion-contenido::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .tabla-container::-webkit-scrollbar-track,
+    .modal-edicion-contenido::-webkit-scrollbar-track {
+      background: #1a1a1a;
+      border-radius: 10px;
+    }
+
+    .tabla-container::-webkit-scrollbar-thumb,
+    .modal-edicion-contenido::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #d4af37, #b38f2c);
+      border-radius: 10px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .tabla-container::-webkit-scrollbar-thumb:hover,
+    .modal-edicion-contenido::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #f4d03f, #d4af37);
+    }
+
     .tabla-container.scrolling #tablaPremafiesto tr {
       transition: none !important;
     }
@@ -606,7 +662,7 @@
       padding: 12px 15px;
       text-align: left;
       border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-      transition: all 0.3s ease;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
       line-height: 1.4;
       background: rgba(30, 30, 30, 0.8);
       transform: translateZ(0);
@@ -626,8 +682,13 @@
     }
 
     tr:hover td {
-      background: rgba(212, 175, 55, 0.1);
-      transform: translateX(5px);
+      background: rgba(212, 175, 55, 0.15);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    tr:hover td:first-child {
+      box-shadow: inset 3px 0 0 #d4af37;
     }
 
     .numero-cita {
@@ -884,125 +945,6 @@
       min-width: 100px;
     }
 
-    /* Responsive - MEJORADO PARA EVITAR AMONTONAMIENTO */
-    @media (max-width: 768px) {
-      .container {
-        padding: 20px 15px;
-        margin: 10px;
-      }
-      
-      .main-wrapper {
-        gap: 15px;
-      }
-      
-      .form-section {
-        min-width: 100%;
-      }
-      
-      .premanifiesto-controls {
-        flex-direction: column;
-        gap: 15px;
-      }
-      
-      .filtro-group {
-        min-width: 100%;
-      }
-      
-      .btn-group {
-        justify-content: center;
-        width: 100%;
-      }
-      
-      table {
-        font-size: 0.7rem;
-      }
-      
-      th, td {
-        padding: 8px 10px;
-      }
-      
-      button {
-        width: 100%;
-        margin: 5px 0;
-        min-height: 44px;
-      }
-      
-      #accesoGerente {
-        margin-left: 0;
-      }
-      
-      .modal-contenido {
-        width: 90%;
-        margin: 10% auto;
-      }
-      
-      .modal-edicion-contenido {
-        width: 95%;
-        margin: 5% auto;
-      }
-      
-      input, select {
-        font-size: 16px;
-      }
-      
-      /* Mejoras para mostrar el día del evento en móviles */
-      .dia-evento-mobile {
-        display: block;
-        font-size: 0.9rem;
-        color: #d4af37;
-        font-weight: bold;
-        margin-top: 5px;
-      }
-      
-      .dia-evento-desktop {
-        display: none;
-      }
-      
-      .paginacion-container {
-        flex-direction: column;
-        gap: 10px;
-      }
-    }
-    
-    /* Estilos para mostrar el día del evento en escritorio */
-    @media (min-width: 769px) {
-      .dia-evento-mobile {
-        display: none;
-      }
-      
-      .dia-evento-desktop {
-        display: table-cell;
-      }
-    }
-
-    /* Animación de entrada para la página */
-    @keyframes fadeIn {
-      0% {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Efecto ripple para botones */
-    @keyframes ripple {
-      0% {
-        transform: scale(0, 0);
-        opacity: 0.5;
-      }
-      20% {
-        transform: scale(20, 20);
-        opacity: 0.3;
-      }
-      100% {
-        transform: scale(40, 40);
-        opacity: 0;
-      }
-    }
-
     /* Botón de Reagendados - AHORA MÁS PEQUEÑO Y SIN CUADRO */
     #reagendadosBtn {
       background: linear-gradient(135deg, #FF6B35 0%, #FFA726 100%);
@@ -1147,8 +1089,136 @@
       transform: translateY(-3px);
       box-shadow: 0 8px 25px rgba(127, 140, 141, 0.5);
     }
-  </style>
 
+    /* Responsive - MEJORADO PARA EVITAR AMONTONAMIENTO */
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px 15px;
+        margin: 10px;
+      }
+      
+      .main-wrapper {
+        gap: 15px;
+      }
+      
+      .form-section {
+        min-width: 100%;
+      }
+      
+      .premanifiesto-controls {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .filtro-group {
+        min-width: 100%;
+      }
+      
+      .btn-group {
+        justify-content: center;
+        width: 100%;
+      }
+      
+      table {
+        font-size: 0.7rem;
+      }
+      
+      th, td {
+        padding: 8px 10px;
+      }
+      
+      /* Mejora de legibilidad en tabla para móviles */
+      td {
+        background: rgba(40, 40, 40, 0.9);
+        border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+      }
+      
+      tr:nth-child(even) td {
+        background: rgba(30, 30, 30, 0.95);
+      }
+      
+      button {
+        width: 100%;
+        margin: 5px 0;
+        min-height: 44px;
+      }
+      
+      #accesoGerente {
+        margin-left: 0;
+      }
+      
+      .modal-contenido {
+        width: 90%;
+        margin: 10% auto;
+      }
+      
+      .modal-edicion-contenido {
+        width: 95%;
+        margin: 5% auto;
+      }
+      
+      input, select {
+        font-size: 16px;
+      }
+      
+      /* Mejoras para mostrar el día del evento en móviles */
+      .dia-evento-mobile {
+        display: block;
+        font-size: 0.9rem;
+        color: #d4af37;
+        font-weight: bold;
+        margin-top: 5px;
+      }
+      
+      .dia-evento-desktop {
+        display: none;
+      }
+      
+      .paginacion-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+    
+    /* Estilos para mostrar el día del evento en escritorio */
+    @media (min-width: 769px) {
+      .dia-evento-mobile {
+        display: none;
+      }
+      
+      .dia-evento-desktop {
+        display: table-cell;
+      }
+    }
+
+    /* Animación de entrada para la página */
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Efecto ripple para botones */
+    @keyframes ripple {
+      0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+      }
+      20% {
+        transform: scale(20, 20);
+        opacity: 0.3;
+      }
+      100% {
+        transform: scale(40, 40);
+        opacity: 0;
+      }
+    }
+  </style>
   <!-- Librerías necesarias -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
