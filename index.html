@@ -34,6 +34,7 @@
         padding: 20px;
         min-height: 100vh;
         position: relative;
+        animation: fadeIn 1.2s ease-in-out;
     }
 
     /* Efecto de partículas doradas */
@@ -57,6 +58,11 @@
         50% { opacity: 0.7; }
     }
 
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
     /* Contenedor principal */
     .container {
         max-width: 1400px;
@@ -67,35 +73,47 @@
         box-shadow: 0 10px 40px rgba(212, 175, 55, 0.15);
         border: 1px solid rgba(212, 175, 55, 0.2);
         position: relative;
+        animation: slideUp 0.8s ease;
     }
 
-    /* ===== ESTILOS DEL LOGO ===== */
+    @keyframes slideUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== ESTILOS DEL LOGO CORREGIDOS ===== */
     .logo-container {
         display: flex;
         align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        padding: 20px;
-        margin-bottom: 20px;
+        justify-content: flex-start;
+        gap: 30px;
+        padding: 20px 30px;
+        margin-bottom: 30px;
         background: linear-gradient(145deg, #1a1a1a, #222);
         border-radius: 20px;
         border: 1px solid rgba(212, 175, 55, 0.2);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
     }
 
     .logo-img-container {
-        width: 150px;
-        height: 150px;
+        width: 100px;
+        height: 100px;
         border-radius: 50%;
         overflow: hidden;
-        border: 4px solid #d4af37;
-        box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
-        margin-bottom: 15px;
+        border: 3px solid #d4af37;
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
         transition: all 0.3s ease;
+        flex-shrink: 0;
     }
 
     .logo-img-container:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 40px rgba(212, 175, 55, 0.8);
+        transform: scale(1.05) rotate(5deg);
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.8);
     }
 
     .logo-img-container img {
@@ -106,11 +124,17 @@
     }
 
     .logo-tagline {
-        font-size: 1.5rem;
+        font-size: 2rem;
         font-weight: 700;
-        color: #d4af37;
-        text-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
+        background: linear-gradient(135deg, #d4af37, #f4d03f, #d4af37);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+        text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
         letter-spacing: 2px;
+        line-height: 1.2;
+        white-space: nowrap;
     }
 
     /* ===== TÍTULOS ===== */
@@ -121,6 +145,7 @@
         border-bottom: 2px solid #d4af37;
         font-size: 1.8rem;
         font-weight: 700;
+        text-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
     }
 
     /* ===== FORMULARIOS PRINCIPALES ===== */
@@ -136,7 +161,25 @@
         padding: 25px;
         border-radius: 15px;
         border: 1px solid rgba(212, 175, 55, 0.15);
-        transition: all 0.3s ease;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .form-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #d4af37, #f4d03f, #d4af37);
+        transform: scaleX(0);
+        transition: transform 0.4s ease;
+    }
+
+    .form-section:hover::before {
+        transform: scaleX(1);
     }
 
     .form-section:hover {
@@ -151,6 +194,12 @@
         color: #d4af37;
         font-weight: 600;
         font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    label:hover {
+        transform: translateX(5px);
+        text-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
     }
 
     input, select {
@@ -169,6 +218,7 @@
         border-color: #d4af37;
         box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
         background: rgba(40, 40, 40, 0.8);
+        transform: translateY(-2px);
     }
 
     /* ===== BOTONES ===== */
@@ -181,22 +231,38 @@
         font-size: 0.95rem;
         font-weight: 700;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         margin: 5px;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    }
+
+    button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transition: left 0.5s;
+    }
+
+    button:hover::before {
+        left: 100%;
     }
 
     button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
     }
 
     button:active {
         transform: translateY(-1px);
     }
 
-    #agregarBtn, #generarInvitacionBtn {
+    #generarInvitacionBtn {
         background: linear-gradient(135deg, #00b4d8, #0077b6);
         color: white;
     }
@@ -219,6 +285,7 @@
     #accesoGerente {
         background: linear-gradient(135deg, #d4af37, #f4d03f);
         display: none;
+        animation: pulseGold 2s ease-in-out infinite;
     }
 
     #solicitarAccesoGerente {
@@ -226,11 +293,17 @@
         color: white;
     }
 
+    @keyframes pulseGold {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6); }
+    }
+
     /* ===== ACOMPAÑANTES ===== */
     #acompanantesContainer {
         margin: 10px 0;
         max-height: 200px;
         overflow-y: auto;
+        padding: 5px;
     }
 
     .acompanante {
@@ -255,7 +328,7 @@
         padding: 8px 15px !important;
     }
 
-    /* ===== MODALES ===== */
+    /* ===== MODALES CORREGIDOS ===== */
     .modal, .modal-edicion {
         display: none;
         position: fixed;
@@ -266,6 +339,12 @@
         height: 100%;
         background: rgba(0, 0, 0, 0.8);
         backdrop-filter: blur(5px);
+        animation: fadeInModal 0.3s ease;
+    }
+
+    @keyframes fadeInModal {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     .modal-contenido {
@@ -278,7 +357,7 @@
         box-shadow: 0 20px 50px rgba(212, 175, 55, 0.3);
         border: 1px solid rgba(212, 175, 55, 0.3);
         position: relative;
-        animation: modalAppear 0.3s ease;
+        animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .modal-edicion-contenido {
@@ -293,18 +372,30 @@
         box-shadow: 0 20px 50px rgba(212, 175, 55, 0.3);
         border: 1px solid rgba(212, 175, 55, 0.3);
         position: relative;
-        animation: modalAppear 0.3s ease;
+        animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     @keyframes modalAppear {
         from {
             opacity: 0;
-            transform: translateY(-30px);
+            transform: translateY(-50px) scale(0.9);
         }
         to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
+    }
+
+    .modal-contenido::before,
+    .modal-edicion-contenido::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #d4af37, #f4d03f, #d4af37);
+        border-radius: 20px 20px 0 0;
     }
 
     .modal-header {
@@ -328,11 +419,12 @@
         font-weight: bold;
         cursor: pointer;
         transition: all 0.3s ease;
+        line-height: 1;
     }
 
     .cerrar-modal:hover {
         color: #f4d03f;
-        transform: rotate(90deg);
+        transform: rotate(90deg) scale(1.2);
     }
 
     /* Grid para formulario de edición */
@@ -340,6 +432,11 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 15px;
+    }
+
+    .modal button {
+        width: 100%;
+        margin-top: 20px;
     }
 
     /* ===== TABLAS ===== */
@@ -350,6 +447,7 @@
         background: rgba(26, 26, 26, 0.9);
         border: 1px solid rgba(212, 175, 55, 0.2);
         padding: 5px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
 
     table {
@@ -368,6 +466,7 @@
         position: sticky;
         top: 0;
         z-index: 10;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     }
 
     td {
@@ -375,10 +474,12 @@
         border-bottom: 1px solid rgba(212, 175, 55, 0.1);
         background: rgba(30, 30, 30, 0.8);
         color: #fff;
+        transition: all 0.3s ease;
     }
 
     tr:hover td {
         background: rgba(212, 175, 55, 0.1);
+        transform: translateX(5px);
     }
 
     .numero-cita {
@@ -389,6 +490,12 @@
         border-radius: 20px;
         display: inline-block;
         font-size: 0.8rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
     }
 
     .btn-accion {
@@ -406,7 +513,7 @@
         gap: 15px;
         margin: 20px 0;
         padding: 20px;
-        background: rgba(26, 26, 26, 0.9);
+        background: linear-gradient(145deg, #1a1a1a, #222);
         border-radius: 12px;
         border: 1px solid rgba(212, 175, 55, 0.2);
     }
@@ -418,15 +525,18 @@
         padding: 15px;
         border-radius: 10px;
         border: 1px solid rgba(212, 175, 55, 0.15);
+        transition: all 0.3s ease;
+    }
+
+    .filtro-group:hover {
+        transform: translateY(-3px);
+        border-color: #d4af37;
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
     }
 
     .filtro-group label {
         margin: 0 0 8px 0;
         font-size: 0.9rem;
-    }
-
-    .filtro-group input, .filtro-group select {
-        margin: 0;
     }
 
     .btn-group {
@@ -557,9 +667,29 @@
         box-shadow: 0 0 10px #e74c3c;
     }
 
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+    /* ===== ENCABEZADOS POR MES ===== */
+    .encabezado-enero { background: linear-gradient(135deg, #3498db, #2980b9) !important; }
+    .encabezado-febrero { background: linear-gradient(135deg, #9b59b6, #8e44ad) !important; }
+    .encabezado-marzo { background: linear-gradient(135deg, #2ecc71, #27ae60) !important; }
+    .encabezado-abril { background: linear-gradient(135deg, #e67e22, #d35400) !important; }
+    .encabezado-mayo { background: linear-gradient(135deg, #e74c3c, #c0392b) !important; }
+    .encabezado-junio { background: linear-gradient(135deg, #1abc9c, #16a085) !important; }
+    .encabezado-julio { background: linear-gradient(135deg, #f1c40f, #f39c12) !important; }
+    .encabezado-agosto { background: linear-gradient(135deg, #d35400, #e67e22) !important; }
+    .encabezado-septiembre { background: linear-gradient(135deg, #7f8c8d, #95a5a6) !important; }
+    .encabezado-octubre { background: linear-gradient(135deg, #8e44ad, #9b59b6) !important; }
+    .encabezado-noviembre { background: linear-gradient(135deg, #2c3e50, #34495e) !important; }
+    .encabezado-diciembre { background: linear-gradient(135deg, #16a085, #1abc9c) !important; }
+
+    .encabezado-mes {
+        color: white !important;
+        font-weight: bold !important;
+        text-align: center !important;
+    }
+
+    /* ===== DÍA EVENTO MOBILE ===== */
+    .dia-evento-mobile {
+        display: none;
     }
 
     /* ===== RESPONSIVE ===== */
@@ -578,13 +708,22 @@
             padding: 15px;
         }
         
+        .logo-container {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+            justify-content: center;
+        }
+        
         .logo-img-container {
-            width: 120px;
-            height: 120px;
+            width: 80px;
+            height: 80px;
         }
         
         .logo-tagline {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
+            white-space: normal;
+            text-align: center;
         }
         
         .premanifiesto-controls {
@@ -619,6 +758,27 @@
         .paginacion-container {
             flex-direction: column;
         }
+        
+        .dia-evento-desktop {
+            display: none;
+        }
+        
+        .dia-evento-mobile {
+            display: block;
+            font-size: 0.8rem;
+            color: #d4af37;
+            margin-top: 3px;
+        }
+    }
+
+    @media (min-width: 769px) {
+        .dia-evento-mobile {
+            display: none;
+        }
+        
+        .dia-evento-desktop {
+            display: table-cell;
+        }
     }
 
     /* ===== SCROLLBAR PERSONALIZADA ===== */
@@ -640,45 +800,7 @@
     ::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(135deg, #f4d03f, #d4af37);
     }
-
-    /* ===== ENCABEZADOS POR MES ===== */
-    .encabezado-enero { background: linear-gradient(135deg, #3498db, #2980b9) !important; }
-    .encabezado-febrero { background: linear-gradient(135deg, #9b59b6, #8e44ad) !important; }
-    .encabezado-marzo { background: linear-gradient(135deg, #2ecc71, #27ae60) !important; }
-    .encabezado-abril { background: linear-gradient(135deg, #e67e22, #d35400) !important; }
-    .encabezado-mayo { background: linear-gradient(135deg, #e74c3c, #c0392b) !important; }
-    .encabezado-junio { background: linear-gradient(135deg, #1abc9c, #16a085) !important; }
-    .encabezado-julio { background: linear-gradient(135deg, #f1c40f, #f39c12) !important; }
-    .encabezado-agosto { background: linear-gradient(135deg, #d35400, #e67e22) !important; }
-    .encabezado-septiembre { background: linear-gradient(135deg, #7f8c8d, #95a5a6) !important; }
-    .encabezado-octubre { background: linear-gradient(135deg, #8e44ad, #9b59b6) !important; }
-    .encabezado-noviembre { background: linear-gradient(135deg, #2c3e50, #34495e) !important; }
-    .encabezado-diciembre { background: linear-gradient(135deg, #16a085, #1abc9c) !important; }
-
-    .encabezado-mes {
-        color: white !important;
-        font-weight: bold !important;
-        text-align: center !important;
-    }
-
-    /* ===== DÍA EVENTO MOBILE ===== */
-    .dia-evento-mobile {
-        display: none;
-    }
-
-    @media (max-width: 768px) {
-        .dia-evento-desktop {
-            display: none;
-        }
-        
-        .dia-evento-mobile {
-            display: block;
-            font-size: 0.8rem;
-            color: #d4af37;
-            margin-top: 3px;
-        }
-    }
-</style>
+  </style>
 
   <!-- Librerías necesarias -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
