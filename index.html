@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -3611,20 +3611,30 @@
           actualizarTablaPremanifiesto();
       });
 
-      // 🔥 CORREGIDO: Descargar Excel (general) - AHORA CON TÍTULOS CORRECTOS Y COLORES POR MES
+      // 🔥 CORREGIDO DEFINITIVAMENTE: Descargar Excel (general)
       document.getElementById("descargarExcel").addEventListener("click", async () => {
+          // Obtener valores actuales de los filtros
+          const fechaFiltroInput = document.getElementById("filtroFecha").value;
+          const supervisoraFiltroInput = document.getElementById("filtroSupervisora").value;
+          
           // Determinar qué registros descargar basado en el estado actual de los filtros
           let registrosParaDescargar = [];
           let fechaTitulo = new Date(); // Por defecto fecha actual
+          let titulo = "";
 
+          // Verificar si hay filtro de supervisor activo (usando las variables globales)
           if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
-              // Si el filtro de supervisor está activo, descargar esos registros
+              // Filtro de supervisor activo
               const estadisticas = obtenerEstadisticasRegistros(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
               registrosParaDescargar = estadisticas ? estadisticas.registros : [];
-              fechaTitulo = new Date(fechaInicioFiltro); // Usar fecha de inicio para el color del mes
+              fechaTitulo = new Date(fechaInicioFiltro);
+              
+              const fechaInicioFormateada = new Date(fechaInicioFiltro).toLocaleDateString('es-MX');
+              const fechaFinFormateada = new Date(fechaFinFiltro).toLocaleDateString('es-MX');
+              titulo = `CITAS DE ${supervisoraFiltroActual} DEL ${fechaInicioFormateada} AL ${fechaFinFormateada}`.toUpperCase();
               
           } else if (busquedaActiva && terminoBusquedaActual) {
-              // Si hay una búsqueda activa, descargar los resultados de la búsqueda
+              // Búsqueda activa
               const termino = terminoBusquedaActual.toLowerCase();
               registrosParaDescargar = window.registrosPremanifiesto.filter(registro => {
                   if (!registro) return false;
@@ -3632,16 +3642,16 @@
                   const telefono = registro.telefono || '';
                   return nombre.toLowerCase().includes(termino) || telefono.includes(terminoBusquedaActual);
               });
-              // fechaTitulo se queda como fecha actual
+              titulo = `PREMANIFIESTO BÚSQUEDA "${terminoBusquedaActual}"`.toUpperCase();
               
-          } else if (ultimaFechaFiltro) {
-              // Si hay un filtro por fecha activo, descargar solo los de esa fecha
-              let fechaFiltroNormalizada = ultimaFechaFiltro;
+          } else if (fechaFiltroInput) {
+              // Filtro por fecha activo (usando el input directamente)
+              let fechaFiltroNormalizada = fechaFiltroInput;
               try {
-                  const fechaObj = new Date(ultimaFechaFiltro);
+                  const fechaObj = new Date(fechaFiltroInput);
                   if (!isNaN(fechaObj.getTime())) {
                       fechaFiltroNormalizada = fechaObj.toISOString().split('T')[0];
-                      fechaTitulo = fechaObj; // Usar la fecha del filtro
+                      fechaTitulo = fechaObj;
                   }
               } catch (error) {
                   console.error("Error al normalizar fecha de filtro:", error);
@@ -3659,10 +3669,23 @@
                   }
                   return fechaRegistroNormalizada === fechaFiltroNormalizada;
               });
+              
+              // Formato "PREMANIFIESTO DEL Viernes 13 de Marzo 2026"
+              const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
+              const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
+              const diaSemana = fechaFormateada.split(' ')[0];
+              const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
+              titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
+              
           } else {
-              // Si no hay filtros, descargar todos
+              // Sin filtros - todos los registros
               registrosParaDescargar = window.registrosPremanifiesto;
-              // fechaTitulo se queda como fecha actual
+              
+              const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
+              const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
+              const diaSemana = fechaFormateada.split(' ')[0];
+              const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
+              titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
           }
 
           if (registrosParaDescargar.length === 0) {
@@ -3676,39 +3699,6 @@
           try {
               const workbook = new ExcelJS.Workbook();
               const worksheet = workbook.addWorksheet('PREMANIFIESTO');
-              
-              // Generar título según el filtro activo
-              let titulo = "";
-              
-              if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
-                  // Título para filtro de supervisor
-                  const fechaInicioFormateada = new Date(fechaInicioFiltro).toLocaleDateString('es-MX');
-                  const fechaFinFormateada = new Date(fechaFinFiltro).toLocaleDateString('es-MX');
-                  
-                  titulo = `CITAS DE ${supervisoraFiltroActual} DEL ${fechaInicioFormateada} AL ${fechaFinFormateada}`.toUpperCase();
-                  
-              } else if (busquedaActiva && terminoBusquedaActual) {
-                  // Título para búsqueda
-                  titulo = `PREMANIFIESTO BÚSQUEDA "${terminoBusquedaActual}"`.toUpperCase();
-                  
-              } else if (ultimaFechaFiltro) {
-                  // Título para fecha específica - CON FORMATO "PREMANIFIESTO DEL Viernes 13 de Marzo 2026"
-                  const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
-                  const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
-                  const diaSemana = fechaFormateada.split(' ')[0];
-                  const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
-                  
-                  titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
-                  
-              } else {
-                  // Título genérico (todos los registros)
-                  const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
-                  const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
-                  const diaSemana = fechaFormateada.split(' ')[0];
-                  const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
-                  
-                  titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
-              }
               
               const tituloRow = worksheet.addRow([titulo]);
               tituloRow.font = { size: 16, bold: true };
@@ -3849,7 +3839,6 @@
               const buffer = await workbook.xlsx.writeBuffer();
               const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
               
-              // Nombre del archivo sin caracteres especiales
               let nombreArchivo = titulo.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
               saveAs(blob, `${nombreArchivo}.xlsx`);
               
