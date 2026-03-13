@@ -3682,18 +3682,18 @@
               const nombreMes = meses[mesActual].toLowerCase();
               
               const coloresPorMes = {
-                  'enero': 'FF3498DB',
-                  'febrero': 'FF9B59B6',
-                  'marzo': 'FF2ECC71',
-                  'abril': 'FFE67E22',
-                  'mayo': 'FFE74C3c',
-                  'junio': 'FF1ABC9C',
-                  'julio': 'FFF1C40F',
-                  'agosto': 'FFD35400',
-                  'septiembre': 'FF7F8C8D',
-                  'octubre': 'FF8E44AD',
-                  'noviembre': 'FF2C3E50',
-                  'diciembre': 'FF16A085'
+                  'enero': 'FFFF0000',     
+                  'febrero': 'FFFFA500',  
+                  'marzo': 'FFFF00FF',  
+                  'abril': 'FFE67E22',     
+                  'mayo': 'FFE74C3C',      
+                  'junio': 'FF1ABC9C',     
+                  'julio': 'FFF1C40F',    
+                  'agosto': 'FFD35400',    
+                  'septiembre': 'FF7F8C8D', 
+                  'octubre': 'FF8E44AD',    
+                  'noviembre': 'FF2C3E50',  
+                  'diciembre': 'FF16A085'   
               };
               
               const colorHeader = coloresPorMes[nombreMes] || 'FF3498DB';
@@ -3770,18 +3770,18 @@
                       registro.telefono ? registro.telefono.toUpperCase() : ''
                   ]);
                   
-                  const primeraCelda = row.getCell(1);
-                  primeraCelda.fill = {
-                      type: 'pattern',
-                      pattern: 'solid',
-                      fgColor: { argb: 'FF2ECC71' }
-                  };
-                  primeraCelda.font = {
-                      bold: true,
-                      color: { argb: 'FFFFFFFF' }
-                  };
-                  primeraCelda.alignment = { horizontal: 'center' };
-                  
+                const primeraCelda = row.getCell(1);
+                primeraCelda.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF0000FF' }  
+               };
+                primeraCelda.font = {
+                bold: true,
+                color: { argb: 'FFFFFFFF' }     
+                };
+                primeraCelda.alignment = { horizontal: 'center' };
+
                   row.eachCell((cell) => {
                       cell.border = {
                           top: { style: 'thin' },
