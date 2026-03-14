@@ -1517,6 +1517,9 @@
     // Limpiar flag de WebSocket para evitar errores
     localStorage.removeItem('firebase:previous_websocket_failure');
 
+    // Detectar iOS para soluciones específicas
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
     // --- GESTIÓN DE SUPERVISORAS ---
     let listaSupervisoras = ['ABRAHAM ROLDAN','LUIS COLULA', 'MACARENA ZAMORA', 'THALIA PINEDA', 'YARET NAJERA', 'MISAEL NAVARRO'];
 
@@ -1754,6 +1757,7 @@
       console.log("- Botón buscar:", document.getElementById('buscarPersonaBtn'));
       console.log("- Input buscar:", document.getElementById('buscarPersonaInput'));
       console.log("- Tabla:", document.getElementById('tablaPremafiesto'));
+      console.log("Dispositivo iOS:", isIOS ? "SÍ" : "NO");
       
       // Verificar Firebase
       try {
@@ -1847,8 +1851,38 @@
           });
       }
 
-      // GUARDAR REGISTROS EN FIREBASE OPTIMIZADO
+      // Función de guardado inmediato para iOS
+      function guardarRegistrosEnFirebaseInmediato() {
+          if (firebaseUpdateQueue.length > 0) {
+              try {
+                  const database = firebase.database();
+                  const registrosObj = {};
+                  firebaseUpdateQueue.forEach(registro => {
+                      registrosObj[registro.id] = registro;
+                  });
+                  
+                  database.ref('registrosPremanifiesto').update(registrosObj)
+                      .then(() => {
+                          console.log("Registros guardados en Firebase (iOS)");
+                          firebaseUpdateQueue = [];
+                          actualizarEstadoSincronizacion(true);
+                      })
+                      .catch(manejarErrorFirebase);
+              } catch (e) {
+                  console.error("Error crítico en iOS:", e);
+              }
+          }
+      }
+
+      // GUARDAR REGISTROS EN FIREBASE OPTIMIZADO (con versión para iOS)
       function guardarRegistrosEnFirebaseOptimizado() {
+          if (isIOS) {
+              // En iOS, guardar inmediatamente
+              guardarRegistrosEnFirebaseInmediato();
+              return;
+          }
+          
+          // Para otros navegadores, mantener el timeout
           if (firebaseUpdateTimeout) clearTimeout(firebaseUpdateTimeout);
           
           firebaseUpdateTimeout = setTimeout(() => {
@@ -1872,7 +1906,7 @@
                       actualizarEstadoSincronizacion(false);
                   }
               }
-          }, 1000); // Esperar 1 segundo antes de actualizar
+          }, 1000);
       }
 
       function actualizarEstadoSincronizacion(conectado) {
@@ -2411,11 +2445,11 @@
               const nombreMes = meses[mesActual].toLowerCase();
               
               const coloresPorMes = {
-                  'enero': 'FF3498DB',
-                  'febrero': 'FF9B59B6',
-                  'marzo': 'FF2ECC71',
+                  'enero': 'FFFF0000',
+                  'febrero': 'FFFFA500',
+                  'marzo': 'FFA3E4D7',
                   'abril': 'FFE67E22',
-                  'mayo': 'FFE74C3c',
+                  'mayo': 'FFE74C3C',
                   'junio': 'FF1ABC9C',
                   'julio': 'FFF1C40F',
                   'agosto': 'FFD35400',
@@ -2476,11 +2510,11 @@
                   primeraCelda.fill = {
                       type: 'pattern',
                       pattern: 'solid',
-                      fgColor: { argb: 'FF2ECC71' }
+                      fgColor: { argb: 'FF0000FF' } // Azul
                   };
                   primeraCelda.font = {
                       bold: true,
-                      color: { argb: 'FFFFFFFF' }
+                      color: { argb: 'FFFFFFFF' } // Blanco
                   };
                   primeraCelda.alignment = { horizontal: 'center' };
                   
@@ -2490,7 +2524,7 @@
                           left: { style: 'thin' },
                           bottom: { style: 'thin' },
                           right: { style: 'thin' }
-                  };
+                      };
                   });
               });
               
@@ -2954,6 +2988,15 @@
           window.registrosPremanifiesto.push(registro);
           firebaseUpdateQueue.push(registro);
           guardarRegistrosEnFirebaseOptimizado();
+          
+          // Backup en localStorage como respaldo
+          try {
+              const backup = JSON.parse(localStorage.getItem('backup_registros') || '[]');
+              backup.push(registro);
+              localStorage.setItem('backup_registros', JSON.stringify(backup.slice(-50))); // Últimos 50
+          } catch (e) {
+              console.error("Error guardando backup local:", e);
+          }
           
           if (premanifiestoVisible) {
               if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
@@ -3503,6 +3546,13 @@
           }
 
           generarPDF(false);
+          
+          // Para iOS, forzar actualización de la tabla
+          if (isIOS && premanifiestoVisible) {
+              setTimeout(() => {
+                  actualizarTablaPremanifiesto(ultimaFechaFiltro);
+              }, 500);
+          }
       });
 
       // Evento para botón de reagendados
@@ -3532,6 +3582,13 @@
           }
 
           generarPDF(true);
+          
+          // Para iOS, forzar actualización de la tabla
+          if (isIOS && premanifiestoVisible) {
+              setTimeout(() => {
+                  actualizarTablaPremanifiesto(ultimaFechaFiltro);
+              }, 500);
+          }
       });
 
       // Botón ver/ocultar premanifiesto general
@@ -3611,11 +3668,22 @@
           actualizarTablaPremanifiesto();
       });
 
-      // 🔥 FUNCIÓN DE EXCEL CORREGIDA - TOMADA DEL PRIMER CÓDIGO (EL QUE FUNCIONA PERFECTO)
+      // 🔥 FUNCIÓN DE EXCEL CORREGIDA - CON COLORES AUTOMÁTICOS CLAROS/OSCUROS
       document.getElementById("descargarExcel").addEventListener("click", async () => {
           if (window.registrosPremanifiesto.length === 0) {
               alert("NO HAY REGISTROS AÚN.");
               return;
+          }
+
+          // Función para determinar si un color es claro u oscuro
+          function esColorClaro(colorHex) {
+              const rgb = colorHex.substring(2);
+              const r = parseInt(rgb.substring(0, 2), 16);
+              const g = parseInt(rgb.substring(2, 4), 16);
+              const b = parseInt(rgb.substring(4, 6), 16);
+              
+              const luminosidad = (r * 0.299 + g * 0.587 + b * 0.114);
+              return luminosidad > 186;
           }
 
           try {
@@ -3681,22 +3749,26 @@
               const mesActual = fechaTitulo.getMonth();
               const nombreMes = meses[mesActual].toLowerCase();
               
+              // Paleta de colores profesional
               const coloresPorMes = {
-                  'enero': 'FFFF0000',     
-                  'febrero': 'FFFFA500',  
-                  'marzo': 'FFA3E4D7',   
-                  'abril': 'FFE67E22',     
-                  'mayo': 'FFE74C3C',      
-                  'junio': 'FF1ABC9C',     
-                  'julio': 'FFF1C40F',    
-                  'agosto': 'FFD35400',    
-                  'septiembre': 'FF7F8C8D', 
-                  'octubre': 'FF8E44AD',    
-                  'noviembre': 'FF2C3E50',  
-                  'diciembre': 'FF16A085'   
+                  'enero': 'FFFF0000',     // Rojo
+                  'febrero': 'FFFFA500',   // Naranja
+                  'marzo': 'FFA3E4D7',     // Menta pastel
+                  'abril': 'FFE67E22',     // Naranja
+                  'mayo': 'FFE74C3C',      // Rojo coral
+                  'junio': 'FF1ABC9C',     // Turquesa
+                  'julio': 'FFF1C40F',     // Amarillo
+                  'agosto': 'FFD35400',    // Naranja oscuro
+                  'septiembre': 'FF7F8C8D', // Gris
+                  'octubre': 'FF8E44AD',    // Morado
+                  'noviembre': 'FF2C3E50',  // Azul oscuro
+                  'diciembre': 'FF16A085'   // Verde azulado
               };
               
               const colorHeader = coloresPorMes[nombreMes] || 'FF3498DB';
+              
+              // Detectar si el color es claro u oscuro
+              const colorClaro = esColorClaro(colorHeader);
               
               headerRow.eachCell((cell, colNumber) => {
                   cell.fill = {
@@ -3706,7 +3778,7 @@
                   };
                   cell.font = {
                       bold: true,
-                      color: { argb: 'FFFFFFFF' }
+                      color: { argb: colorClaro ? 'FF000000' : 'FFFFFFFF' } // Negro si es claro, blanco si es oscuro
                   };
                   cell.alignment = { horizontal: 'center' };
                   cell.border = {
@@ -3770,18 +3842,19 @@
                       registro.telefono ? registro.telefono.toUpperCase() : ''
                   ]);
                   
-                const primeraCelda = row.getCell(1);
-                primeraCelda.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FF0000FF' }  
-               };
-                primeraCelda.font = {
-                bold: true,
-                color: { argb: 'FFFFFFFF' }     
-                };
-                primeraCelda.alignment = { horizontal: 'center' };
-
+                  // Color de la columna NUM. CITA (azul con texto blanco)
+                  const primeraCelda = row.getCell(1);
+                  primeraCelda.fill = {
+                      type: 'pattern',
+                      pattern: 'solid',
+                      fgColor: { argb: 'FF0000FF' } // Azul
+                  };
+                  primeraCelda.font = {
+                      bold: true,
+                      color: { argb: 'FFFFFFFF' } // Blanco
+                  };
+                  primeraCelda.alignment = { horizontal: 'center' };
+                  
                   row.eachCell((cell) => {
                       cell.border = {
                           top: { style: 'thin' },
