@@ -1075,6 +1075,17 @@
       </div>
     </section>
 
+    <!-- <<< --- CORRECCIÓN: NUEVA SECCIÓN PARA CITAS DE MAÑANA --- >>> -->
+    <section class="citas-agregadas-hoy" id="citasMananaSection">
+      <h2><i class="fas fa-calendar-day"></i> CITAS PROGRAMADAS PARA MAÑANA</h2>
+      <div class="citas-agregadas-grid" id="citasMananaGrid">
+        <div class="cargando">
+          <i class="fas fa-spinner"></i>
+          <p>CARGANDO CITAS DE MAÑANA...</p>
+        </div>
+      </div>
+    </section>
+
     <!-- NUEVA SECCIÓN: Citas Agregadas Hoy -->
     <section class="citas-agregadas-hoy" id="citasAgregadasHoy">
       <h2><i class="fas fa-calendar-plus"></i> CITAS AGREGADAS HOY</h2>
@@ -1318,6 +1329,7 @@
         try {
           actualizarResumenGeneral();
           actualizarQnqTotales();
+          actualizarCitasManana(); // <<< --- CORRECCIÓN: Llamada a la nueva función
           actualizarCitasAgregadasHoy();
           actualizarEstadisticasSupervisoras();
           actualizarGraficoBarras();
@@ -1326,6 +1338,100 @@
           console.error("❌ ERROR AL ACTUALIZAR EL PANEL:", error);
           mostrarNotificacion("ERROR AL ACTUALIZAR LA INFORMACIÓN", 'error');
         }
+      }
+
+      // <<< --- CORRECCIÓN: NUEVA FUNCIÓN PARA MOSTRAR CITAS DE MAÑANA EN TIEMPO REAL --- >>>
+      function actualizarCitasManana() {
+        const citasMananaGrid = document.getElementById('citasMananaGrid');
+        const hoy = new Date();
+        const manana = new Date(hoy);
+        manana.setDate(hoy.getDate() + 1);
+        
+        // Formatear la fecha de mañana para comparación (YYYY-MM-DD)
+        const anioManana = manana.getFullYear();
+        const mesManana = String(manana.getMonth() + 1).padStart(2, '0');
+        const diaManana = String(manana.getDate()).padStart(2, '0');
+        const fechaMananaStr = `${anioManana}-${mesManana}-${diaManana}`;
+        
+        // Filtrar citas para mañana basándose en 'diaEvento' o 'fechaRegistro'
+        const citasManana = registrosPremanifiesto.filter(reg => {
+            let fechaEvento = reg.diaEvento; // Priorizar diaEvento
+            if (!fechaEvento) fechaEvento = reg.fechaRegistro; // Usar fechaRegistro como fallback
+            if (!fechaEvento) return false;
+            
+            // Normalizar la fecha a string YYYY-MM-DD para comparar
+            let fechaComparar = fechaEvento;
+            try {
+                const fechaObj = new Date(fechaEvento);
+                if (!isNaN(fechaObj.getTime())) {
+                    fechaComparar = fechaObj.toISOString().split('T')[0];
+                }
+            } catch(e) { /* Ignorar si falla */ }
+            
+            return fechaComparar === fechaMananaStr;
+        });
+        
+        console.log(`📅 CITAS PARA MAÑANA (${fechaMananaStr}) ENCONTRADAS: ${citasManana.length}`);
+        
+        if (citasManana.length === 0) {
+            citasMananaGrid.innerHTML = '<div class="sin-datos"><i class="fas fa-calendar-times"></i> NO HAY CITAS PROGRAMADAS PARA MAÑANA</div>';
+            return;
+        }
+        
+        // Agrupar por supervisora para una mejor visualización
+        const citasPorSupervisora = {};
+        citasManana.forEach(cita => {
+            const supervisora = cita.supervisora || 'SIN SUPERVISORA';
+            if (!citasPorSupervisora[supervisora]) {
+                citasPorSupervisora[supervisora] = [];
+            }
+            citasPorSupervisora[supervisora].push(cita);
+        });
+        
+        let html = '';
+        // Mostrar total de citas para mañana
+        html += `
+            <div class="cita-agregada-item" style="border-left: 4px solid var(--gold); background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(244, 208, 63, 0.05));">
+                <div class="cita-agregada-supervisora">🏆 TOTAL DE CITAS PARA MAÑANA</div>
+                <div class="cita-agregada-cantidad">${citasManana.length} CITAS</div>
+                <div class="cita-agregada-eficiencia eficiencia-excelente">
+                    ${manana.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </div>
+            </div>
+        `;
+        
+        // Mostrar desglose por supervisora
+        Object.keys(citasPorSupervisora).sort().forEach(supervisora => {
+            const citas = citasPorSupervisora[supervisora];
+            html += `
+                <div class="cita-agregada-item">
+                    <div class="cita-agregada-supervisora">👩‍💼 ${supervisora}</div>
+                    <div class="cita-agregada-cantidad">${citas.length} CITAS</div>
+                    <div class="cita-agregada-eficiencia">
+                        <details>
+                            <summary>Ver detalles (${citas.length})</summary>
+                            <ul style="margin-top: 10px; list-style: none; padding-left: 0;">
+            `;
+            
+            citas.forEach((cita, idx) => {
+                const nombreCliente = cita.nombre || cita.cliente || 'CLIENTE NO ESPECIFICADO';
+                const hora = cita.hora || 'Hora no especificada';
+                const telefono = cita.telefono || '';
+                html += `<li style="margin-bottom: 8px; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 5px;">
+                            <strong>${idx+1}. ${nombreCliente}</strong><br>
+                            <small>🕒 ${hora} | 📞 ${telefono}</small>
+                         </li>`;
+            });
+            
+            html += `
+                            </ul>
+                        </details>
+                    </div>
+                </div>
+            `;
+        });
+        
+        citasMananaGrid.innerHTML = html;
       }
 
       // --- FUNCIONES DE CÁLCULO DE EFICIENCIA ---
@@ -2520,7 +2626,7 @@
                       <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">OPERADOR</th>
                       <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">SUPERVISOR</th>
                       <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">TELEFONO</th>
-                    </tr>
+                     </tr>
                   </thead>
                   <tbody>
           `;
@@ -2551,7 +2657,7 @@
                 <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.operador || ''}</td>
                 <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.supervisora || ''}</td>
                 <td style="padding: 10px; border: 1px solid var(--primary-light); text-align: center;">${cita.telefono || ''}</td>
-               </tr>
+              </tr>
             `;
           });
           
@@ -2715,7 +2821,7 @@
                       <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">OPERADOR</th>
                       <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">SUPERVISOR</th>
                       <th style="padding: 12px; border: 1px solid var(--primary-light); text-align: center;">TELEFONO</th>
-                    </tr>
+                     </tr>
                   </thead>
                   <tbody>
           `;
