@@ -2166,7 +2166,7 @@
       let premanifiestoVisible = false;
       let ultimaFechaFiltro = null;
       let registroEditando = null; 
-      let fechaHoraEditada = false;
+      let edicionSnapshot = null;
       let busquedaActiva = false;
       let terminoBusquedaActual = '';
       let filtroSupervisorActivo = false;
@@ -3159,6 +3159,7 @@
           document.getElementById('editarSupervisora').value = registroEditando.supervisora;
           document.getElementById('editarTelefono').value = registroEditando.telefono;
           document.getElementById('editarDiaEvento').value = registroEditando.diaEvento || '';
+          edicionSnapshot = { diaEvento: registroEditando.diaEvento || '', hora: registroEditando.hora || '' };
           modalEdicion.style.display = 'block';
       }
 
@@ -3292,24 +3293,75 @@
           else if (busquedaActiva) buscarPersonaEnTabla(terminoBusquedaActual);
           else actualizarTablaPremanifiesto(ultimaFechaFiltro);
           actualizarTablaNoAsistieron();
+          if (edicionSnapshot) {
+              const cambioFechaHora = registroEditando.diaEvento !== edicionSnapshot.diaEvento || registroEditando.hora !== edicionSnapshot.hora;
+              if (cambioFechaHora && confirm('Se ha modificado la fecha u hora del evento. ¿Desea descargar una nueva invitación?')) {
+                  generarPDFDesdeEdicion();
+              }
+          }
           modalEdicion.style.display = 'none';
           mostrarNotificacion("Registro actualizado");
       });
 
-    function generarPDF(esReagendados = false) {
+    function aplicarFondoInvitacion(doc, hotelSeleccionado) {
+        const h = (hotelSeleccionado || '').toLowerCase();
+        const clave = h.includes('sheraton') ? 'sheraton' : h.includes('fontan') ? 'fontan' : h.includes('marquis') ? 'marquis' : 'sheraton';
+        const imgData = fondos[clave];
+        if (!imgData) {
+            doc.setFillColor(245, 245, 245);
+            doc.rect(0, 0, 210, 297, 'F');
+            return;
+        }
+        const fmt = String(imgData).indexOf('image/png') !== -1 ? 'PNG' : 'JPEG';
+        try {
+            doc.addImage(imgData, fmt, 0, 0, 210, 297);
+        } catch (err) {
+            console.error('Error al cargar el fondo:', err);
+            doc.setFillColor(245, 245, 245);
+            doc.rect(0, 0, 210, 297, 'F');
+        }
+    }
+
+    function generarPDFDesdeEdicion() {
+        if (!registroEditando) return;
+        generarPDF(false, true);
+    }
+
+    function generarPDF(esReagendados = false, desdeEdicion = false) {
     if (!window.jspdf || !window.jspdf.jsPDF) {
         alert("No se pudo cargar la libreria del PDF. Revise su conexion e intente de nuevo.");
         return;
     }
     const { jsPDF } = window.jspdf;
-    
-    const nombre = document.getElementById("nombre").value.trim();
-    const personas = document.getElementById("mesaDescripcion").value;
-    const hora = document.getElementById("horaCita").value;
-    const fechaInput = document.getElementById("diaEvento").value;
-    const celular = document.getElementById("celular").value;
-    const codigo = document.getElementById("codigo").value;
-    const hotelSeleccionado = document.getElementById("hotel").value;
+
+    let nombre;
+    let personas;
+    let hora;
+    let fechaInput;
+    let celular;
+    let codigo;
+    let hotelSeleccionado;
+    let nombreParaArchivo;
+
+    if (desdeEdicion && registroEditando) {
+        nombre = (registroEditando.nombre || '').replace(/\[REAGENDADO\]\s*/gi, '').trim();
+        nombreParaArchivo = (registroEditando.nombre || 'cliente').replace(/\s+/g, '_').replace(/\//g, '_');
+        personas = String(registroEditando.numPersonas != null ? registroEditando.numPersonas : '');
+        hora = document.getElementById('editarHora').value;
+        fechaInput = registroEditando.diaEvento;
+        celular = registroEditando.telefono || '';
+        codigo = (document.getElementById('codigo') && document.getElementById('codigo').value) ? document.getElementById('codigo').value : 'SF';
+        hotelSeleccionado = registroEditando.hotel;
+    } else {
+        nombre = document.getElementById("nombre").value.trim();
+        nombreParaArchivo = nombre.replace(/\s+/g, "_");
+        personas = document.getElementById("mesaDescripcion").value;
+        hora = document.getElementById("horaCita").value;
+        fechaInput = document.getElementById("diaEvento").value;
+        celular = document.getElementById("celular").value;
+        codigo = document.getElementById("codigo").value;
+        hotelSeleccionado = document.getElementById("hotel").value;
+    }
 
     if (!hotelSeleccionado) {
         alert("Por favor selecciona un hotel.");
@@ -3325,10 +3377,7 @@
     }
 
     const doc = new jsPDF();
-    
-    // Fondo
-    doc.setFillColor(245, 245, 245);
-    doc.rect(0, 0, 210, 297, 'F');
+    aplicarFondoInvitacion(doc, hotelSeleccionado);
     
     // Título principal
     doc.setFont("helvetica", "bold");
@@ -3345,18 +3394,30 @@
     doc.setLineWidth(0.5);
     doc.line(30, 52, 180, 52);
     
-    // Obtener acompañantes
-    const acompanantesInputs = document.querySelectorAll("#acompanantesContainer input");
-    const acompanantes = Array.from(acompanantesInputs).map(i => i.value.trim()).filter(v => v !== "");
-    
-    let nombreYSaludo = nombre.toUpperCase();
-    if (acompanantes.length > 0) {
-        const acompanantesUpper = acompanantes.map(a => a.toUpperCase());
-        if (acompanantesUpper.length === 1) {
-            nombreYSaludo = `${nombreYSaludo} Y ${acompanantesUpper[0]}`;
-        } else {
-            const ultimo = acompanantesUpper.pop();
-            nombreYSaludo = `${nombreYSaludo}, ${acompanantesUpper.join(', ')} Y ${ultimo}`;
+    // Nombre en invitación (formulario o registro editado con "nombre/acompañante")
+    let nombreYSaludo;
+    if (desdeEdicion && registroEditando) {
+        const partes = nombre.split('/').map(s => s.trim()).filter(Boolean);
+        const principal = (partes[0] || '').toUpperCase();
+        const acomps = partes.slice(1).map(a => a.toUpperCase());
+        nombreYSaludo = principal;
+        if (acomps.length === 1) nombreYSaludo = `${nombreYSaludo} Y ${acomps[0]}`;
+        else if (acomps.length > 1) {
+            const ultimo = acomps.pop();
+            nombreYSaludo = `${nombreYSaludo}, ${acomps.join(', ')} Y ${ultimo}`;
+        }
+    } else {
+        const acompanantesInputs = document.querySelectorAll("#acompanantesContainer input");
+        const acompanantes = Array.from(acompanantesInputs).map(i => i.value.trim()).filter(v => v !== "");
+        nombreYSaludo = nombre.toUpperCase();
+        if (acompanantes.length > 0) {
+            const acompanantesUpper = acompanantes.map(a => a.toUpperCase());
+            if (acompanantesUpper.length === 1) {
+                nombreYSaludo = `${nombreYSaludo} Y ${acompanantesUpper[0]}`;
+            } else {
+                const ultimo = acompanantesUpper.pop();
+                nombreYSaludo = `${nombreYSaludo}, ${acompanantesUpper.join(', ')} Y ${ultimo}`;
+            }
         }
     }
     
@@ -3443,17 +3504,21 @@
     const pdfUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = pdfUrl;
-    const nombreArchivo = esReagendados ? `Invitacion_Reagendados_${nombre.replace(/\s+/g, "_")}.pdf` : `Invitacion_${nombre.replace(/\s+/g, "_")}.pdf`;
+    const nombreArchivo = desdeEdicion
+        ? `Invitacion_Actualizada_${nombreParaArchivo}.pdf`
+        : (esReagendados ? `Invitacion_Reagendados_${nombre.replace(/\s+/g, "_")}.pdf` : `Invitacion_${nombre.replace(/\s+/g, "_")}.pdf`);
     a.download = nombreArchivo;
     a.click();
     URL.revokeObjectURL(pdfUrl);
-    
-    // Abrir WhatsApp
-    const mensaje = `Estimado(a) ${nombre}, Reciba un cordial saludo de Destination Connect Group. Le hago llegar su invitación para el evento del día ${fechaFormateada} a las ${convertirHoraAMPM(hora)} en el ${hotelSeleccionado}. ¡Te esperamos!`;
-    const whatsappURL = `https://wa.me/52${celular}?text=${encodeURIComponent(mensaje)}`;
-    window.open(whatsappURL, '_blank');
-    
-    mostrarNotificacion("✅ Invitación generada correctamente");
+
+    if (!desdeEdicion) {
+        const mensaje = `Estimado(a) ${nombre}, Reciba un cordial saludo de Destination Connect Group. Le hago llegar su invitación para el evento del día ${fechaFormateada} a las ${convertirHoraAMPM(hora)} en el ${hotelSeleccionado}. ¡Te esperamos!`;
+        const whatsappURL = `https://wa.me/52${celular}?text=${encodeURIComponent(mensaje)}`;
+        window.open(whatsappURL, '_blank');
+        mostrarNotificacion("✅ Invitación generada correctamente");
+    } else {
+        alert("Invitación actualizada descargada correctamente.");
+    }
 }
 
       generarInvitacionBtn.addEventListener('click', () => {
