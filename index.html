@@ -2990,6 +2990,18 @@
           });
       }
 
+      function obtenerEstadisticasRegistros(fechaInicio, fechaFin, supervisora) {
+          if (!fechaInicio || !fechaFin || !supervisora) return null;
+          const registros = ordenarRegistrosPorCita(obtenerRegistrosPorFiltroSupervisor(fechaInicio, fechaFin, supervisora));
+          return {
+              supervisora,
+              fechaInicio,
+              fechaFin,
+              totalRegistros: registros.length,
+              registros
+          };
+      }
+
       function mostrarEstadisticasRegistros(estadisticas) {
           const contenedor = document.getElementById('estadisticasSupervisora');
           const info = document.getElementById('infoRegistros');
@@ -3031,7 +3043,173 @@
               alert("No hay filtro de supervisor activo");
               return;
           }
-          alert("Función de descarga disponible");
+
+          try {
+              const workbook = new ExcelJS.Workbook();
+              const worksheet = workbook.addWorksheet('CITAS SUPERVISOR');
+
+              const fechaInicioFormateada = new Date(fechaInicioFiltro).toLocaleDateString('es-MX');
+              const fechaFinFormateada = new Date(fechaFinFiltro).toLocaleDateString('es-MX');
+
+              const estadisticas = obtenerEstadisticasRegistros(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
+
+              let titulo = `CITAS DE ${supervisoraFiltroActual.replace(/\s+/g, '_')} DEL ${fechaInicioFormateada.replace(/\//g, '-')}_AL_${fechaFinFormateada.replace(/\//g, '-')}`;
+              if (estadisticas && estadisticas.totalRegistros > 0) {
+                  titulo += ` - ${estadisticas.totalRegistros}_REGISTROS`;
+              }
+
+              const tituloRow = worksheet.addRow([titulo]);
+              tituloRow.font = { size: 16, bold: true };
+              tituloRow.alignment = { horizontal: 'center' };
+              worksheet.mergeCells('A1:Q1');
+
+              worksheet.addRow([]);
+
+              const headers = [
+                  'NUM DE CITAS', 'FECHA', 'PAX', 'NOMBRES FAMILIA', 'EDAD', 'ESTADO CIVIL',
+                  'TARJETAS', 'ID', 'INGRESOS', 'VENDOR', 'OPERADOR', 'GERENTE',
+                  'SALA', 'HORA DE LLEGADA', 'BASE DE DATOS', 'SUPERVISOR', 'TELEFONO'
+              ].map(header => header.toUpperCase());
+
+              const headerRow = worksheet.addRow(headers);
+
+              const meses = [
+                  'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+                  'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+              ];
+              const mesActual = new Date(fechaInicioFiltro).getMonth();
+              const nombreMes = meses[mesActual].toLowerCase();
+
+              const coloresPorMes = {
+                  'enero': 'FFFF0000',
+                  'febrero': 'FFFFA500',
+                  'marzo': 'FFA3E4D7',
+                  'abril': 'FFE67E22',
+                  'mayo': 'FFE74C3C',
+                  'junio': 'FF1ABC9C',
+                  'julio': 'FFF1C40F',
+                  'agosto': 'FFD35400',
+                  'septiembre': 'FF7F8C8D',
+                  'octubre': 'FF8E44AD',
+                  'noviembre': 'FF2C3E50',
+                  'diciembre': 'FF16A085'
+              };
+
+              const colorHeader = coloresPorMes[nombreMes] || 'FF3498DB';
+
+              headerRow.eachCell((cell) => {
+                  cell.fill = {
+                      type: 'pattern',
+                      pattern: 'solid',
+                      fgColor: { argb: colorHeader }
+                  };
+                  cell.font = {
+                      bold: true,
+                      color: { argb: 'FFFFFFFF' }
+                  };
+                  cell.alignment = { horizontal: 'center' };
+                  cell.border = {
+                      top: { style: 'thin' },
+                      left: { style: 'thin' },
+                      bottom: { style: 'thin' },
+                      right: { style: 'thin' }
+                  };
+              });
+
+              let registrosParaExcel = [];
+              if (estadisticas && estadisticas.registros) {
+                  registrosParaExcel = estadisticas.registros;
+              }
+
+              registrosParaExcel.forEach(registro => {
+                  const row = worksheet.addRow([
+                      registro.citaPorDia || registro.cita,
+                      registro.diaEvento ? String(registro.diaEvento).toUpperCase() : '',
+                      registro.numPersonas ? registro.numPersonas.toString().toUpperCase() : '',
+                      registro.nombre ? registro.nombre.toUpperCase() : '',
+                      registro.edad ? String(registro.edad).toUpperCase() : '',
+                      registro.estadoCivil ? registro.estadoCivil.toUpperCase() : '',
+                      registro.tarjeta ? registro.tarjeta.toUpperCase() : '',
+                      '',
+                      registro.ingresos ? String(registro.ingresos).toUpperCase() : '',
+                      registro.vendedor ? registro.vendedor.toUpperCase() : '',
+                      registro.operador ? registro.operador.toUpperCase() : '',
+                      registro.calificacionOrigen ? registro.calificacionOrigen.toUpperCase() : '',
+                      registro.hotel ? registro.hotel.toUpperCase() : '',
+                      registro.hora ? String(registro.hora).toUpperCase() : '',
+                      registro.baseDatos ? registro.baseDatos.toUpperCase() : '',
+                      registro.supervisora ? registro.supervisora.toUpperCase() : '',
+                      registro.telefono ? registro.telefono.toUpperCase() : ''
+                  ]);
+
+                  const primeraCelda = row.getCell(1);
+                  primeraCelda.fill = {
+                      type: 'pattern',
+                      pattern: 'solid',
+                      fgColor: { argb: 'FF0000FF' }
+                  };
+                  primeraCelda.font = {
+                      bold: true,
+                      color: { argb: 'FFFFFFFF' }
+                  };
+                  primeraCelda.alignment = { horizontal: 'center' };
+
+                  row.eachCell((cell) => {
+                      cell.border = {
+                          top: { style: 'thin' },
+                          left: { style: 'thin' },
+                          bottom: { style: 'thin' },
+                          right: { style: 'thin' }
+                      };
+                  });
+              });
+
+              worksheet.columns = [
+                  { width: 15 },
+                  { width: 15 },
+                  { width: 10 },
+                  { width: 40 },
+                  { width: 12 },
+                  { width: 15 },
+                  { width: 25 },
+                  { width: 20 },
+                  { width: 18 },
+                  { width: 15 },
+                  { width: 25 },
+                  { width: 15 },
+                  { width: 25 },
+                  { width: 18 },
+                  { width: 20 },
+                  { width: 18 },
+                  { width: 18 }
+              ];
+
+              worksheet.eachRow((row) => {
+                  row.eachCell((cell) => {
+                      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                  });
+                  row.height = 25;
+              });
+
+              worksheet.autoFilter = {
+                  from: 'A3',
+                  to: 'Q' + (worksheet.rowCount)
+              };
+
+              worksheet.views = [
+                  { state: 'frozen', xSplit: 0, ySplit: 3, activeCell: 'A4' }
+              ];
+
+              const buffer = await workbook.xlsx.writeBuffer();
+              const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+              let nombreArchivo = `CITAS_${supervisoraFiltroActual.replace(/\s+/g, '_')}_${fechaInicioFormateada.replace(/\//g, '-')}_AL_${fechaFinFormateada.replace(/\//g, '-')}`;
+              saveAs(blob, `${nombreArchivo}.xlsx`);
+
+          } catch (error) {
+              console.error('ERROR AL GENERAR EL EXCEL:', error);
+              alert('OCURRIÓ UN ERROR AL GENERAR EL ARCHIVO EXCEL.');
+          }
       }
 
       // Cerrar modales
@@ -3533,6 +3711,10 @@
         url: "https://www.dcgroup.com.mx",
         align: "center"
     });
+    const dcStr = "www.dcgroup.com.mx";
+    const dcW = doc.getTextWidth(dcStr);
+    doc.setDrawColor(0, 0, 0);
+    doc.line(105 - dcW / 2, y + 2, 105 + dcW / 2, y + 2);
 
     // Descargar PDF
     const blob = doc.output('blob');
@@ -3551,6 +3733,11 @@
         const whatsappURL = `https://wa.me/52${celular}?text=${encodeURIComponent(mensaje)}`;
         window.open(whatsappURL, '_blank');
         mostrarNotificacion("✅ Invitación generada correctamente");
+        form.reset();
+        const ac = document.getElementById("acompanantesContainer");
+        if (ac) ac.innerHTML = "";
+        const codigoEl = document.getElementById('codigo');
+        if (codigoEl) codigoEl.value = 'SF';
     } else {
         alert("Invitación actualizada descargada correctamente.");
     }
@@ -3615,23 +3802,239 @@
         });
       }
 
+      function esColorClaro(colorHex) {
+          const rgb = colorHex.substring(2);
+          const r = parseInt(rgb.substring(0, 2), 16);
+          const g = parseInt(rgb.substring(2, 4), 16);
+          const b = parseInt(rgb.substring(4, 6), 16);
+          const luminosidad = (r * 0.299 + g * 0.587 + b * 0.114);
+          return luminosidad > 186;
+      }
+
       document.getElementById("descargarExcel").addEventListener("click", async () => {
-          if (!window.registrosPremanifiesto.length) { alert("NO HAY REGISTROS."); return; }
-          const workbook = new ExcelJS.Workbook();
-          const worksheet = workbook.addWorksheet('PREMANIFIESTO');
-          const headers = ['NUM CITA', 'FECHA', 'PAX', 'NOMBRE', 'EDAD', 'ESTADO CIVIL', 'TARJETA', '', 'INGRESOS', 'VENDOR', 'OPERADOR', 'GERENTE', 'SALA', 'HORA', 'BASE DATOS', 'SUPERVISOR', 'TELEFONO', 'ASISTENCIA'];
-          worksheet.addRow(['PREMANIFIESTO']).font = { size: 16, bold: true };
-          worksheet.addRow([]);
-          worksheet.addRow(headers);
-          window.registrosPremanifiesto.forEach(r => {
-              worksheet.addRow([
-                  r.citaPorDia, r.diaEvento, r.numPersonas, r.nombre, r.edad, r.estadoCivil, r.tarjeta, '',
-                  r.ingresos, r.vendedor, r.operador, r.calificacionOrigen, r.hotel, r.hora, r.baseDatos, r.supervisora, r.telefono,
-                  r.asistencia === 'asistio' ? 'ASISTIÓ' : (r.asistencia === 'no_asistio' ? 'NO ASISTIÓ' : 'PENDIENTE')
-              ]);
-          });
-          const buffer = await workbook.xlsx.writeBuffer();
-          saveAs(new Blob([buffer]), 'Premanifiesto.xlsx');
+          if (window.registrosPremanifiesto.length === 0) {
+              alert("NO HAY REGISTROS AÚN.");
+              return;
+          }
+
+          try {
+              const workbook = new ExcelJS.Workbook();
+              const worksheet = workbook.addWorksheet('PREMANIFIESTO');
+
+              const fechaFiltro = document.getElementById("filtroFecha").value;
+
+              let fechaTitulo;
+              let titulo;
+
+              if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
+                  const fechaInicioFormateada = new Date(fechaInicioFiltro).toLocaleDateString('es-MX');
+                  const fechaFinFormateada = new Date(fechaFinFiltro).toLocaleDateString('es-MX');
+
+                  const estadisticas = obtenerEstadisticasRegistros(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
+
+                  if (estadisticas && estadisticas.totalRegistros > 0) {
+                      titulo = `CITAS DE ${supervisoraFiltroActual} DEL ${fechaInicioFormateada} AL ${fechaFinFormateada} - ${estadisticas.totalRegistros} REGISTROS`;
+                  } else {
+                      titulo = `CITAS DE ${supervisoraFiltroActual} DEL ${fechaInicioFormateada} AL ${fechaFinFormateada}`;
+                  }
+
+                  fechaTitulo = new Date(fechaInicioFiltro);
+              } else if (fechaFiltro) {
+                  fechaTitulo = new Date(fechaFiltro + 'T00:00:00');
+                  const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
+                  const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
+                  const diaSemana = fechaFormateada.split(' ')[0];
+                  const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
+
+                  titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
+              } else {
+                  fechaTitulo = new Date();
+                  const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
+                  const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
+                  const diaSemana = fechaFormateada.split(' ')[0];
+                  const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
+
+                  titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
+              }
+
+              const tituloRow = worksheet.addRow([titulo]);
+              tituloRow.font = { size: 16, bold: true };
+              tituloRow.alignment = { horizontal: 'center' };
+              worksheet.mergeCells('A1:Q1');
+
+              worksheet.addRow([]);
+
+              const headers = [
+                  'NUM DE CITAS', 'FECHA', 'PAX', 'NOMBRES FAMILIA', 'EDAD', 'ESTADO CIVIL',
+                  'TARJETAS', 'ID', 'INGRESOS', 'VENDOR', 'OPERADOR', 'GERENTE',
+                  'SALA', 'HORA DE LLEGADA', 'BASE DE DATOS', 'SUPERVISOR', 'TELEFONO'
+              ].map(header => header.toUpperCase());
+
+              const headerRow = worksheet.addRow(headers);
+
+              const meses = [
+                  'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+                  'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+              ];
+              const mesActual = fechaTitulo.getMonth();
+              const nombreMes = meses[mesActual].toLowerCase();
+
+              const coloresPorMes = {
+                  'enero': 'FFFF0000',
+                  'febrero': 'FFFFA500',
+                  'marzo': 'FFA3E4D7',
+                  'abril': 'FFE67E22',
+                  'mayo': 'FFE74C3C',
+                  'junio': 'FF1ABC9C',
+                  'julio': 'FFF1C40F',
+                  'agosto': 'FFD35400',
+                  'septiembre': 'FF7F8C8D',
+                  'octubre': 'FF8E44AD',
+                  'noviembre': 'FF2C3E50',
+                  'diciembre': 'FF16A085'
+              };
+
+              const colorHeader = coloresPorMes[nombreMes] || 'FF3498DB';
+              const colorClaro = esColorClaro(colorHeader);
+
+              headerRow.eachCell((cell) => {
+                  cell.fill = {
+                      type: 'pattern',
+                      pattern: 'solid',
+                      fgColor: { argb: colorHeader }
+                  };
+                  cell.font = {
+                      bold: true,
+                      color: { argb: colorClaro ? 'FF000000' : 'FFFFFFFF' }
+                  };
+                  cell.alignment = { horizontal: 'center' };
+                  cell.border = {
+                      top: { style: 'thin' },
+                      left: { style: 'thin' },
+                      bottom: { style: 'thin' },
+                      right: { style: 'thin' }
+                  };
+              });
+
+              let registrosParaExcel = window.registrosPremanifiesto;
+              if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
+                  const estadisticas = obtenerEstadisticasRegistros(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
+                  registrosParaExcel = estadisticas ? estadisticas.registros : [];
+              } else if (fechaFiltro) {
+                  registrosParaExcel = window.registrosPremanifiesto.filter(registro => {
+                      let fechaRegistroNormalizada = registro.diaEvento;
+                      try {
+                          const fechaObj = new Date(registro.diaEvento);
+                          if (!isNaN(fechaObj.getTime())) {
+                              fechaRegistroNormalizada = fechaObj.toISOString().split('T')[0];
+                          }
+                      } catch (error) {
+                          console.error("Error al normalizar fecha del registro:", error);
+                      }
+
+                      let fechaFiltroNormalizada = fechaFiltro;
+                      try {
+                          const fechaObj = new Date(fechaFiltro);
+                          if (!isNaN(fechaObj.getTime())) {
+                              fechaFiltroNormalizada = fechaObj.toISOString().split('T')[0];
+                          }
+                      } catch (error) {
+                          console.error("Error al normalizar fecha de filtro:", error);
+                      }
+
+                      return fechaRegistroNormalizada === fechaFiltroNormalizada;
+                  });
+              }
+
+              registrosParaExcel.forEach(registro => {
+                  const row = worksheet.addRow([
+                      registro.citaPorDia || registro.cita,
+                      registro.diaEvento ? String(registro.diaEvento).toUpperCase() : '',
+                      registro.numPersonas ? registro.numPersonas.toString().toUpperCase() : '',
+                      registro.nombre ? registro.nombre.toUpperCase() : '',
+                      registro.edad ? String(registro.edad).toUpperCase() : '',
+                      registro.estadoCivil ? registro.estadoCivil.toUpperCase() : '',
+                      registro.tarjeta ? registro.tarjeta.toUpperCase() : '',
+                      '',
+                      registro.ingresos ? String(registro.ingresos).toUpperCase() : '',
+                      registro.vendedor ? registro.vendedor.toUpperCase() : '',
+                      registro.operador ? registro.operador.toUpperCase() : '',
+                      registro.calificacionOrigen ? registro.calificacionOrigen.toUpperCase() : '',
+                      registro.hotel ? registro.hotel.toUpperCase() : '',
+                      registro.hora ? String(registro.hora).toUpperCase() : '',
+                      registro.baseDatos ? registro.baseDatos.toUpperCase() : '',
+                      registro.supervisora ? registro.supervisora.toUpperCase() : '',
+                      registro.telefono ? registro.telefono.toUpperCase() : ''
+                  ]);
+
+                  const primeraCelda = row.getCell(1);
+                  primeraCelda.fill = {
+                      type: 'pattern',
+                      pattern: 'solid',
+                      fgColor: { argb: 'FF0000FF' }
+                  };
+                  primeraCelda.font = {
+                      bold: true,
+                      color: { argb: 'FFFFFFFF' }
+                  };
+                  primeraCelda.alignment = { horizontal: 'center' };
+
+                  row.eachCell((cell) => {
+                      cell.border = {
+                          top: { style: 'thin' },
+                          left: { style: 'thin' },
+                          bottom: { style: 'thin' },
+                          right: { style: 'thin' }
+                      };
+                  });
+              });
+
+              worksheet.columns = [
+                  { width: 15 },
+                  { width: 15 },
+                  { width: 10 },
+                  { width: 40 },
+                  { width: 12 },
+                  { width: 15 },
+                  { width: 25 },
+                  { width: 20 },
+                  { width: 18 },
+                  { width: 15 },
+                  { width: 25 },
+                  { width: 15 },
+                  { width: 25 },
+                  { width: 18 },
+                  { width: 20 },
+                  { width: 18 },
+                  { width: 18 }
+              ];
+
+              worksheet.eachRow((row) => {
+                  row.eachCell((cell) => {
+                      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                  });
+                  row.height = 25;
+              });
+
+              worksheet.autoFilter = {
+                  from: 'A3',
+                  to: 'Q' + (worksheet.rowCount)
+              };
+
+              worksheet.views = [
+                  { state: 'frozen', xSplit: 0, ySplit: 3, activeCell: 'A4' }
+              ];
+
+              const buffer = await workbook.xlsx.writeBuffer();
+              const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+              let nombreArchivo = titulo.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+              saveAs(blob, `${nombreArchivo}.xlsx`);
+
+          } catch (error) {
+              console.error('ERROR AL GENERAR EL EXCEL:', error);
+              alert('OCURRIÓ UN ERROR AL GENERAR EL ARCHIVO EXCEL.');
+          }
       });
 
       configurarFirebase();
