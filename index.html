@@ -3287,9 +3287,161 @@
           mostrarNotificacion("Registro actualizado");
       });
 
-      function generarPDF(esReagendados = false) {
-          alert("Función de generación de PDF disponible");
-      }
+    function generarPDF(esReagendados = false) {
+    const { jsPDF } = window.jspdf;
+    
+    const nombre = document.getElementById("nombre").value.trim();
+    const personas = document.getElementById("mesaDescripcion").value;
+    const hora = document.getElementById("horaCita").value;
+    const fechaInput = document.getElementById("diaEvento").value;
+    const celular = document.getElementById("celular").value;
+    const codigo = document.getElementById("codigo").value;
+    const hotelSeleccionado = document.getElementById("hotel").value;
+
+    if (!hotelSeleccionado) {
+        alert("Por favor selecciona un hotel.");
+        return;
+    }
+
+    let fechaFormateada = fechaInput;
+    if (fechaInput) {
+        const partes = fechaInput.split('-');
+        if (partes.length === 3) {
+            fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+    }
+
+    const doc = new jsPDF();
+    
+    // Fondo
+    doc.setFillColor(245, 245, 245);
+    doc.rect(0, 0, 210, 297, 'F');
+    
+    // Título principal
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(10, 37, 64);
+    doc.setFontSize(22);
+    doc.text("DESTINATION CONNECT GROUP", 105, 30, { align: "center" });
+    
+    doc.setFontSize(16);
+    doc.setTextColor(74, 43, 122);
+    doc.text("INVITACIÓN EXCLUSIVA", 105, 45, { align: "center" });
+    
+    // Línea decorativa
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(0.5);
+    doc.line(30, 52, 180, 52);
+    
+    // Obtener acompañantes
+    const acompanantesInputs = document.querySelectorAll("#acompanantesContainer input");
+    const acompanantes = Array.from(acompanantesInputs).map(i => i.value.trim()).filter(v => v !== "");
+    
+    let nombreYSaludo = nombre.toUpperCase();
+    if (acompanantes.length > 0) {
+        const acompanantesUpper = acompanantes.map(a => a.toUpperCase());
+        if (acompanantesUpper.length === 1) {
+            nombreYSaludo = `${nombreYSaludo} Y ${acompanantesUpper[0]}`;
+        } else {
+            const ultimo = acompanantesUpper.pop();
+            nombreYSaludo = `${nombreYSaludo}, ${acompanantesUpper.join(', ')} Y ${ultimo}`;
+        }
+    }
+    
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(10, 37, 64);
+    doc.setFontSize(20);
+    doc.text(nombreYSaludo, 105, 70, { align: "center" });
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Reciban un cordial saludo de Destination Connect Group.", 105, 85, { align: "center" });
+    doc.text("Nos complace invitarle a una presentación exclusiva de experiencias de viaje.", 105, 95, { align: "center" });
+    
+    // Detalles del evento
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(10, 37, 64);
+    doc.text("📅 DÍA DEL EVENTO", 105, 115, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(fechaFormateada, 105, 125, { align: "center" });
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("⏰ HORA", 105, 140, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text(convertirHoraAMPM(hora), 105, 150, { align: "center" });
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("📍 UBICACIÓN", 105, 165, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text(hotelSeleccionado, 105, 175, { align: "center" });
+    
+    // URL del hotel
+    let urlHotel = "";
+    if (hotelSeleccionado.includes("Sheraton")) urlHotel = "https://maps.app.goo.gl/LWt6E1X8cQH2bXrZA";
+    else if (hotelSeleccionado.includes("Fontan")) urlHotel = "https://maps.app.goo.gl/UVjAHobxNAHP5bwu9";
+    else if (hotelSeleccionado.includes("Marquis")) urlHotel = "https://maps.app.goo.gl/PoFQwAKxVKAfG4Cr7";
+    else if (hotelSeleccionado.includes("Daikoku")) urlHotel = "https://maps.app.goo.gl/N86NDYRoK8uAPhcKA";
+    
+    if (urlHotel) {
+        doc.setTextColor(0, 0, 255);
+        doc.textWithLink("Ver ubicación en Google Maps", 105, 185, { align: "center", url: urlHotel });
+        doc.setTextColor(0, 0, 0);
+    }
+    
+    // Clave de acceso
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(212, 175, 55);
+    doc.text(`CLAVE DE ACCESO: ${codigo}`, 105, 200, { align: "center" });
+    
+    // Requisitos
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(10, 37, 64);
+    doc.text("REQUISITOS INDISPENSABLES:", 105, 220, { align: "center" });
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    const requisitos = [
+        "✓ Mostrar identificación oficial vigente (INE o Pasaporte)",
+        "✓ Presentar tarjeta de crédito o débito (Visa, MasterCard o AMEX)",
+        "✓ Tiempo estimado de 90 minutos",
+        "✓ Si es casado o vive en unión libre, asistir en pareja"
+    ];
+    
+    let yRequisitos = 230;
+    requisitos.forEach(req => {
+        doc.text(req, 105, yRequisitos, { align: "center" });
+        yRequisitos += 8;
+    });
+    
+    // Pie de página
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("www.dcgroup.com.mx", 105, 280, { align: "center" });
+    doc.text("© Destination Connect Group - Todos los derechos reservados", 105, 288, { align: "center" });
+    
+    // Descargar PDF
+    const blob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = pdfUrl;
+    const nombreArchivo = esReagendados ? `Invitacion_Reagendados_${nombre.replace(/\s+/g, "_")}.pdf` : `Invitacion_${nombre.replace(/\s+/g, "_")}.pdf`;
+    a.download = nombreArchivo;
+    a.click();
+    URL.revokeObjectURL(pdfUrl);
+    
+    // Abrir WhatsApp
+    const mensaje = `Estimado(a) ${nombre}, Reciba un cordial saludo de Destination Connect Group. Le hago llegar su invitación para el evento del día ${fechaFormateada} a las ${convertirHoraAMPM(hora)} en el ${hotelSeleccionado}. ¡Te esperamos!`;
+    const whatsappURL = `https://wa.me/52${celular}?text=${encodeURIComponent(mensaje)}`;
+    window.open(whatsappURL, '_blank');
+    
+    mostrarNotificacion("✅ Invitación generada correctamente");
+}
 
       generarInvitacionBtn.addEventListener('click', () => {
           const required = form.querySelectorAll("[required]");
