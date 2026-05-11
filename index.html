@@ -3193,8 +3193,17 @@
       }
 
       document.addEventListener('click', (e) => {
-          if (e.target.closest('.btn-editar')) editarRegistro(e.target.closest('.btn-editar').getAttribute('data-id'));
-          if (e.target.closest('.btn-limpiar')) eliminarRegistro(e.target.closest('.btn-limpiar').getAttribute('data-id'));
+          const btnEditarTabla = e.target.closest('#tablaPremafiesto .btn-accion.btn-editar');
+          if (btnEditarTabla) {
+              const id = btnEditarTabla.getAttribute('data-id');
+              if (id) editarRegistro(id);
+              return;
+          }
+          const btnEliminarTabla = e.target.closest('#tablaPremafiesto .btn-accion.btn-limpiar');
+          if (btnEliminarTabla) {
+              const id = btnEliminarTabla.getAttribute('data-id');
+              if (id) eliminarRegistro(id);
+          }
       });
 
       function agregarAlPremanifiesto(esReagendados = false) {
@@ -3288,6 +3297,10 @@
       });
 
     function generarPDF(esReagendados = false) {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert("No se pudo cargar la libreria del PDF. Revise su conexion e intente de nuevo.");
+        return;
+    }
     const { jsPDF } = window.jspdf;
     
     const nombre = document.getElementById("nombre").value.trim();
@@ -3362,19 +3375,19 @@
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(10, 37, 64);
-    doc.text("📅 DÍA DEL EVENTO", 105, 115, { align: "center" });
+    doc.text("DIA DEL EVENTO", 105, 115, { align: "center" });
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.text(fechaFormateada, 105, 125, { align: "center" });
     
     doc.setFont("helvetica", "bold");
-    doc.text("⏰ HORA", 105, 140, { align: "center" });
+    doc.text("HORA", 105, 140, { align: "center" });
     doc.setFont("helvetica", "normal");
     doc.text(convertirHoraAMPM(hora), 105, 150, { align: "center" });
     
     doc.setFont("helvetica", "bold");
-    doc.text("📍 UBICACIÓN", 105, 165, { align: "center" });
+    doc.text("UBICACION", 105, 165, { align: "center" });
     doc.setFont("helvetica", "normal");
     doc.text(hotelSeleccionado, 105, 175, { align: "center" });
     
@@ -3407,10 +3420,10 @@
     doc.setFontSize(9);
     doc.setTextColor(0, 0, 0);
     const requisitos = [
-        "✓ Mostrar identificación oficial vigente (INE o Pasaporte)",
-        "✓ Presentar tarjeta de crédito o débito (Visa, MasterCard o AMEX)",
-        "✓ Tiempo estimado de 90 minutos",
-        "✓ Si es casado o vive en unión libre, asistir en pareja"
+        "- Mostrar identificacion oficial vigente (INE o Pasaporte)",
+        "- Presentar tarjeta de credito o debito (Visa, MasterCard o AMEX)",
+        "- Tiempo estimado de 90 minutos",
+        "- Si es casado o vive en union libre, asistir en pareja"
     ];
     
     let yRequisitos = 230;
@@ -3423,7 +3436,7 @@
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
     doc.text("www.dcgroup.com.mx", 105, 280, { align: "center" });
-    doc.text("© Destination Connect Group - Todos los derechos reservados", 105, 288, { align: "center" });
+    doc.text("Destination Connect Group - Todos los derechos reservados", 105, 288, { align: "center" });
     
     // Descargar PDF
     const blob = doc.output('blob');
