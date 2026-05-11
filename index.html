@@ -1147,6 +1147,7 @@
   <div class="overlay-menu" id="overlayMenu"></div>
   <div class="menu-lateral" id="menuLateral">
       <button id="btnSeguimientosSupervisor"><i class="fas fa-clipboard-list"></i> Seg. Supervisor</button>
+      <button id="btnVerSeguimientosPorSupervisor"><i class="fas fa-user-shield"></i> Ver seg. por supervisor</button>
       <button id="btnReporteCitas"><i class="fas fa-calendar-check"></i> Reporte de Citas</button>
       <button id="btnFormatoBriefing"><i class="fas fa-chalkboard-user"></i> Formato Briefing</button>
       <button id="btnVerBriefings"><i class="fas fa-history"></i> Ver Briefings Guardados</button>
@@ -1276,6 +1277,15 @@
               <h3>Reporte de Citas y Análisis de Bases</h3>
               <span class="cerrar-modal cerrar-reporte">&times;</span>
           </div>
+          <div style="padding: 12px 0 16px; border-bottom: 1px solid #e6edf5; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+              <div style="flex: 1; min-width: 220px;">
+                  <label for="reporteCitasSupervisorFiltro" style="margin-top:0;">Supervisor a mostrar en el reporte</label>
+                  <select id="reporteCitasSupervisorFiltro" style="width:100%;">
+                      <option value="">Todas las supervisoras</option>
+                  </select>
+              </div>
+              <button type="button" id="btnActualizarReporteCitas" style="margin:0;">Actualizar reporte</button>
+          </div>
           <div id="contenidoReporteCitas" style="max-height: 70vh; overflow-y: auto;">
               </div>
       </div>
@@ -1320,6 +1330,29 @@
       </div>
   </div>
 
+  <!-- Modal: ver seguimientos por supervisor (contraseña) -->
+  <div id="modalSeguimientosPorSupervisor" class="modal">
+      <div class="modal-contenido modal-contenido-grande">
+          <div class="modal-header">
+              <h3>Seguimientos por supervisor</h3>
+              <span class="cerrar-modal cerrar-seguimientos-sup">&times;</span>
+          </div>
+          <p style="font-size:0.9rem;color:#64748b;margin-bottom:12px;">Consulta los seguimientos guardados agrupados por la fecha en que pidieron ser llamados. Cada supervisor tiene su propia clave de acceso.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:16px;">
+              <div style="flex:1;min-width:200px;">
+                  <label for="vistaSeguimientoSupervisorSelect">Supervisor</label>
+                  <select id="vistaSeguimientoSupervisorSelect"></select>
+              </div>
+              <div style="flex:1;min-width:160px;">
+                  <label for="vistaSeguimientoPassword">Contraseña</label>
+                  <input type="password" id="vistaSeguimientoPassword" placeholder="Ej. maca123" autocomplete="off">
+              </div>
+              <button type="button" id="btnEntrarSeguimientosSup" style="margin:0;">Ver seguimientos</button>
+          </div>
+          <div id="contenidoSeguimientosPorSupervisor" style="max-height:60vh;overflow-y:auto;"></div>
+      </div>
+  </div>
+
   <!-- Modal para Formato Briefing -->
   <div id="modalBriefing" class="modal">
       <div class="modal-contenido modal-contenido-grande">
@@ -1330,6 +1363,12 @@
           <form id="formBriefing">
               <label for="briefingFecha">Fecha:</label>
               <input type="date" id="briefingFecha" required>
+              <label for="briefingSupervisor">Supervisora que elabora / envía este briefing:</label>
+              <select id="briefingSupervisor" required>
+                  <option value="">Seleccione supervisora</option>
+              </select>
+              <label for="briefingWhatsAppDestino">WhatsApp destino (opcional, solo dígitos; ej. 5517907958):</label>
+              <input type="tel" id="briefingWhatsAppDestino" placeholder="Si lo llenas, se usa al pulsar Enviar por WhatsApp" inputmode="numeric" pattern="[0-9]*">
               <label for="briefingObjetivo">Objetivo de citas del día:</label>
               <input type="number" id="briefingObjetivo" required>
               <label for="briefingResultado">Resultado del día:</label>
@@ -1396,7 +1435,10 @@
               <span class="cerrar-modal cerrar-email">&times;</span>
           </div>
           <form id="formEnviarEmail">
-              <label>Correo electrónico:</label>
+              <p style="font-size:0.88rem;color:#64748b;margin-bottom:12px;line-height:1.5;">El mensaje se abrirá en tu programa de correo (Outlook, Gmail en el navegador, etc.). <strong>El correo sale desde la cuenta que tú tengas configurada ahí</strong>, no desde esta página. El destinatario es quien indiques abajo.</p>
+              <label>Supervisora que elabora el briefing:</label>
+              <input type="text" id="emailSupervisorInfo" readonly style="background:#f1f5f9;">
+              <label>Correo del destinatario (para quién):</label>
               <input type="email" id="emailDestino" required placeholder="ejemplo@correo.com">
               <label>Asunto:</label>
               <input type="text" id="emailAsunto" value="Formato de Briefing - Reporte Diario">
@@ -1706,14 +1748,14 @@
     }
 
     function cargarSupervisoras() {
-        const selects = ['supervisora', 'editarSupervisora', 'filtroSupervisora', 'supervisoraFiltro', 'seguimientoSupervisorSeleccion'];
-        
+        const selects = ['supervisora', 'editarSupervisora', 'filtroSupervisora', 'supervisoraFiltro', 'seguimientoSupervisorSeleccion', 'briefingSupervisor', 'vistaSeguimientoSupervisorSelect'];
+
         selects.forEach(selectId => {
             const select = document.getElementById(selectId);
             if (!select) return;
             const valorActual = select.value;
             select.innerHTML = '<option value="">Seleccione</option>';
-            
+
             listaSupervisoras.forEach(supervisora => {
                 if (supervisora && supervisora.trim() !== '') {
                     const option = document.createElement('option');
@@ -1722,11 +1764,74 @@
                     select.appendChild(option);
                 }
             });
-            
+
             if (valorActual && listaSupervisoras.includes(valorActual)) {
                 select.value = valorActual;
             }
         });
+
+        const reporteSel = document.getElementById('reporteCitasSupervisorFiltro');
+        if (reporteSel) {
+            const vr = reporteSel.value;
+            reporteSel.innerHTML = '<option value="">Todas las supervisoras</option>';
+            listaSupervisoras.forEach(supervisora => {
+                if (supervisora && supervisora.trim() !== '') {
+                    const option = document.createElement('option');
+                    option.value = supervisora;
+                    option.textContent = supervisora;
+                    reporteSel.appendChild(option);
+                }
+            });
+            if (vr && listaSupervisoras.includes(vr)) reporteSel.value = vr;
+        }
+    }
+
+    /** Claves por supervisora para ver seguimientos (evitar acceso cruzado). Ajusta aquí las contraseñas. */
+    const CLAVES_SEGUIMIENTO_SUPERVISOR = {
+        'LUIS COLULA': 'luis123',
+        'MACARENA ZAMORA': 'maca123',
+        'THALIA PINEDA': 'thalia123',
+        'RICARDO NAVARRO': 'ricardo123',
+        'PRISCILA GARCIA': 'prisl123'
+    };
+
+    function claveSeguimientoParaSupervisor(nombreSupervisor) {
+        if (!nombreSupervisor) return null;
+        if (CLAVES_SEGUIMIENTO_SUPERVISOR[nombreSupervisor]) return CLAVES_SEGUIMIENTO_SUPERVISOR[nombreSupervisor];
+        const primera = nombreSupervisor.trim().split(/\s+/)[0] || '';
+        const base = primera.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        return base ? base + '123' : null;
+    }
+
+    function fechaBriefingParaArchivo(isoDate) {
+        if (!isoDate) {
+            const t = new Date();
+            const d = String(t.getDate()).padStart(2, '0');
+            const m = String(t.getMonth() + 1).padStart(2, '0');
+            const y = t.getFullYear();
+            return `${d}-${m}-${y}`;
+        }
+        const p = isoDate.split('-');
+        if (p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`;
+        return isoDate;
+    }
+
+    function etiquetaSupParaArchivo(nombreCompletoSupervisor) {
+        const w = (nombreCompletoSupervisor || 'Supervisor').trim().split(/\s+/)[0] || 'Supervisor';
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    }
+
+    function construirNombreBaseBriefingExcel(datosBriefing) {
+        const f = fechaBriefingParaArchivo(datosBriefing.fecha);
+        const sup = etiquetaSupParaArchivo(datosBriefing.supervisor || '');
+        return `Briefing_${f}_Sup-${sup}`;
+    }
+
+    function normalizarTelefonoWhatsApp(raw) {
+        const d = String(raw || '').replace(/\D/g, '');
+        if (!d) return '';
+        if (d.length === 10) return '52' + d;
+        return d;
     }
 
     function autenticarFirebase() {
@@ -1831,6 +1936,7 @@
         // Información general
         const infoGeneral = [
             ['FECHA', datosBriefing.fecha || new Date().toISOString().split('T')[0]],
+            ['SUPERVISORA (elabora / envía)', datosBriefing.supervisor || ''],
             ['OBJETIVO DE CITAS DEL DÍA', datosBriefing.objetivoGeneral || ''],
             ['RESULTADO DEL DÍA', datosBriefing.resultadoGeneral || '']
         ];
@@ -1913,18 +2019,24 @@
         
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        saveAs(blob, `${nombreArchivo}_${datosBriefing.fecha || 'fecha'}.xlsx`);
+        const nombreFinal = (nombreArchivo && String(nombreArchivo).indexOf('Sup-') !== -1)
+            ? `${nombreArchivo}.xlsx`
+            : `${nombreArchivo}_${datosBriefing.fecha || 'fecha'}.xlsx`;
+        saveAs(blob, nombreFinal);
         
         return blob;
     }
     
     // --- Función para enviar por WhatsApp ---
-    function enviarPorWhatsApp(datosBriefing) {
+    function enviarPorWhatsApp(datosBriefing, numeroManual) {
         let mensaje = `📋 *FORMATO DE BRIEFING* 📋\n\n`;
+        if (datosBriefing.supervisor) {
+            mensaje += `👤 *Supervisora:* ${datosBriefing.supervisor}\n`;
+        }
         mensaje += `📅 *Fecha:* ${datosBriefing.fecha}\n`;
         mensaje += `🎯 *Objetivo de citas del día:* ${datosBriefing.objetivoGeneral}\n`;
         mensaje += `✅ *Resultado del día:* ${datosBriefing.resultadoGeneral}\n\n`;
-        
+
         mensaje += `👥 *OPERADORES:*\n`;
         if (datosBriefing.operadores && datosBriefing.operadores.length > 0) {
             datosBriefing.operadores.forEach(op => {
@@ -1933,7 +2045,7 @@
         } else {
             mensaje += `▸ No se registraron operadores\n`;
         }
-        
+
         mensaje += `\n📝 *ANÁLISIS:*\n`;
         const preguntas = [
             datosBriefing.preguntas?.[0],
@@ -1943,21 +2055,33 @@
             datosBriefing.preguntas?.[4],
             datosBriefing.preguntas?.[5]
         ];
-        
+
         mensaje += `\n1️⃣ Situaciones: ${preguntas[0] || 'No especificado'}\n`;
         mensaje += `\n2️⃣ Plan de acción: ${preguntas[1] || 'No especificado'}\n`;
         mensaje += `\n3️⃣ Métricas: ${preguntas[2] || 'No especificado'}\n`;
         mensaje += `\n4️⃣ Aspectos individuales: ${preguntas[3] || 'No especificado'}\n`;
         mensaje += `\n5️⃣ Promedio 35 agendados: ${preguntas[4] || 'No especificado'}\n`;
         mensaje += `\n6️⃣ Dinámica/motivación: ${preguntas[5] || 'No especificado'}\n`;
-        
+
         mensaje += `\n---\n*Destination Connect Group*`;
-        
-        const numero = prompt('Ingrese el número de WhatsApp (código país sin +, ej: 521234567890):');
+
+        let raw = (numeroManual != null && String(numeroManual).trim() !== '')
+            ? String(numeroManual).trim()
+            : '';
+        if (!raw) {
+            const inputEl = document.getElementById('briefingWhatsAppDestino');
+            if (inputEl && inputEl.value.trim()) raw = inputEl.value.trim();
+        }
+        if (!raw) {
+            raw = prompt('Ingrese el número de WhatsApp (solo dígitos, ej: 5517907958 o 525517907958):') || '';
+        }
+        const numero = normalizarTelefonoWhatsApp(raw);
         if (numero) {
             const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
             window.open(url, '_blank');
             mostrarNotificacion('Mensaje listo para enviar por WhatsApp');
+        } else {
+            mostrarNotificacion('Número no válido', 'error');
         }
     }
     
@@ -1988,6 +2112,7 @@
                 <body>
                     <h1>📋 FORMATO DE BRIEFING</h1>
                     <h2>Destination Connect Group</h2>
+                    <p><strong>Supervisora (elabora / envía):</strong> ${datosBriefing.supervisor || 'No indicada'}</p>
                     
                     <p><strong>📅 Fecha:</strong> ${datosBriefing.fecha}</p>
                     <p><strong>🎯 Objetivo de citas del día:</strong> ${datosBriefing.objetivoGeneral}</p>
@@ -2022,7 +2147,14 @@
             mostrarNotificacion('Se abrirá tu cliente de correo para enviar el briefing');
             modalEmail.style.display = 'none';
         };
-        
+
+        const infoSup = document.getElementById('emailSupervisorInfo');
+        if (infoSup) infoSup.value = datosBriefing.supervisor || 'No indicada';
+        const asuntoEl = document.getElementById('emailAsunto');
+        if (asuntoEl && datosBriefing.supervisor) {
+            asuntoEl.value = `Briefing ${datosBriefing.fecha || ''} — ${datosBriefing.supervisor}`;
+        }
+
         modalEmail.style.display = 'block';
     }
 
@@ -2056,6 +2188,7 @@
       const menuLateral = document.getElementById('menuLateral');
       const overlayMenu = document.getElementById('overlayMenu');
       const btnSeguimientosSupervisor = document.getElementById('btnSeguimientosSupervisor');
+      const btnVerSeguimientosPorSupervisor = document.getElementById('btnVerSeguimientosPorSupervisor');
       const btnReporteCitas = document.getElementById('btnReporteCitas');
       const btnFormatoBriefing = document.getElementById('btnFormatoBriefing');
       const btnVerBriefings = document.getElementById('btnVerBriefings');
@@ -2121,17 +2254,7 @@
       }
       
       // --- Análisis de Bases de Datos para Reporte de Citas ---
-      function generarAnalisisBases() {
-          const hoy = new Date();
-          const limite = new Date();
-          limite.setDate(hoy.getDate() + 2);
-          
-          const citasProximas = window.registrosPremanifiesto.filter(registro => {
-              if (!registro.diaEvento) return false;
-              const fechaEvento = new Date(registro.diaEvento);
-              return fechaEvento >= hoy && fechaEvento <= limite;
-          });
-          
+      function generarAnalisisBases(citasProximas) {
           const supervisorCount = {};
           citasProximas.forEach(cita => {
               const sup = cita.supervisora || 'Sin asignar';
@@ -2182,6 +2305,7 @@
       }
       
       function mostrarReporteCitas() {
+          const supFiltro = document.getElementById('reporteCitasSupervisorFiltro') ? document.getElementById('reporteCitasSupervisorFiltro').value : '';
           const hoy = new Date();
           const limite = new Date();
           limite.setDate(hoy.getDate() + 2);
@@ -2189,12 +2313,17 @@
           const citasProximas = window.registrosPremanifiesto.filter(registro => {
               if (!registro.diaEvento) return false;
               const fechaEvento = new Date(registro.diaEvento);
-              return fechaEvento >= hoy && fechaEvento <= limite;
+              if (fechaEvento < hoy || fechaEvento > limite) return false;
+              if (supFiltro && registro.supervisora !== supFiltro) return false;
+              return true;
           }).sort((a, b) => new Date(a.diaEvento) - new Date(b.diaEvento));
           
-          const analisis = generarAnalisisBases();
+          const analisis = generarAnalisisBases(citasProximas);
           
           let html = '';
+          if (supFiltro) {
+              html += `<p style="margin-bottom:12px;padding:10px;background:#e8f0fe;border-radius:10px;"><strong>Filtro activo:</strong> solo citas de <strong>${supFiltro}</strong> (próximos 2 días).</p>`;
+          }
           
           html += `<div class="analisis-container">
                       <h4>📊 ANÁLISIS DE RENDIMIENTO</h4>
@@ -2235,11 +2364,111 @@
       const modalSeguimiento = document.getElementById('modalSeguimientoSupervisor');
       const formSeguimiento = document.getElementById('formSeguimientoSupervisor');
       
+      function datosBriefingDesdeFormulario() {
+          const datosBriefing = {
+              fecha: document.getElementById('briefingFecha').value,
+              supervisor: document.getElementById('briefingSupervisor').value,
+              objetivoGeneral: document.getElementById('briefingObjetivo').value,
+              resultadoGeneral: document.getElementById('briefingResultado').value,
+              operadores: [],
+              preguntas: [
+                  document.getElementById('briefingPregunta1').value,
+                  document.getElementById('briefingPregunta2').value,
+                  document.getElementById('briefingPregunta3').value,
+                  document.getElementById('briefingPregunta4').value,
+                  document.getElementById('briefingPregunta5').value,
+                  document.getElementById('briefingPregunta6').value
+              ]
+          };
+          document.querySelectorAll('#operadoresBriefingContainer .operador-briefing').forEach(op => {
+              const nombre = op.querySelector('.op-nombre')?.value || '';
+              const objetivo = op.querySelector('.op-objetivo')?.value || '';
+              const resultado = op.querySelector('.op-resultado')?.value || '';
+              if (nombre) datosBriefing.operadores.push({ nombre, objetivo, resultado });
+          });
+          return datosBriefing;
+      }
+
+      function etiquetaFechaLargaMX(isoDateStr) {
+          if (!isoDateStr) return 'Sin fecha';
+          const d = new Date(isoDateStr + 'T12:00:00');
+          if (isNaN(d.getTime())) return isoDateStr;
+          return d.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      }
+
+      function mostrarSeguimientosFiltradosSupervisor(nombreSupervisor, claveIngresada) {
+          const esperada = claveSeguimientoParaSupervisor(nombreSupervisor);
+          if (!esperada || claveIngresada !== esperada) {
+              mostrarNotificacion('Contraseña incorrecta o supervisora sin clave configurada', 'error');
+              return;
+          }
+          const cont = document.getElementById('contenidoSeguimientosPorSupervisor');
+          cont.innerHTML = '<p>Cargando…</p>';
+          firebase.database().ref('seguimientos_supervisor').once('value')
+              .then(snapshot => {
+                  const data = snapshot.val();
+                  let lista = [];
+                  if (data) {
+                      Object.entries(data).forEach(([, v]) => {
+                          if (v && v.supervisor === nombreSupervisor) lista.push(v);
+                      });
+                  }
+                  if (!lista.length) {
+                      cont.innerHTML = '<p>No hay seguimientos guardados para esta supervisora.</p>';
+                      return;
+                  }
+                  lista.sort((a, b) => String(a.fechaPidioLlamar || '').localeCompare(String(b.fechaPidioLlamar || '')) || (b.timestamp || 0) - (a.timestamp || 0));
+                  const grupos = {};
+                  lista.forEach(s => {
+                      const k = s.fechaPidioLlamar || 'Sin fecha';
+                      if (!grupos[k]) grupos[k] = [];
+                      grupos[k].push(s);
+                  });
+                  const fechasOrden = Object.keys(grupos).sort();
+                  let html = `<p style="margin-bottom:12px;"><strong>${lista.length}</strong> seguimiento(s) de <strong>${nombreSupervisor}</strong>, agrupados por la fecha en que pidieron ser llamados.</p>`;
+                  fechasOrden.forEach(fechaKey => {
+                      html += `<h4 style="margin:16px 0 8px;color:#0a2540;border-bottom:1px solid #e6edf5;padding-bottom:6px;">📅 ${etiquetaFechaLargaMX(fechaKey)}</h4>`;
+                      grupos[fechaKey].forEach(s => {
+                          html += `<div style="border:1px solid #e6edf5;border-radius:12px;padding:12px;margin-bottom:10px;background:#f9fbfd;font-size:0.9rem;">
+                              <div><strong>Operador:</strong> ${s.nombreOperador || ''}</div>
+                              <div><strong>Base datos:</strong> ${s.baseDatos || ''}</div>
+                              <div><strong>Teléfono:</strong> ${s.numero || ''}</div>
+                              <div><strong>Llamada:</strong> ${s.fechaLlamada || ''}</div>
+                              <div><strong>Estado:</strong> ${s.estadoLlamada || ''}</div>
+                              <div><strong>Comentarios:</strong> ${s.comentarios || ''}</div>
+                          </div>`;
+                      });
+                  });
+                  cont.innerHTML = html;
+              })
+              .catch(err => {
+                  console.error(err);
+                  cont.innerHTML = '<p>Error al cargar seguimientos.</p>';
+              });
+      }
+
+      btnVerSeguimientosPorSupervisor.addEventListener('click', () => {
+          cargarSupervisoras();
+          document.getElementById('contenidoSeguimientosPorSupervisor').innerHTML = '<p>Selecciona supervisora e ingresa la contraseña.</p>';
+          document.getElementById('vistaSeguimientoPassword').value = '';
+          document.getElementById('modalSeguimientosPorSupervisor').style.display = 'block';
+      });
+
+      document.getElementById('btnEntrarSeguimientosSup').addEventListener('click', () => {
+          const sup = document.getElementById('vistaSeguimientoSupervisorSelect').value;
+          const clave = document.getElementById('vistaSeguimientoPassword').value;
+          if (!sup) {
+              mostrarNotificacion('Seleccione supervisora', 'error');
+              return;
+          }
+          mostrarSeguimientosFiltradosSupervisor(sup, clave);
+      });
+
       btnSeguimientosSupervisor.addEventListener('click', () => {
           cargarSupervisoras();
           modalSeguimiento.style.display = 'block';
       });
-      
+
       formSeguimiento.addEventListener('submit', (e) => {
           e.preventDefault();
           const seguimiento = {
@@ -2272,9 +2501,18 @@
       const modalReporte = document.getElementById('modalReporteCitas');
       
       btnReporteCitas.addEventListener('click', () => {
+          cargarSupervisoras();
           mostrarReporteCitas();
           modalReporte.style.display = 'block';
       });
+
+      const btnActualizarReporteCitas = document.getElementById('btnActualizarReporteCitas');
+      if (btnActualizarReporteCitas) {
+          btnActualizarReporteCitas.addEventListener('click', () => {
+              mostrarReporteCitas();
+              mostrarNotificacion('Reporte actualizado');
+          });
+      }
       
       // --- Formato Briefing con envíos ---
       const modalBriefing = document.getElementById('modalBriefing');
@@ -2283,6 +2521,7 @@
       const agregarOperadorBtn = document.getElementById('agregarOperadorBriefing');
       
       btnFormatoBriefing.addEventListener('click', () => {
+          cargarSupervisoras();
           document.getElementById('briefingFecha').value = new Date().toISOString().split('T')[0];
           modalBriefing.style.display = 'block';
       });
@@ -2305,112 +2544,56 @@
       
       // Descargar Excel con diseño profesional
       document.getElementById('descargarBriefingExcel').addEventListener('click', async () => {
-          const datosBriefing = {
-              fecha: document.getElementById('briefingFecha').value,
-              objetivoGeneral: document.getElementById('briefingObjetivo').value,
-              resultadoGeneral: document.getElementById('briefingResultado').value,
-              operadores: [],
-              preguntas: [
-                  document.getElementById('briefingPregunta1').value,
-                  document.getElementById('briefingPregunta2').value,
-                  document.getElementById('briefingPregunta3').value,
-                  document.getElementById('briefingPregunta4').value,
-                  document.getElementById('briefingPregunta5').value,
-                  document.getElementById('briefingPregunta6').value
-              ]
-          };
-          
-          document.querySelectorAll('#operadoresBriefingContainer .operador-briefing').forEach(op => {
-              const nombre = op.querySelector('.op-nombre')?.value || '';
-              const objetivo = op.querySelector('.op-objetivo')?.value || '';
-              const resultado = op.querySelector('.op-resultado')?.value || '';
-              if(nombre) datosBriefing.operadores.push({nombre, objetivo, resultado});
-          });
-          
-          await generarExcelBriefing(datosBriefing, 'Briefing');
-          mostrarNotificacion('Excel generado correctamente');
+          const datosBriefing = datosBriefingDesdeFormulario();
+          if (!datosBriefing.supervisor) {
+              mostrarNotificacion('Seleccione la supervisora que elabora el briefing', 'error');
+              return;
+          }
+          datosBriefing.timestamp = Date.now();
+          datosBriefing.finalizado = true;
+          const nombreBase = construirNombreBaseBriefingExcel(datosBriefing);
+          await generarExcelBriefing(datosBriefing, nombreBase);
+          try {
+              await firebase.database().ref('briefings').push(datosBriefing);
+              mostrarNotificacion('Excel descargado y briefing guardado en el historial');
+          } catch (err) {
+              console.error(err);
+              mostrarNotificacion('Excel generado; error al guardar en la nube', 'error');
+          }
       });
       
       // Enviar por WhatsApp
       document.getElementById('enviarBriefingWhatsApp').addEventListener('click', () => {
-          const datosBriefing = {
-              fecha: document.getElementById('briefingFecha').value,
-              objetivoGeneral: document.getElementById('briefingObjetivo').value,
-              resultadoGeneral: document.getElementById('briefingResultado').value,
-              operadores: [],
-              preguntas: [
-                  document.getElementById('briefingPregunta1').value,
-                  document.getElementById('briefingPregunta2').value,
-                  document.getElementById('briefingPregunta3').value,
-                  document.getElementById('briefingPregunta4').value,
-                  document.getElementById('briefingPregunta5').value,
-                  document.getElementById('briefingPregunta6').value
-              ]
-          };
-          
-          document.querySelectorAll('#operadoresBriefingContainer .operador-briefing').forEach(op => {
-              const nombre = op.querySelector('.op-nombre')?.value || '';
-              const objetivo = op.querySelector('.op-objetivo')?.value || '';
-              const resultado = op.querySelector('.op-resultado')?.value || '';
-              if(nombre) datosBriefing.operadores.push({nombre, objetivo, resultado});
-          });
-          
-          enviarPorWhatsApp(datosBriefing);
+          const datosBriefing = datosBriefingDesdeFormulario();
+          if (!datosBriefing.supervisor) {
+              mostrarNotificacion('Seleccione la supervisora que elabora el briefing', 'error');
+              return;
+          }
+          const waInput = document.getElementById('briefingWhatsAppDestino');
+          const pre = waInput && waInput.value.trim() ? waInput.value.trim() : null;
+          enviarPorWhatsApp(datosBriefing, pre);
       });
       
       // Enviar por Email
       document.getElementById('enviarBriefingEmail').addEventListener('click', () => {
-          const datosBriefing = {
-              fecha: document.getElementById('briefingFecha').value,
-              objetivoGeneral: document.getElementById('briefingObjetivo').value,
-              resultadoGeneral: document.getElementById('briefingResultado').value,
-              operadores: [],
-              preguntas: [
-                  document.getElementById('briefingPregunta1').value,
-                  document.getElementById('briefingPregunta2').value,
-                  document.getElementById('briefingPregunta3').value,
-                  document.getElementById('briefingPregunta4').value,
-                  document.getElementById('briefingPregunta5').value,
-                  document.getElementById('briefingPregunta6').value
-              ]
-          };
-          
-          document.querySelectorAll('#operadoresBriefingContainer .operador-briefing').forEach(op => {
-              const nombre = op.querySelector('.op-nombre')?.value || '';
-              const objetivo = op.querySelector('.op-objetivo')?.value || '';
-              const resultado = op.querySelector('.op-resultado')?.value || '';
-              if(nombre) datosBriefing.operadores.push({nombre, objetivo, resultado});
-          });
-          
+          const datosBriefing = datosBriefingDesdeFormulario();
+          if (!datosBriefing.supervisor) {
+              mostrarNotificacion('Seleccione la supervisora que elabora el briefing', 'error');
+              return;
+          }
           enviarPorEmail(datosBriefing);
       });
       
       formBriefing.addEventListener('submit', (e) => {
           e.preventDefault();
-          const datosBriefing = {
-              fecha: document.getElementById('briefingFecha').value,
-              objetivoGeneral: document.getElementById('briefingObjetivo').value,
-              resultadoGeneral: document.getElementById('briefingResultado').value,
-              operadores: [],
-              preguntas: [
-                  document.getElementById('briefingPregunta1').value,
-                  document.getElementById('briefingPregunta2').value,
-                  document.getElementById('briefingPregunta3').value,
-                  document.getElementById('briefingPregunta4').value,
-                  document.getElementById('briefingPregunta5').value,
-                  document.getElementById('briefingPregunta6').value
-              ],
-              timestamp: Date.now(),
-              finalizado: true
-          };
-          
-          document.querySelectorAll('#operadoresBriefingContainer .operador-briefing').forEach(op => {
-              const nombre = op.querySelector('.op-nombre')?.value || '';
-              const objetivo = op.querySelector('.op-objetivo')?.value || '';
-              const resultado = op.querySelector('.op-resultado')?.value || '';
-              if(nombre) datosBriefing.operadores.push({nombre, objetivo, resultado});
-          });
-          
+          const datosBriefing = datosBriefingDesdeFormulario();
+          if (!datosBriefing.supervisor) {
+              mostrarNotificacion('Seleccione la supervisora que elabora el briefing', 'error');
+              return;
+          }
+          datosBriefing.timestamp = Date.now();
+          datosBriefing.finalizado = true;
+
           const database = firebase.database();
           database.ref('briefings').push(datosBriefing)
               .then(() => {
@@ -2463,7 +2646,7 @@
                       html += `
                           <div style="border: 1px solid #e6edf5; border-radius: 12px; padding: 15px; background: #f9fbfd;">
                               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-                                  <strong>📅 Briefing del ${briefing.fecha || fecha}</strong>
+                                  <strong>📅 Briefing del ${briefing.fecha || fecha}${briefing.supervisor ? ` · ${briefing.supervisor}` : ''}</strong>
                                   <div style="display: flex; gap: 8px;">
                                       <button class="btn-descargar-briefing" data-key="${briefing.key}" style="padding: 5px 10px; font-size: 0.8rem; margin: 0; background: #1b5e3a !important;"><i class="fas fa-download"></i> Excel</button>
                                       <button class="btn-wa-briefing" data-key="${briefing.key}" style="padding: 5px 10px; font-size: 0.8rem; margin: 0; background: #25D366 !important;"><i class="fab fa-whatsapp"></i> WhatsApp</button>
@@ -2486,7 +2669,8 @@
                           const db = firebase.database();
                           const snapshot = await db.ref(`briefings/${key}`).once('value');
                           const briefing = snapshot.val();
-                          await generarExcelBriefing(briefing, `Briefing_${briefing.fecha}`);
+                          const nombreBase = briefing.supervisor ? construirNombreBaseBriefingExcel(briefing) : 'Briefing';
+                          await generarExcelBriefing(briefing, nombreBase);
                           mostrarNotificacion('Excel generado');
                       });
                   });
@@ -2851,7 +3035,7 @@
       }
 
       // Cerrar modales
-      document.querySelectorAll('.cerrar-modal, .cerrar-seguimiento, .cerrar-reporte, .cerrar-briefing, .cerrar-ver-briefings, .cerrar-email').forEach(btn => {
+      document.querySelectorAll('.cerrar-modal, .cerrar-seguimiento, .cerrar-seguimientos-sup, .cerrar-reporte, .cerrar-briefing, .cerrar-ver-briefings, .cerrar-email').forEach(btn => {
           btn.addEventListener('click', function() {
               document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
           });
