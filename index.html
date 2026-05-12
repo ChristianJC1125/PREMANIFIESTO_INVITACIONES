@@ -3362,7 +3362,6 @@
               if (filtroSupervisorActivo) aplicarFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
               else if (busquedaActiva) buscarPersonaEnTabla(terminoBusquedaActual);
               else actualizarTablaPremanifiesto(ultimaFechaFiltro);
-              actualizarTablaNoAsistieron();
               mostrarNotificacion("Registro eliminado");
           }
       }
@@ -3460,7 +3459,6 @@
               else if (busquedaActiva) buscarPersonaEnTabla(terminoBusquedaActual);
               else actualizarTablaPremanifiesto(ultimaFechaFiltro);
           }
-          actualizarTablaNoAsistieron();
           return true;
       }
 
@@ -3483,7 +3481,6 @@
           if (filtroSupervisorActivo) aplicarFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
           else if (busquedaActiva) buscarPersonaEnTabla(terminoBusquedaActual);
           else actualizarTablaPremanifiesto(ultimaFechaFiltro);
-          actualizarTablaNoAsistieron();
           if (edicionSnapshot) {
               const cambioFechaHora = registroEditando.diaEvento !== edicionSnapshot.diaEvento || registroEditando.hora !== edicionSnapshot.hora;
               if (cambioFechaHora && confirm('Se ha modificado la fecha u hora del evento. ¿Desea descargar una nueva invitación?')) {
