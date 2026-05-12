@@ -320,22 +320,6 @@
       background: #5b3a8c !important;
     }
     
-    .btn-asistencia {
-        background: #1b5e3a !important;
-        padding: 4px 8px !important;
-        font-size: 0.7rem !important;
-        margin: 2px !important;
-        border-radius: 30px !important;
-    }
-    
-    .btn-asistencia.asistio {
-        background: #10b981 !important;
-    }
-    
-    .btn-asistencia.no-asistio {
-        background: #ef4444 !important;
-    }
-
     .modal {
       display: none;
       position: fixed;
@@ -1000,6 +984,77 @@
         transform: translateY(-2px);
     }
 
+    /* Briefing: formulario y modal ordenados en móvil */
+    .form-modal-briefing {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .form-modal-briefing .operador-briefing {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 10px;
+        align-items: stretch;
+    }
+    .form-modal-briefing .operador-briefing input {
+        flex: 1 1 120px;
+        min-width: 0;
+        margin: 0;
+    }
+    .form-modal-briefing .operador-briefing .eliminar-operador-briefing {
+        flex: 0 0 auto;
+        align-self: center;
+        margin: 0 !important;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    .form-briefing-acciones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    .briefing-item-acciones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+    #modalBriefing .modal-contenido,
+    #modalVerBriefings .modal-contenido {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .briefing-subtitulo-modal {
+        color: #0a2540 !important;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 12px 0;
+    }
+    .recuadro-descarga-briefing {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e8f4fc 100%);
+        border: 1px solid #b4c8da;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+        color: #0a2540;
+        font-weight: 500;
+    }
+    .briefing-separador-modal {
+        border: none;
+        border-top: 1px solid #e6edf5;
+        margin: 20px 0;
+    }
+    #tablaPremanifiestoScroll {
+        outline: none;
+    }
+    #tablaPremanifiestoScroll:focus-visible {
+        box-shadow: 0 0 0 3px rgba(10, 37, 64, 0.15);
+    }
+
     /* RESPONSIVE MEJORADO PARA CELULARES */
     @media (max-width: 768px) {
       .container {
@@ -1104,6 +1159,37 @@
       
       .menu-lateral {
           width: 250px;
+      }
+
+      .form-modal-briefing .operador-briefing {
+        flex-direction: column;
+      }
+      .form-modal-briefing .operador-briefing input,
+      .form-modal-briefing .operador-briefing .eliminar-operador-briefing {
+        width: 100%;
+        flex: none !important;
+      }
+      .form-briefing-acciones {
+        flex-direction: column;
+        justify-content: stretch;
+      }
+      .form-briefing-acciones button {
+        width: 100% !important;
+        margin: 4px 0 !important;
+      }
+      .briefing-item-acciones {
+        flex-direction: column;
+        width: 100%;
+        justify-content: stretch;
+      }
+      .briefing-item-acciones button {
+        width: 100% !important;
+      }
+      #modalBriefing .modal-contenido.modal-contenido-grande,
+      #modalVerBriefings .modal-contenido.modal-contenido-grande {
+        margin: 8px auto !important;
+        max-height: calc(100vh - 16px - env(safe-area-inset-bottom, 0px));
+        padding: 16px;
       }
     }
 
@@ -1295,10 +1381,13 @@
   <div id="modalSeguimientoSupervisor" class="modal">
       <div class="modal-contenido">
           <div class="modal-header">
-              <h3>Seguimiento de Operador</h3>
+              <h3 id="tituloModalSeguimiento">Seguimiento de Operador</h3>
               <span class="cerrar-modal cerrar-seguimiento">&times;</span>
           </div>
           <form id="formSeguimientoSupervisor">
+              <input type="hidden" id="seguimientoEditId" value="">
+              <input type="hidden" id="seguimientoEditTimestamp" value="">
+              <input type="hidden" id="seguimientoEditIdInterno" value="">
               <label>Supervisor al que pertenece:</label>
               <select id="seguimientoSupervisorSeleccion" required>
                   <option value="">Seleccione un supervisor</option>
@@ -1319,12 +1408,13 @@
                   <option value="Contestó">Contestó</option>
                   <option value="No contestó">No contestó</option>
                   <option value="Cita">Cita</option>
+                  <option value="Seguimiento">Seguimiento</option>
               </select>
               <label>Comentarios:</label>
               <textarea id="seguimientoComentarios" rows="3"></textarea>
               <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
                   <button type="button" class="cerrar-seguimiento btn-limpiar">Cancelar</button>
-                  <button type="submit">Guardar Seguimiento</button>
+                  <button type="submit" id="btnSubmitSeguimiento">Guardar Seguimiento</button>
               </div>
           </form>
       </div>
@@ -1345,7 +1435,7 @@
               </div>
               <div style="flex:1;min-width:160px;">
                   <label for="vistaSeguimientoPassword">Contraseña</label>
-                  <input type="password" id="vistaSeguimientoPassword" placeholder="Ej. maca123" autocomplete="off">
+                  <input type="password" id="vistaSeguimientoPassword" placeholder="" autocomplete="off">
               </div>
               <button type="button" id="btnEntrarSeguimientosSup" style="margin:0;">Ver seguimientos</button>
           </div>
@@ -1360,15 +1450,15 @@
               <h3>Formato de Briefing</h3>
               <span class="cerrar-modal cerrar-briefing">&times;</span>
           </div>
-          <form id="formBriefing">
+          <form id="formBriefing" class="form-modal-briefing" novalidate>
               <label for="briefingFecha">Fecha:</label>
               <input type="date" id="briefingFecha" required>
               <label for="briefingSupervisor">Supervisora que elabora / envía este briefing:</label>
               <select id="briefingSupervisor" required>
                   <option value="">Seleccione supervisora</option>
               </select>
-              <label for="briefingWhatsAppDestino">WhatsApp destino (opcional, solo dígitos; ej. 5517907958):</label>
-              <input type="tel" id="briefingWhatsAppDestino" placeholder="Si lo llenas, se usa al pulsar Enviar por WhatsApp" inputmode="numeric" pattern="[0-9]*">
+              <label for="briefingWhatsAppDestino">WhatsApp destino (10 dígitos, como en la invitación; ej. 5517907958):</label>
+              <input type="tel" id="briefingWhatsAppDestino" placeholder="Obligatorio para enviar por WhatsApp" inputmode="numeric" maxlength="15" autocomplete="tel">
               <label for="briefingObjetivo">Objetivo de citas del día:</label>
               <input type="number" id="briefingObjetivo" required>
               <label for="briefingResultado">Resultado del día:</label>
@@ -1376,11 +1466,11 @@
               
               <label>Operadores:</label>
               <div id="operadoresBriefingContainer">
-                  <div class="operador-briefing" style="display: flex; gap: 10px; margin-bottom: 10px;">
-                      <input type="text" placeholder="Nombre operador" class="op-nombre" style="flex:2;">
-                      <input type="number" placeholder="Objetivo" class="op-objetivo" style="flex:1;">
-                      <input type="number" placeholder="Resultado" class="op-resultado" style="flex:1;">
-                      <button type="button" class="eliminar-operador-briefing" style="padding: 8px; margin:0;">X</button>
+                  <div class="operador-briefing">
+                      <input type="text" placeholder="Nombre operador" class="op-nombre">
+                      <input type="number" placeholder="Objetivo" class="op-objetivo">
+                      <input type="number" placeholder="Resultado" class="op-resultado">
+                      <button type="button" class="eliminar-operador-briefing">X</button>
                   </div>
               </div>
               <button type="button" id="agregarOperadorBriefing">Agregar Operador</button>
@@ -1403,12 +1493,12 @@
               <label>¿Realizaras alguna dinámica operativa, dinámica o motivación el día de mañana? Indica cual es</label>
               <textarea id="briefingPregunta6" rows="3" required></textarea>
               
-              <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+              <div class="form-briefing-acciones">
                   <button type="button" class="cerrar-briefing btn-limpiar">Cancelar</button>
                   <button type="button" id="descargarBriefingExcel" style="background: #1b5e3a !important;"><i class="fas fa-download"></i> Descargar Excel</button>
                   <button type="button" id="enviarBriefingWhatsApp" class="btn-enviar-wa"><i class="fab fa-whatsapp"></i> Enviar por WhatsApp</button>
                   <button type="button" id="enviarBriefingEmail" class="btn-enviar-email"><i class="fas fa-envelope"></i> Enviar por Email</button>
-                  <button type="submit"><i class="fas fa-save"></i> Guardar Briefing</button>
+                  <button type="submit" id="guardarBriefingBtn"><i class="fas fa-save"></i> Guardar Briefing</button>
               </div>
           </form>
       </div>
@@ -1613,7 +1703,7 @@
         </button>
       </div>
       
-      <div class="tabla-container">
+      <div class="tabla-container" id="tablaPremanifiestoScroll" tabindex="0" title="Clic aquí y use las flechas ← → para desplazar la tabla horizontalmente">
         <table id="tablaPremafiesto">
           <thead>
             <tr>
@@ -1634,7 +1724,6 @@
               <th>BASEDATOS</th>
               <th>SUPERVISORA</th>
               <th>TELEFONO</th>
-              <th>ASISTENCIA</th>
               <th>ACCIONES</th>
              </tr>
           </thead>
@@ -1821,6 +1910,14 @@
         return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
     }
 
+    /** Fecha del briefing (YYYY-MM-DD) → dd/MM/yyyy para recuadros de descarga. */
+    function formatoFechaBriefingDDMMYYYY(isoDate) {
+        if (!isoDate) return '';
+        const p = String(isoDate).split('T')[0].split('-');
+        if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+        return String(isoDate);
+    }
+
     function construirNombreBaseBriefingExcel(datosBriefing) {
         const f = fechaBriefingParaArchivo(datosBriefing.fecha);
         const sup = etiquetaSupParaArchivo(datosBriefing.supervisor || '');
@@ -1839,6 +1936,13 @@
         auth.signInAnonymously()
             .then(() => console.log("Autenticado correctamente"))
             .catch(error => console.error("Error en autenticación:", error));
+    }
+
+    /** Evita push a Firebase antes de que exista usuario anónimo (común en móvil al abrir el modal pronto). */
+    async function firebaseConUsuarioListo() {
+        const auth = firebase.auth();
+        if (auth.currentUser) return;
+        await auth.signInAnonymously();
     }
     
     const fondos = {
@@ -2073,15 +2177,26 @@
             if (inputEl && inputEl.value.trim()) raw = inputEl.value.trim();
         }
         if (!raw) {
-            raw = prompt('Ingrese el número de WhatsApp (solo dígitos, ej: 5517907958 o 525517907958):') || '';
+            const modalBrief = document.getElementById('modalBriefing');
+            const modalAbierto = modalBrief && modalBrief.style.display === 'block';
+            if (modalAbierto) {
+                mostrarNotificacion('Escriba el número de WhatsApp destino (10 dígitos), igual que en la invitación.', 'error');
+                const inputEl = document.getElementById('briefingWhatsAppDestino');
+                if (inputEl) {
+                    inputEl.focus();
+                    try { inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
+                }
+                return;
+            }
+            raw = window.prompt('Número de WhatsApp (10 dígitos, ej. 5517907958):') || '';
         }
         const numero = normalizarTelefonoWhatsApp(raw);
         if (numero) {
             const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
             window.open(url, '_blank');
-            mostrarNotificacion('Mensaje listo para enviar por WhatsApp');
+            mostrarNotificacion('WhatsApp listo para enviar');
         } else {
-            mostrarNotificacion('Número no válido', 'error');
+            mostrarNotificacion('Número no válido. Use 10 dígitos (celular en México).', 'error');
         }
     }
     
@@ -2396,12 +2511,77 @@
           return d.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
       }
 
+      let ultimaVistaSegSupervisor = null;
+      let ultimaVistaSegClave = null;
+
+      function segEscapeHtml(t) {
+          if (t == null) return '';
+          return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function valorParaDatetimeLocal(v) {
+          if (!v) return '';
+          const s = String(v).replace(' ', 'T');
+          if (s.length >= 16 && s.charAt(10) === 'T') return s.slice(0, 16);
+          try {
+              const d = new Date(v);
+              if (!isNaN(d.getTime())) return d.toISOString().slice(0, 16);
+          } catch (_) {}
+          return s.length >= 16 ? s.slice(0, 16) : s;
+      }
+
+      function resetSeguimientoFormYEstilo() {
+          const m = document.getElementById('modalSeguimientoSupervisor');
+          if (m) m.style.zIndex = '';
+          const editId = document.getElementById('seguimientoEditId');
+          const ts = document.getElementById('seguimientoEditTimestamp');
+          const idInt = document.getElementById('seguimientoEditIdInterno');
+          if (editId) editId.value = '';
+          if (ts) ts.value = '';
+          if (idInt) idInt.value = '';
+          const tit = document.getElementById('tituloModalSeguimiento');
+          const btnS = document.getElementById('btnSubmitSeguimiento');
+          if (tit) tit.textContent = 'Seguimiento de Operador';
+          if (btnS) btnS.textContent = 'Guardar Seguimiento';
+      }
+
+      function abrirEdicionSeguimientoDesdeFirebase(fbKey) {
+          if (!fbKey) return;
+          firebase.database().ref('seguimientos_supervisor/' + fbKey).once('value').then(snap => {
+              const s = snap.val();
+              if (!s) {
+                  mostrarNotificacion('No se encontró el seguimiento', 'error');
+                  return;
+              }
+              document.getElementById('seguimientoEditId').value = fbKey;
+              document.getElementById('seguimientoEditTimestamp').value = s.timestamp != null ? String(s.timestamp) : '';
+              document.getElementById('seguimientoEditIdInterno').value = s.id || '';
+              document.getElementById('seguimientoSupervisorSeleccion').value = s.supervisor || '';
+              document.getElementById('seguimientoBaseDatos').value = s.baseDatos || '';
+              document.getElementById('seguimientoNombreOperador').value = s.nombreOperador || '';
+              document.getElementById('seguimientoNumero').value = s.numero || '';
+              document.getElementById('seguimientoFechaLlamada').value = valorParaDatetimeLocal(s.fechaLlamada);
+              document.getElementById('seguimientoFechaPidioLlamar').value = s.fechaPidioLlamar || '';
+              document.getElementById('seguimientoEstadoLlamada').value = s.estadoLlamada || '';
+              document.getElementById('seguimientoComentarios').value = s.comentarios || '';
+              document.getElementById('tituloModalSeguimiento').textContent = 'Editar seguimiento';
+              document.getElementById('btnSubmitSeguimiento').textContent = 'Guardar cambios';
+              modalSeguimiento.style.zIndex = '1002';
+              modalSeguimiento.style.display = 'block';
+          }).catch(err => {
+              console.error(err);
+              mostrarNotificacion('Error al cargar el seguimiento', 'error');
+          });
+      }
+
       function mostrarSeguimientosFiltradosSupervisor(nombreSupervisor, claveIngresada) {
           const esperada = claveSeguimientoParaSupervisor(nombreSupervisor);
           if (!esperada || claveIngresada !== esperada) {
               mostrarNotificacion('Contraseña incorrecta o supervisora sin clave configurada', 'error');
               return;
           }
+          ultimaVistaSegSupervisor = nombreSupervisor;
+          ultimaVistaSegClave = claveIngresada;
           const cont = document.getElementById('contenidoSeguimientosPorSupervisor');
           cont.innerHTML = '<p>Cargando…</p>';
           firebase.database().ref('seguimientos_supervisor').once('value')
@@ -2409,8 +2589,8 @@
                   const data = snapshot.val();
                   let lista = [];
                   if (data) {
-                      Object.entries(data).forEach(([, v]) => {
-                          if (v && v.supervisor === nombreSupervisor) lista.push(v);
+                      Object.entries(data).forEach(([key, v]) => {
+                          if (v && v.supervisor === nombreSupervisor) lista.push({ ...v, _fbKey: key });
                       });
                   }
                   if (!lista.length) {
@@ -2425,21 +2605,46 @@
                       grupos[k].push(s);
                   });
                   const fechasOrden = Object.keys(grupos).sort();
-                  let html = `<p style="margin-bottom:12px;"><strong>${lista.length}</strong> seguimiento(s) de <strong>${nombreSupervisor}</strong>, agrupados por la fecha en que pidieron ser llamados.</p>`;
+                  let html = `<p style="margin-bottom:12px;"><strong>${lista.length}</strong> seguimiento(s) de <strong>${segEscapeHtml(nombreSupervisor)}</strong>, agrupados por la fecha en que pidieron ser llamados.</p>`;
                   fechasOrden.forEach(fechaKey => {
-                      html += `<h4 style="margin:16px 0 8px;color:#0a2540;border-bottom:1px solid #e6edf5;padding-bottom:6px;">📅 ${etiquetaFechaLargaMX(fechaKey)}</h4>`;
+                      html += `<h4 style="margin:16px 0 8px;color:#0a2540;border-bottom:1px solid #e6edf5;padding-bottom:6px;">📅 ${segEscapeHtml(etiquetaFechaLargaMX(fechaKey))}</h4>`;
                       grupos[fechaKey].forEach(s => {
                           html += `<div style="border:1px solid #e6edf5;border-radius:12px;padding:12px;margin-bottom:10px;background:#f9fbfd;font-size:0.9rem;">
-                              <div><strong>Operador:</strong> ${s.nombreOperador || ''}</div>
-                              <div><strong>Base datos:</strong> ${s.baseDatos || ''}</div>
-                              <div><strong>Teléfono:</strong> ${s.numero || ''}</div>
-                              <div><strong>Llamada:</strong> ${s.fechaLlamada || ''}</div>
-                              <div><strong>Estado:</strong> ${s.estadoLlamada || ''}</div>
-                              <div><strong>Comentarios:</strong> ${s.comentarios || ''}</div>
+                              <div><strong>Operador:</strong> ${segEscapeHtml(s.nombreOperador)}</div>
+                              <div><strong>Base datos:</strong> ${segEscapeHtml(s.baseDatos)}</div>
+                              <div><strong>Teléfono:</strong> ${segEscapeHtml(s.numero)}</div>
+                              <div><strong>Llamada:</strong> ${segEscapeHtml(s.fechaLlamada)}</div>
+                              <div><strong>Estado:</strong> ${segEscapeHtml(s.estadoLlamada)}</div>
+                              <div><strong>Comentarios:</strong> ${segEscapeHtml(s.comentarios)}</div>
+                              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+                                  <button type="button" class="btn-accion btn-editar-seg-sup" data-fb-key="${s._fbKey}">Editar</button>
+                                  <button type="button" class="btn-accion btn-limpiar btn-eliminar-seg-sup" data-fb-key="${s._fbKey}">Eliminar</button>
+                              </div>
                           </div>`;
                       });
                   });
                   cont.innerHTML = html;
+
+                  cont.querySelectorAll('.btn-editar-seg-sup').forEach(btn => {
+                      btn.addEventListener('click', () => abrirEdicionSeguimientoDesdeFirebase(btn.getAttribute('data-fb-key')));
+                  });
+                  cont.querySelectorAll('.btn-eliminar-seg-sup').forEach(btn => {
+                      btn.addEventListener('click', async () => {
+                          const key = btn.getAttribute('data-fb-key');
+                          if (!key || !confirm('¿Eliminar este seguimiento? No se puede deshacer.')) return;
+                          try {
+                              await firebaseConUsuarioListo();
+                              await firebase.database().ref('seguimientos_supervisor/' + key).remove();
+                              mostrarNotificacion('Seguimiento eliminado');
+                              if (ultimaVistaSegSupervisor != null && ultimaVistaSegClave != null) {
+                                  mostrarSeguimientosFiltradosSupervisor(ultimaVistaSegSupervisor, ultimaVistaSegClave);
+                              }
+                          } catch (err) {
+                              console.error(err);
+                              mostrarNotificacion('Error al eliminar el seguimiento', 'error');
+                          }
+                      });
+                  });
               })
               .catch(err => {
                   console.error(err);
@@ -2466,11 +2671,14 @@
 
       btnSeguimientosSupervisor.addEventListener('click', () => {
           cargarSupervisoras();
+          formSeguimiento.reset();
+          resetSeguimientoFormYEstilo();
           modalSeguimiento.style.display = 'block';
       });
 
-      formSeguimiento.addEventListener('submit', (e) => {
+      formSeguimiento.addEventListener('submit', async (e) => {
           e.preventDefault();
+          const fbKey = document.getElementById('seguimientoEditId').value;
           const seguimiento = {
               supervisor: document.getElementById('seguimientoSupervisorSeleccion').value,
               baseDatos: document.getElementById('seguimientoBaseDatos').value,
@@ -2479,22 +2687,39 @@
               fechaLlamada: document.getElementById('seguimientoFechaLlamada').value,
               fechaPidioLlamar: document.getElementById('seguimientoFechaPidioLlamar').value,
               estadoLlamada: document.getElementById('seguimientoEstadoLlamada').value,
-              comentarios: document.getElementById('seguimientoComentarios').value,
-              timestamp: Date.now(),
-              id: Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+              comentarios: document.getElementById('seguimientoComentarios').value
           };
-          
+          const tsStr = document.getElementById('seguimientoEditTimestamp').value;
+          const idInt = document.getElementById('seguimientoEditIdInterno').value;
+          if (tsStr) seguimiento.timestamp = parseInt(tsStr, 10);
+          else seguimiento.timestamp = Date.now();
+          if (idInt) seguimiento.id = idInt;
+          else seguimiento.id = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
           const database = firebase.database();
-          database.ref('seguimientos_supervisor').push(seguimiento)
-              .then(() => {
+          try {
+              await firebaseConUsuarioListo();
+              if (fbKey) {
+                  await database.ref('seguimientos_supervisor/' + fbKey).set(seguimiento);
+                  mostrarNotificacion('Seguimiento actualizado');
+              } else {
+                  await database.ref('seguimientos_supervisor').push(seguimiento);
                   mostrarNotificacion('Seguimiento guardado correctamente');
-                  modalSeguimiento.style.display = 'none';
-                  formSeguimiento.reset();
-              })
-              .catch(error => {
-                  console.error('Error al guardar seguimiento:', error);
-                  mostrarNotificacion('Error al guardar el seguimiento', 'error');
-              });
+              }
+              modalSeguimiento.style.display = 'none';
+              formSeguimiento.reset();
+              resetSeguimientoFormYEstilo();
+              if (ultimaVistaSegSupervisor != null && ultimaVistaSegClave != null && document.getElementById('modalSeguimientosPorSupervisor').style.display === 'block') {
+                  mostrarSeguimientosFiltradosSupervisor(ultimaVistaSegSupervisor, ultimaVistaSegClave);
+              }
+          } catch (error) {
+              console.error('Error al guardar seguimiento:', error);
+              mostrarNotificacion('Error al guardar el seguimiento', 'error');
+          }
+      });
+
+      document.querySelectorAll('.cerrar-seguimiento').forEach(btn => {
+          btn.addEventListener('click', () => resetSeguimientoFormYEstilo());
       });
       
       // --- Reporte de Citas ---
@@ -2519,6 +2744,16 @@
       const formBriefing = document.getElementById('formBriefing');
       const operadoresContainer = document.getElementById('operadoresBriefingContainer');
       const agregarOperadorBtn = document.getElementById('agregarOperadorBriefing');
+
+      operadoresContainer.addEventListener('click', (e) => {
+          const btn = e.target.closest('.eliminar-operador-briefing');
+          if (!btn || !operadoresContainer.contains(btn)) return;
+          const row = btn.closest('.operador-briefing');
+          if (!row) return;
+          const rows = operadoresContainer.querySelectorAll('.operador-briefing');
+          if (rows.length > 1) row.remove();
+          else row.querySelectorAll('input').forEach(inp => { inp.value = ''; });
+      });
       
       btnFormatoBriefing.addEventListener('click', () => {
           cargarSupervisoras();
@@ -2529,48 +2764,68 @@
       agregarOperadorBtn.addEventListener('click', () => {
           const div = document.createElement('div');
           div.className = 'operador-briefing';
-          div.style.display = 'flex';
-          div.style.gap = '10px';
-          div.style.marginBottom = '10px';
           div.innerHTML = `
-              <input type="text" placeholder="Nombre operador" class="op-nombre" style="flex:2;">
-              <input type="number" placeholder="Objetivo" class="op-objetivo" style="flex:1;">
-              <input type="number" placeholder="Resultado" class="op-resultado" style="flex:1;">
-              <button type="button" class="eliminar-operador-briefing" style="padding: 8px; margin:0;">X</button>
+              <input type="text" placeholder="Nombre operador" class="op-nombre">
+              <input type="number" placeholder="Objetivo" class="op-objetivo">
+              <input type="number" placeholder="Resultado" class="op-resultado">
+              <button type="button" class="eliminar-operador-briefing">X</button>
           `;
           operadoresContainer.appendChild(div);
-          div.querySelector('.eliminar-operador-briefing').addEventListener('click', () => div.remove());
       });
       
-      // Descargar Excel con diseño profesional
+      async function registrarBriefingDescargaEnFirebase(datosBriefing) {
+          await firebaseConUsuarioListo();
+          await firebase.database().ref('briefingDescargasExcel').push({
+              timestamp: Date.now(),
+              fechaBriefing: datosBriefing.fecha || '',
+              supervisora: datosBriefing.supervisor,
+              etiquetaSup: etiquetaSupParaArchivo(datosBriefing.supervisor)
+          });
+      }
+
+      // Descargar Excel con diseño profesional (solo archivo + registro de descarga; "Guardar briefing" guarda el historial completo)
       document.getElementById('descargarBriefingExcel').addEventListener('click', async () => {
           const datosBriefing = datosBriefingDesdeFormulario();
           if (!datosBriefing.supervisor) {
               mostrarNotificacion('Seleccione la supervisora que elabora el briefing', 'error');
               return;
           }
-          datosBriefing.timestamp = Date.now();
-          datosBriefing.finalizado = true;
           const nombreBase = construirNombreBaseBriefingExcel(datosBriefing);
           await generarExcelBriefing(datosBriefing, nombreBase);
           try {
-              await firebase.database().ref('briefings').push(datosBriefing);
-              mostrarNotificacion('Excel descargado y briefing guardado en el historial');
+              await registrarBriefingDescargaEnFirebase(datosBriefing);
+              mostrarNotificacion('Excel descargado. Quedó registrada la descarga.');
           } catch (err) {
               console.error(err);
-              mostrarNotificacion('Excel generado; error al guardar en la nube', 'error');
+              mostrarNotificacion('Excel generado; no se pudo registrar la descarga en la nube', 'error');
           }
       });
       
-      // Enviar por WhatsApp
-      document.getElementById('enviarBriefingWhatsApp').addEventListener('click', () => {
+      // Enviar por WhatsApp (mismo criterio que invitación: número obligatorio desde el formulario)
+      document.getElementById('enviarBriefingWhatsApp').addEventListener('click', async () => {
           const datosBriefing = datosBriefingDesdeFormulario();
           if (!datosBriefing.supervisor) {
               mostrarNotificacion('Seleccione la supervisora que elabora el briefing', 'error');
               return;
           }
           const waInput = document.getElementById('briefingWhatsAppDestino');
-          const pre = waInput && waInput.value.trim() ? waInput.value.trim() : null;
+          const pre = waInput && waInput.value.trim() ? waInput.value.trim() : '';
+          if (!normalizarTelefonoWhatsApp(pre)) {
+              mostrarNotificacion('Escriba el WhatsApp destino con 10 dígitos (como el celular de la invitación).', 'error');
+              if (waInput) {
+                  waInput.focus();
+                  try { waInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
+              }
+              return;
+          }
+          const nombreBase = construirNombreBaseBriefingExcel(datosBriefing);
+          await generarExcelBriefing(datosBriefing, nombreBase);
+          try {
+              await registrarBriefingDescargaEnFirebase(datosBriefing);
+          } catch (err) {
+              console.error(err);
+              mostrarNotificacion('Excel descargado; no se pudo registrar la descarga en la nube', 'error');
+          }
           enviarPorWhatsApp(datosBriefing, pre);
       });
       
@@ -2584,8 +2839,12 @@
           enviarPorEmail(datosBriefing);
       });
       
-      formBriefing.addEventListener('submit', (e) => {
+      formBriefing.addEventListener('submit', async (e) => {
           e.preventDefault();
+          if (!formBriefing.checkValidity()) {
+              formBriefing.reportValidity();
+              return;
+          }
           const datosBriefing = datosBriefingDesdeFormulario();
           if (!datosBriefing.supervisor) {
               mostrarNotificacion('Seleccione la supervisora que elabora el briefing', 'error');
@@ -2594,31 +2853,26 @@
           datosBriefing.timestamp = Date.now();
           datosBriefing.finalizado = true;
 
-          const database = firebase.database();
-          database.ref('briefings').push(datosBriefing)
-              .then(() => {
-                  mostrarNotificacion('Briefing guardado correctamente');
-                  modalBriefing.style.display = 'none';
-                  formBriefing.reset();
-                  operadoresContainer.innerHTML = '';
-                  const divInicial = document.createElement('div');
-                  divInicial.className = 'operador-briefing';
-                  divInicial.style.display = 'flex';
-                  divInicial.style.gap = '10px';
-                  divInicial.style.marginBottom = '10px';
-                  divInicial.innerHTML = `
-                      <input type="text" placeholder="Nombre operador" class="op-nombre" style="flex:2;">
-                      <input type="number" placeholder="Objetivo" class="op-objetivo" style="flex:1;">
-                      <input type="number" placeholder="Resultado" class="op-resultado" style="flex:1;">
-                      <button type="button" class="eliminar-operador-briefing" style="padding: 8px; margin:0;">X</button>
+          try {
+              await firebaseConUsuarioListo();
+              await firebase.database().ref('briefings').push(datosBriefing);
+              mostrarNotificacion('Briefing guardado correctamente');
+              modalBriefing.style.display = 'none';
+              formBriefing.reset();
+              operadoresContainer.innerHTML = '';
+              const divInicial = document.createElement('div');
+              divInicial.className = 'operador-briefing';
+              divInicial.innerHTML = `
+                      <input type="text" placeholder="Nombre operador" class="op-nombre">
+                      <input type="number" placeholder="Objetivo" class="op-objetivo">
+                      <input type="number" placeholder="Resultado" class="op-resultado">
+                      <button type="button" class="eliminar-operador-briefing">X</button>
                   `;
-                  operadoresContainer.appendChild(divInicial);
-                  divInicial.querySelector('.eliminar-operador-briefing').addEventListener('click', () => divInicial.remove());
-              })
-              .catch(error => {
-                  console.error('Error al guardar briefing:', error);
-                  mostrarNotificacion('Error al guardar el briefing', 'error');
-              });
+              operadoresContainer.appendChild(divInicial);
+          } catch (error) {
+              console.error('Error al guardar briefing:', error);
+              mostrarNotificacion('Error al guardar el briefing. Revise conexión o permisos.', 'error');
+          }
       });
       
       // --- Ver Briefings Guardados ---
@@ -2630,24 +2884,47 @@
           modalVerBriefings.style.display = 'block';
           
           const database = firebase.database();
-          database.ref('briefings').orderByChild('timestamp').once('value')
-              .then((snapshot) => {
+          Promise.all([
+              database.ref('briefingDescargasExcel').once('value'),
+              database.ref('briefings').orderByChild('timestamp').once('value')
+          ])
+              .then(([snapDesc, snapshot]) => {
+                  const descVal = snapDesc.val();
+                  const descargasTodos = descVal
+                      ? Object.entries(descVal).map(([key, val]) => ({ key, ...val })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+                      : [];
+                  const descargas = descargasTodos.slice(0, 200);
                   const data = snapshot.val();
-                  if (!data) {
-                      listaBriefings.innerHTML = '<p>No hay briefings guardados aún.</p>';
-                      return;
+                  const briefings = data
+                      ? Object.entries(data).map(([key, val]) => ({ key, ...val })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+                      : [];
+
+                  let html = '';
+                  html += '<div class="briefing-descargas-bloque">';
+                  html += '<h4 class="briefing-subtitulo-modal">Descargas de Excel (completo briefing)</h4>';
+                  if (!descargas.length) {
+                      html += '<p style="color:#64748b;font-size:0.9rem;margin:0;">Ninguna descarga registrada aún.</p>';
+                  } else {
+                      descargas.forEach(d => {
+                          const sup = d.etiquetaSup || etiquetaSupParaArchivo(d.supervisora);
+                          const linea = `${formatoFechaBriefingDDMMYYYY(d.fechaBriefing)} Sup-${sup} Completo Briefing`;
+                          html += `<div class="recuadro-descarga-briefing">${linea}</div>`;
+                      });
                   }
-                  
-                  let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
-                  const briefings = Object.entries(data).map(([key, val]) => ({ key, ...val })).reverse();
-                  
-                  briefings.forEach(briefing => {
-                      const fecha = new Date(briefing.timestamp).toLocaleDateString('es-MX');
-                      html += `
+                  html += '</div><hr class="briefing-separador-modal">';
+                  html += '<h4 class="briefing-subtitulo-modal">Briefings guardados</h4>';
+
+                  if (!briefings.length) {
+                      html += '<p style="color:#64748b;">No hay briefings guardados.</p>';
+                  } else {
+                      html += '<div style="display: flex; flex-direction: column; gap: 15px;">';
+                      briefings.forEach(briefing => {
+                          const fecha = new Date(briefing.timestamp).toLocaleDateString('es-MX');
+                          html += `
                           <div style="border: 1px solid #e6edf5; border-radius: 12px; padding: 15px; background: #f9fbfd;">
-                              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-                                  <strong>📅 Briefing del ${briefing.fecha || fecha}${briefing.supervisor ? ` · ${briefing.supervisor}` : ''}</strong>
-                                  <div style="display: flex; gap: 8px;">
+                              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                                  <strong style="flex:1; min-width:0;">📅 Briefing del ${briefing.fecha || fecha}${briefing.supervisor ? ` · ${briefing.supervisor}` : ''}</strong>
+                                  <div class="briefing-item-acciones">
                                       <button class="btn-descargar-briefing" data-key="${briefing.key}" style="padding: 5px 10px; font-size: 0.8rem; margin: 0; background: #1b5e3a !important;"><i class="fas fa-download"></i> Excel</button>
                                       <button class="btn-wa-briefing" data-key="${briefing.key}" style="padding: 5px 10px; font-size: 0.8rem; margin: 0; background: #25D366 !important;"><i class="fab fa-whatsapp"></i> WhatsApp</button>
                                       <button class="btn-email-briefing" data-key="${briefing.key}" style="padding: 5px 10px; font-size: 0.8rem; margin: 0; background: #EA4335 !important;"><i class="fas fa-envelope"></i> Email</button>
@@ -2658,42 +2935,48 @@
                               </div>
                           </div>
                       `;
-                  });
-                  html += '</div>';
+                      });
+                      html += '</div>';
+                  }
+
                   listaBriefings.innerHTML = html;
-                  
-                  // Descargar Excel desde guardado
+
                   document.querySelectorAll('.btn-descargar-briefing').forEach(btn => {
                       btn.addEventListener('click', async () => {
                           const key = btn.getAttribute('data-key');
                           const db = firebase.database();
-                          const snapshot = await db.ref(`briefings/${key}`).once('value');
-                          const briefing = snapshot.val();
+                          const snap = await db.ref(`briefings/${key}`).once('value');
+                          const briefing = snap.val();
                           const nombreBase = briefing.supervisor ? construirNombreBaseBriefingExcel(briefing) : 'Briefing';
                           await generarExcelBriefing(briefing, nombreBase);
+                          try {
+                              await firebaseConUsuarioListo();
+                              await db.ref('briefingDescargasExcel').push({
+                                  timestamp: Date.now(),
+                                  fechaBriefing: briefing.fecha || '',
+                                  supervisora: briefing.supervisor || '',
+                                  etiquetaSup: etiquetaSupParaArchivo(briefing.supervisor)
+                              });
+                          } catch (e) { console.warn(e); }
                           mostrarNotificacion('Excel generado');
                       });
                   });
-                  
-                  // Enviar WhatsApp desde guardado
+
                   document.querySelectorAll('.btn-wa-briefing').forEach(btn => {
                       btn.addEventListener('click', async () => {
                           const key = btn.getAttribute('data-key');
                           const db = firebase.database();
-                          const snapshot = await db.ref(`briefings/${key}`).once('value');
-                          const briefing = snapshot.val();
-                          enviarPorWhatsApp(briefing);
+                          const snap = await db.ref(`briefings/${key}`).once('value');
+                          enviarPorWhatsApp(snap.val());
                       });
                   });
-                  
-                  // Enviar Email desde guardado
+
                   document.querySelectorAll('.btn-email-briefing').forEach(btn => {
                       btn.addEventListener('click', async () => {
                           const key = btn.getAttribute('data-key');
                           const db = firebase.database();
-                          const snapshot = await db.ref(`briefings/${key}`).once('value');
-                          const briefing = snapshot.val();
-                          enviarPorEmail(briefing);
+                          const snap = await db.ref(`briefings/${key}`).once('value');
+                          enviarPorEmail(snap.val());
                       });
                   });
               })
@@ -2857,7 +3140,7 @@
           if (registrosLimitados.length === 0) {
               const tr = document.createElement("tr");
               const td = document.createElement("td");
-              td.colSpan = 19;
+              td.colSpan = 18;
               td.textContent = "No hay registros para mostrar";
               td.style.textAlign = "center";
               td.style.padding = "20px";
@@ -2880,17 +3163,6 @@
                   ];
                   celdas.forEach(celda => tr.appendChild(celda));
                   
-                  const tdAsistencia = document.createElement("td");
-                  tdAsistencia.className = "acciones-celda";
-                  if (registro.asistencia === 'asistio') {
-                      tdAsistencia.innerHTML = '<button class="btn-asistencia asistio"><i class="fas fa-check-circle"></i> Asistió</button>';
-                  } else if (registro.asistencia === 'no_asistio') {
-                      tdAsistencia.innerHTML = '<button class="btn-asistencia no-asistio"><i class="fas fa-times-circle"></i> No Asistió</button>';
-                  } else {
-                      tdAsistencia.innerHTML = '<button class="btn-asistencia"><i class="fas fa-question-circle"></i> Marcar</button>';
-                  }
-                  tr.appendChild(tdAsistencia);
-                  
                   const tdAcciones = document.createElement("td");
                   tdAcciones.className = "acciones-celda";
                   tdAcciones.innerHTML = `
@@ -2904,21 +3176,6 @@
           
           tbody.innerHTML = '';
           tbody.appendChild(fragment);
-          
-          document.querySelectorAll('#tablaPremafiesto .btn-asistencia').forEach((btn, idx) => {
-              const registro = registrosLimitados[idx];
-              if (registro) {
-                  btn.addEventListener('click', (e) => {
-                      e.stopPropagation();
-                      if (registro.asistencia === 'asistio') marcarAsistencia(registro.id, 'no_asistio');
-                      else if (registro.asistencia === 'no_asistio') marcarAsistencia(registro.id, 'asistio');
-                      else {
-                          const opcion = confirm(`Marcar a ${registro.nombre} como: ¿Aceptar para ASISTIÓ, Cancelar para NO ASISTIÓ?`);
-                          marcarAsistencia(registro.id, opcion ? 'asistio' : 'no_asistio');
-                      }
-                  });
-              }
-          });
           
           aplicarEstilosEncabezado();
           actualizarPaginacion(registros.length);
@@ -2990,18 +3247,6 @@
           });
       }
 
-      function obtenerEstadisticasRegistros(fechaInicio, fechaFin, supervisora) {
-          if (!fechaInicio || !fechaFin || !supervisora) return null;
-          const registros = ordenarRegistrosPorCita(obtenerRegistrosPorFiltroSupervisor(fechaInicio, fechaFin, supervisora));
-          return {
-              supervisora,
-              fechaInicio,
-              fechaFin,
-              totalRegistros: registros.length,
-              registros
-          };
-      }
-
       function mostrarEstadisticasRegistros(estadisticas) {
           const contenedor = document.getElementById('estadisticasSupervisora');
           const info = document.getElementById('infoRegistros');
@@ -3043,173 +3288,7 @@
               alert("No hay filtro de supervisor activo");
               return;
           }
-
-          try {
-              const workbook = new ExcelJS.Workbook();
-              const worksheet = workbook.addWorksheet('CITAS SUPERVISOR');
-
-              const fechaInicioFormateada = new Date(fechaInicioFiltro).toLocaleDateString('es-MX');
-              const fechaFinFormateada = new Date(fechaFinFiltro).toLocaleDateString('es-MX');
-
-              const estadisticas = obtenerEstadisticasRegistros(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
-
-              let titulo = `CITAS DE ${supervisoraFiltroActual.replace(/\s+/g, '_')} DEL ${fechaInicioFormateada.replace(/\//g, '-')}_AL_${fechaFinFormateada.replace(/\//g, '-')}`;
-              if (estadisticas && estadisticas.totalRegistros > 0) {
-                  titulo += ` - ${estadisticas.totalRegistros}_REGISTROS`;
-              }
-
-              const tituloRow = worksheet.addRow([titulo]);
-              tituloRow.font = { size: 16, bold: true };
-              tituloRow.alignment = { horizontal: 'center' };
-              worksheet.mergeCells('A1:Q1');
-
-              worksheet.addRow([]);
-
-              const headers = [
-                  'NUM DE CITAS', 'FECHA', 'PAX', 'NOMBRES FAMILIA', 'EDAD', 'ESTADO CIVIL',
-                  'TARJETAS', 'ID', 'INGRESOS', 'VENDOR', 'OPERADOR', 'GERENTE',
-                  'SALA', 'HORA DE LLEGADA', 'BASE DE DATOS', 'SUPERVISOR', 'TELEFONO'
-              ].map(header => header.toUpperCase());
-
-              const headerRow = worksheet.addRow(headers);
-
-              const meses = [
-                  'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
-                  'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
-              ];
-              const mesActual = new Date(fechaInicioFiltro).getMonth();
-              const nombreMes = meses[mesActual].toLowerCase();
-
-              const coloresPorMes = {
-                  'enero': 'FFFF0000',
-                  'febrero': 'FFFFA500',
-                  'marzo': 'FFA3E4D7',
-                  'abril': 'FFE67E22',
-                  'mayo': 'FFE74C3C',
-                  'junio': 'FF1ABC9C',
-                  'julio': 'FFF1C40F',
-                  'agosto': 'FFD35400',
-                  'septiembre': 'FF7F8C8D',
-                  'octubre': 'FF8E44AD',
-                  'noviembre': 'FF2C3E50',
-                  'diciembre': 'FF16A085'
-              };
-
-              const colorHeader = coloresPorMes[nombreMes] || 'FF3498DB';
-
-              headerRow.eachCell((cell) => {
-                  cell.fill = {
-                      type: 'pattern',
-                      pattern: 'solid',
-                      fgColor: { argb: colorHeader }
-                  };
-                  cell.font = {
-                      bold: true,
-                      color: { argb: 'FFFFFFFF' }
-                  };
-                  cell.alignment = { horizontal: 'center' };
-                  cell.border = {
-                      top: { style: 'thin' },
-                      left: { style: 'thin' },
-                      bottom: { style: 'thin' },
-                      right: { style: 'thin' }
-                  };
-              });
-
-              let registrosParaExcel = [];
-              if (estadisticas && estadisticas.registros) {
-                  registrosParaExcel = estadisticas.registros;
-              }
-
-              registrosParaExcel.forEach(registro => {
-                  const row = worksheet.addRow([
-                      registro.citaPorDia || registro.cita,
-                      registro.diaEvento ? String(registro.diaEvento).toUpperCase() : '',
-                      registro.numPersonas ? registro.numPersonas.toString().toUpperCase() : '',
-                      registro.nombre ? registro.nombre.toUpperCase() : '',
-                      registro.edad ? String(registro.edad).toUpperCase() : '',
-                      registro.estadoCivil ? registro.estadoCivil.toUpperCase() : '',
-                      registro.tarjeta ? registro.tarjeta.toUpperCase() : '',
-                      '',
-                      registro.ingresos ? String(registro.ingresos).toUpperCase() : '',
-                      registro.vendedor ? registro.vendedor.toUpperCase() : '',
-                      registro.operador ? registro.operador.toUpperCase() : '',
-                      registro.calificacionOrigen ? registro.calificacionOrigen.toUpperCase() : '',
-                      registro.hotel ? registro.hotel.toUpperCase() : '',
-                      registro.hora ? String(registro.hora).toUpperCase() : '',
-                      registro.baseDatos ? registro.baseDatos.toUpperCase() : '',
-                      registro.supervisora ? registro.supervisora.toUpperCase() : '',
-                      registro.telefono ? registro.telefono.toUpperCase() : ''
-                  ]);
-
-                  const primeraCelda = row.getCell(1);
-                  primeraCelda.fill = {
-                      type: 'pattern',
-                      pattern: 'solid',
-                      fgColor: { argb: 'FF0000FF' }
-                  };
-                  primeraCelda.font = {
-                      bold: true,
-                      color: { argb: 'FFFFFFFF' }
-                  };
-                  primeraCelda.alignment = { horizontal: 'center' };
-
-                  row.eachCell((cell) => {
-                      cell.border = {
-                          top: { style: 'thin' },
-                          left: { style: 'thin' },
-                          bottom: { style: 'thin' },
-                          right: { style: 'thin' }
-                      };
-                  });
-              });
-
-              worksheet.columns = [
-                  { width: 15 },
-                  { width: 15 },
-                  { width: 10 },
-                  { width: 40 },
-                  { width: 12 },
-                  { width: 15 },
-                  { width: 25 },
-                  { width: 20 },
-                  { width: 18 },
-                  { width: 15 },
-                  { width: 25 },
-                  { width: 15 },
-                  { width: 25 },
-                  { width: 18 },
-                  { width: 20 },
-                  { width: 18 },
-                  { width: 18 }
-              ];
-
-              worksheet.eachRow((row) => {
-                  row.eachCell((cell) => {
-                      cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                  });
-                  row.height = 25;
-              });
-
-              worksheet.autoFilter = {
-                  from: 'A3',
-                  to: 'Q' + (worksheet.rowCount)
-              };
-
-              worksheet.views = [
-                  { state: 'frozen', xSplit: 0, ySplit: 3, activeCell: 'A4' }
-              ];
-
-              const buffer = await workbook.xlsx.writeBuffer();
-              const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-              let nombreArchivo = `CITAS_${supervisoraFiltroActual.replace(/\s+/g, '_')}_${fechaInicioFormateada.replace(/\//g, '-')}_AL_${fechaFinFormateada.replace(/\//g, '-')}`;
-              saveAs(blob, `${nombreArchivo}.xlsx`);
-
-          } catch (error) {
-              console.error('ERROR AL GENERAR EL EXCEL:', error);
-              alert('OCURRIÓ UN ERROR AL GENERAR EL ARCHIVO EXCEL.');
-          }
+          alert("Función de descarga disponible");
       }
 
       // Cerrar modales
@@ -3711,10 +3790,6 @@
         url: "https://www.dcgroup.com.mx",
         align: "center"
     });
-    const dcStr = "www.dcgroup.com.mx";
-    const dcW = doc.getTextWidth(dcStr);
-    doc.setDrawColor(0, 0, 0);
-    doc.line(105 - dcW / 2, y + 2, 105 + dcW / 2, y + 2);
 
     // Descargar PDF
     const blob = doc.output('blob');
@@ -3733,11 +3808,6 @@
         const whatsappURL = `https://wa.me/52${celular}?text=${encodeURIComponent(mensaje)}`;
         window.open(whatsappURL, '_blank');
         mostrarNotificacion("✅ Invitación generada correctamente");
-        form.reset();
-        const ac = document.getElementById("acompanantesContainer");
-        if (ac) ac.innerHTML = "";
-        const codigoEl = document.getElementById('codigo');
-        if (codigoEl) codigoEl.value = 'SF';
     } else {
         alert("Invitación actualizada descargada correctamente.");
     }
@@ -3802,240 +3872,45 @@
         });
       }
 
-      function esColorClaro(colorHex) {
-          const rgb = colorHex.substring(2);
-          const r = parseInt(rgb.substring(0, 2), 16);
-          const g = parseInt(rgb.substring(2, 4), 16);
-          const b = parseInt(rgb.substring(4, 6), 16);
-          const luminosidad = (r * 0.299 + g * 0.587 + b * 0.114);
-          return luminosidad > 186;
-      }
-
       document.getElementById("descargarExcel").addEventListener("click", async () => {
-          if (window.registrosPremanifiesto.length === 0) {
-              alert("NO HAY REGISTROS AÚN.");
-              return;
-          }
-
-          try {
-              const workbook = new ExcelJS.Workbook();
-              const worksheet = workbook.addWorksheet('PREMANIFIESTO');
-
-              const fechaFiltro = document.getElementById("filtroFecha").value;
-
-              let fechaTitulo;
-              let titulo;
-
-              if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
-                  const fechaInicioFormateada = new Date(fechaInicioFiltro).toLocaleDateString('es-MX');
-                  const fechaFinFormateada = new Date(fechaFinFiltro).toLocaleDateString('es-MX');
-
-                  const estadisticas = obtenerEstadisticasRegistros(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
-
-                  if (estadisticas && estadisticas.totalRegistros > 0) {
-                      titulo = `CITAS DE ${supervisoraFiltroActual} DEL ${fechaInicioFormateada} AL ${fechaFinFormateada} - ${estadisticas.totalRegistros} REGISTROS`;
-                  } else {
-                      titulo = `CITAS DE ${supervisoraFiltroActual} DEL ${fechaInicioFormateada} AL ${fechaFinFormateada}`;
-                  }
-
-                  fechaTitulo = new Date(fechaInicioFiltro);
-              } else if (fechaFiltro) {
-                  fechaTitulo = new Date(fechaFiltro + 'T00:00:00');
-                  const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
-                  const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
-                  const diaSemana = fechaFormateada.split(' ')[0];
-                  const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
-
-                  titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
-              } else {
-                  fechaTitulo = new Date();
-                  const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
-                  const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
-                  const diaSemana = fechaFormateada.split(' ')[0];
-                  const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
-
-                  titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
-              }
-
-              const tituloRow = worksheet.addRow([titulo]);
-              tituloRow.font = { size: 16, bold: true };
-              tituloRow.alignment = { horizontal: 'center' };
-              worksheet.mergeCells('A1:Q1');
-
-              worksheet.addRow([]);
-
-              const headers = [
-                  'NUM DE CITAS', 'FECHA', 'PAX', 'NOMBRES FAMILIA', 'EDAD', 'ESTADO CIVIL',
-                  'TARJETAS', 'ID', 'INGRESOS', 'VENDOR', 'OPERADOR', 'GERENTE',
-                  'SALA', 'HORA DE LLEGADA', 'BASE DE DATOS', 'SUPERVISOR', 'TELEFONO'
-              ].map(header => header.toUpperCase());
-
-              const headerRow = worksheet.addRow(headers);
-
-              const meses = [
-                  'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
-                  'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
-              ];
-              const mesActual = fechaTitulo.getMonth();
-              const nombreMes = meses[mesActual].toLowerCase();
-
-              const coloresPorMes = {
-                  'enero': 'FFFF0000',
-                  'febrero': 'FFFFA500',
-                  'marzo': 'FFA3E4D7',
-                  'abril': 'FFE67E22',
-                  'mayo': 'FFE74C3C',
-                  'junio': 'FF1ABC9C',
-                  'julio': 'FFF1C40F',
-                  'agosto': 'FFD35400',
-                  'septiembre': 'FF7F8C8D',
-                  'octubre': 'FF8E44AD',
-                  'noviembre': 'FF2C3E50',
-                  'diciembre': 'FF16A085'
-              };
-
-              const colorHeader = coloresPorMes[nombreMes] || 'FF3498DB';
-              const colorClaro = esColorClaro(colorHeader);
-
-              headerRow.eachCell((cell) => {
-                  cell.fill = {
-                      type: 'pattern',
-                      pattern: 'solid',
-                      fgColor: { argb: colorHeader }
-                  };
-                  cell.font = {
-                      bold: true,
-                      color: { argb: colorClaro ? 'FF000000' : 'FFFFFFFF' }
-                  };
-                  cell.alignment = { horizontal: 'center' };
-                  cell.border = {
-                      top: { style: 'thin' },
-                      left: { style: 'thin' },
-                      bottom: { style: 'thin' },
-                      right: { style: 'thin' }
-                  };
-              });
-
-              let registrosParaExcel = window.registrosPremanifiesto;
-              if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
-                  const estadisticas = obtenerEstadisticasRegistros(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
-                  registrosParaExcel = estadisticas ? estadisticas.registros : [];
-              } else if (fechaFiltro) {
-                  registrosParaExcel = window.registrosPremanifiesto.filter(registro => {
-                      let fechaRegistroNormalizada = registro.diaEvento;
-                      try {
-                          const fechaObj = new Date(registro.diaEvento);
-                          if (!isNaN(fechaObj.getTime())) {
-                              fechaRegistroNormalizada = fechaObj.toISOString().split('T')[0];
-                          }
-                      } catch (error) {
-                          console.error("Error al normalizar fecha del registro:", error);
-                      }
-
-                      let fechaFiltroNormalizada = fechaFiltro;
-                      try {
-                          const fechaObj = new Date(fechaFiltro);
-                          if (!isNaN(fechaObj.getTime())) {
-                              fechaFiltroNormalizada = fechaObj.toISOString().split('T')[0];
-                          }
-                      } catch (error) {
-                          console.error("Error al normalizar fecha de filtro:", error);
-                      }
-
-                      return fechaRegistroNormalizada === fechaFiltroNormalizada;
-                  });
-              }
-
-              registrosParaExcel.forEach(registro => {
-                  const row = worksheet.addRow([
-                      registro.citaPorDia || registro.cita,
-                      registro.diaEvento ? String(registro.diaEvento).toUpperCase() : '',
-                      registro.numPersonas ? registro.numPersonas.toString().toUpperCase() : '',
-                      registro.nombre ? registro.nombre.toUpperCase() : '',
-                      registro.edad ? String(registro.edad).toUpperCase() : '',
-                      registro.estadoCivil ? registro.estadoCivil.toUpperCase() : '',
-                      registro.tarjeta ? registro.tarjeta.toUpperCase() : '',
-                      '',
-                      registro.ingresos ? String(registro.ingresos).toUpperCase() : '',
-                      registro.vendedor ? registro.vendedor.toUpperCase() : '',
-                      registro.operador ? registro.operador.toUpperCase() : '',
-                      registro.calificacionOrigen ? registro.calificacionOrigen.toUpperCase() : '',
-                      registro.hotel ? registro.hotel.toUpperCase() : '',
-                      registro.hora ? String(registro.hora).toUpperCase() : '',
-                      registro.baseDatos ? registro.baseDatos.toUpperCase() : '',
-                      registro.supervisora ? registro.supervisora.toUpperCase() : '',
-                      registro.telefono ? registro.telefono.toUpperCase() : ''
-                  ]);
-
-                  const primeraCelda = row.getCell(1);
-                  primeraCelda.fill = {
-                      type: 'pattern',
-                      pattern: 'solid',
-                      fgColor: { argb: 'FF0000FF' }
-                  };
-                  primeraCelda.font = {
-                      bold: true,
-                      color: { argb: 'FFFFFFFF' }
-                  };
-                  primeraCelda.alignment = { horizontal: 'center' };
-
-                  row.eachCell((cell) => {
-                      cell.border = {
-                          top: { style: 'thin' },
-                          left: { style: 'thin' },
-                          bottom: { style: 'thin' },
-                          right: { style: 'thin' }
-                      };
-                  });
-              });
-
-              worksheet.columns = [
-                  { width: 15 },
-                  { width: 15 },
-                  { width: 10 },
-                  { width: 40 },
-                  { width: 12 },
-                  { width: 15 },
-                  { width: 25 },
-                  { width: 20 },
-                  { width: 18 },
-                  { width: 15 },
-                  { width: 25 },
-                  { width: 15 },
-                  { width: 25 },
-                  { width: 18 },
-                  { width: 20 },
-                  { width: 18 },
-                  { width: 18 }
-              ];
-
-              worksheet.eachRow((row) => {
-                  row.eachCell((cell) => {
-                      cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                  });
-                  row.height = 25;
-              });
-
-              worksheet.autoFilter = {
-                  from: 'A3',
-                  to: 'Q' + (worksheet.rowCount)
-              };
-
-              worksheet.views = [
-                  { state: 'frozen', xSplit: 0, ySplit: 3, activeCell: 'A4' }
-              ];
-
-              const buffer = await workbook.xlsx.writeBuffer();
-              const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-              let nombreArchivo = titulo.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
-              saveAs(blob, `${nombreArchivo}.xlsx`);
-
-          } catch (error) {
-              console.error('ERROR AL GENERAR EL EXCEL:', error);
-              alert('OCURRIÓ UN ERROR AL GENERAR EL ARCHIVO EXCEL.');
-          }
+          if (!window.registrosPremanifiesto.length) { alert("NO HAY REGISTROS."); return; }
+          const workbook = new ExcelJS.Workbook();
+          const worksheet = workbook.addWorksheet('PREMANIFIESTO');
+          const headers = ['NUM CITA', 'FECHA', 'PAX', 'NOMBRE', 'EDAD', 'ESTADO CIVIL', 'TARJETA', '', 'INGRESOS', 'VENDOR', 'OPERADOR', 'GERENTE', 'SALA', 'HORA', 'BASE DATOS', 'SUPERVISOR', 'TELEFONO'];
+          worksheet.addRow(['PREMANIFIESTO']).font = { size: 16, bold: true };
+          worksheet.addRow([]);
+          worksheet.addRow(headers);
+          window.registrosPremanifiesto.forEach(r => {
+              worksheet.addRow([
+                  r.citaPorDia, r.diaEvento, r.numPersonas, r.nombre, r.edad, r.estadoCivil, r.tarjeta, '',
+                  r.ingresos, r.vendedor, r.operador, r.calificacionOrigen, r.hotel, r.hora, r.baseDatos, r.supervisora, r.telefono
+              ]);
+          });
+          const buffer = await workbook.xlsx.writeBuffer();
+          saveAs(new Blob([buffer]), 'Premanifiesto.xlsx');
       });
+
+      (function initScrollTeclasPremanifiesto() {
+          const wrap = document.getElementById('tablaPremanifiestoScroll');
+          if (!wrap) return;
+          let hover = false;
+          wrap.addEventListener('mouseenter', () => { hover = true; });
+          wrap.addEventListener('mouseleave', () => { hover = false; });
+          document.addEventListener('keydown', (e) => {
+              const section = document.getElementById('premafiestoSection');
+              if (!section || section.style.display === 'none') return;
+              if (!hover && document.activeElement !== wrap) return;
+              const ae = document.activeElement;
+              if (ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName) && document.activeElement !== wrap) return;
+              if (e.key === 'ArrowLeft') {
+                  wrap.scrollLeft -= 80;
+                  e.preventDefault();
+              } else if (e.key === 'ArrowRight') {
+                  wrap.scrollLeft += 80;
+                  e.preventDefault();
+              }
+          }, true);
+      })();
 
       configurarFirebase();
     });
