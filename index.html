@@ -2247,6 +2247,42 @@
         modalEmail.style.display = 'block';
     }
 
+    /** Colores por mes del día del evento (misma paleta que .encabezado-* en la tabla). Excel ARGB = AARRGGBB */
+    const PREMANIFIESTO_EXCEL_COLOR_POR_MES = [
+        { fill: 'FF2563EB', font: 'FFFFFFFF' },
+        { fill: 'FF7C3AED', font: 'FFFFFFFF' },
+        { fill: 'FF059669', font: 'FFFFFFFF' },
+        { fill: 'FFD97706', font: 'FFFFFFFF' },
+        { fill: 'FFDC2626', font: 'FFFFFFFF' },
+        { fill: 'FF0891B2', font: 'FFFFFFFF' },
+        { fill: 'FFF59E0B', font: 'FF0A2540' },
+        { fill: 'FFB45309', font: 'FFFFFFFF' },
+        { fill: 'FF4B5563', font: 'FFFFFFFF' },
+        { fill: 'FF8B5CF6', font: 'FFFFFFFF' },
+        { fill: 'FF1E293B', font: 'FFFFFFFF' },
+        { fill: 'FF047857', font: 'FFFFFFFF' }
+    ];
+
+    function premanifiestoMesIndexDesdeDiaEvento(diaEvento) {
+        if (diaEvento == null || diaEvento === '') return null;
+        const s = String(diaEvento).trim();
+        const d = new Date(/^\d{4}-\d{2}-\d{2}/.test(s) ? s + 'T12:00:00' : s);
+        if (isNaN(d.getTime())) return null;
+        return d.getMonth();
+    }
+
+    function nombreArchivoExcelSeguro(base) {
+        let s = String(base || 'Premanifiesto')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[<>:"/\\|?*]/g, '')
+            .trim()
+            .replace(/\s+/g, '_')
+            .replace(/_+/g, '_');
+        if (!s) s = 'Premanifiesto';
+        return s.substring(0, 120);
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
       console.log("Iniciando aplicación...");
 
@@ -3761,20 +3797,97 @@
 
       document.getElementById("descargarExcel").addEventListener("click", async () => {
           if (!window.registrosPremanifiesto.length) { alert("NO HAY REGISTROS."); return; }
+          const registros = ordenarRegistrosPorCita([...window.registrosPremanifiesto]);
+          const filtroFechaEl = document.getElementById('filtroFecha');
+          let refDate = new Date();
+          if (filtroFechaEl && filtroFechaEl.value) {
+              const t = new Date(filtroFechaEl.value + 'T12:00:00');
+              if (!isNaN(t.getTime())) refDate = t;
+          }
+          const y = refDate.getFullYear();
+          const mo = String(refDate.getMonth() + 1).padStart(2, '0');
+          const da = String(refDate.getDate()).padStart(2, '0');
+          const nombreArchivo = `${nombreArchivoExcelSeguro(`Premanifiesto_${y}-${mo}-${da}`)}.xlsx`;
+
           const workbook = new ExcelJS.Workbook();
-          const worksheet = workbook.addWorksheet('PREMANIFIESTO');
-          const headers = ['NUM CITA', 'FECHA', 'PAX', 'NOMBRE', 'EDAD', 'ESTADO CIVIL', 'TARJETA', '', 'INGRESOS', 'VENDOR', 'OPERADOR', 'GERENTE', 'SALA', 'HORA', 'BASE DATOS', 'SUPERVISOR', 'TELEFONO'];
-          worksheet.addRow(['PREMANIFIESTO']).font = { size: 16, bold: true };
-          worksheet.addRow([]);
-          worksheet.addRow(headers);
-          window.registrosPremanifiesto.forEach(r => {
-              worksheet.addRow([
-                  r.citaPorDia, r.diaEvento, r.numPersonas, r.nombre, r.edad, r.estadoCivil, r.tarjeta, '',
-                  r.ingresos, r.vendedor, r.operador, r.calificacionOrigen, r.hotel, r.hora, r.baseDatos, r.supervisora, r.telefono
-              ]);
+          workbook.creator = 'Destination Connect Group';
+          workbook.created = new Date();
+          const worksheet = workbook.addWorksheet('PREMANIFIESTO', {
+              views: [{ state: 'frozen', ySplit: 4 }]
           });
+
+          const tituloLargo = `PREMANIFIESTO — ${refDate.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+          const numCols = 17;
+          worksheet.mergeCells(1, 1, 1, numCols);
+          const tituloCell = worksheet.getCell(1, 1);
+          tituloCell.value = tituloLargo;
+          tituloCell.font = { size: 16, bold: true, color: { argb: 'FF0A2540' } };
+          tituloCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          worksheet.getRow(1).height = 30;
+
+          worksheet.mergeCells(2, 1, 2, numCols);
+          const subCell = worksheet.getCell(2, 1);
+          subCell.value = `Generado: ${new Date().toLocaleString('es-MX')} · Total registros: ${registros.length}`;
+          subCell.font = { size: 10, italic: true, color: { argb: 'FF64748B' } };
+          subCell.alignment = { horizontal: 'center', vertical: 'middle' };
+          worksheet.addRow([]);
+
+          const headers = ['NUM CITA', 'NOMBRE DE INVITADOS', 'NUM PERSONA', 'ESTADO CIVIL', 'HORA', 'DÍA EVENTO', 'SALON', 'EDAD', 'INGRESOS', 'TARJETA', 'CALIF ORIGEN', 'GERENTE', 'OPERADOR', 'VENDEDOR', 'BASE DATOS', 'SUPERVISORA', 'TELÉFONO'];
+          const headerRow = worksheet.addRow(headers);
+          headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          const thinBorder = {
+              top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+          };
+          headerRow.eachCell((cell) => {
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0A2540' } };
+              cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+              cell.border = thinBorder;
+          });
+
+          registros.forEach((r) => {
+              if (!r) return;
+              const mesIdx = premanifiestoMesIndexDesdeDiaEvento(r.diaEvento);
+              const palette = mesIdx != null && PREMANIFIESTO_EXCEL_COLOR_POR_MES[mesIdx]
+                  ? PREMANIFIESTO_EXCEL_COLOR_POR_MES[mesIdx]
+                  : { fill: 'FFF1F5F9', font: 'FF0F172A' };
+              const row = worksheet.addRow([
+                  r.citaPorDia != null ? r.citaPorDia : (r.cita || ''),
+                  r.nombre || '',
+                  r.numPersonas || '',
+                  r.estadoCivil || '',
+                  r.hora || '',
+                  r.diaEvento || '',
+                  r.hotel || '',
+                  r.edad || '',
+                  r.ingresos || '',
+                  r.tarjeta || '',
+                  r.calificacionOrigen || '',
+                  r.calificacionOrigen || '',
+                  r.operador || '',
+                  r.vendedor || '',
+                  r.baseDatos || '',
+                  r.supervisora || '',
+                  r.telefono || ''
+              ]);
+              row.eachCell((cell) => {
+                  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: palette.fill } };
+                  cell.font = { color: { argb: palette.font } };
+                  cell.border = thinBorder;
+              });
+          });
+
+          worksheet.columns = [
+              { width: 10 }, { width: 30 }, { width: 12 }, { width: 14 }, { width: 11 },
+              { width: 14 }, { width: 20 }, { width: 8 }, { width: 12 }, { width: 14 },
+              { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 },
+              { width: 20 }, { width: 14 }
+          ];
+
           const buffer = await workbook.xlsx.writeBuffer();
-          saveAs(new Blob([buffer]), 'Premanifiesto.xlsx');
+          saveAs(new Blob([buffer]), nombreArchivo);
       });
 
       (function initScrollTeclasPremanifiesto() {
