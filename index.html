@@ -1457,7 +1457,7 @@
               <select id="briefingSupervisor" required>
                   <option value="">Seleccione supervisora</option>
               </select>
-              <label for="briefingWhatsAppDestino">WhatsApp destino (10 dígitos, como en la invitación; ej. 5517907958):</label>
+              <label for="briefingWhatsAppDestino">WhatsApp destino</label>
               <input type="tel" id="briefingWhatsAppDestino" placeholder="Obligatorio para enviar por WhatsApp" inputmode="numeric" maxlength="15" autocomplete="tel">
               <label for="briefingObjetivo">Objetivo de citas del día:</label>
               <input type="number" id="briefingObjetivo" required>
@@ -1744,25 +1744,6 @@
       <br>
       <button id="descargarExcel">Descargar Excel</button>
     </section>
-    
-    <!-- Sección de No Asistieron -->
-    <section id="noAsistieronSection" style="display:none; margin-top:25px;">
-        <h2>Clientes que No Asistieron</h2>
-        <div class="tabla-container">
-            <table id="tablaNoAsistieron">
-                <thead>
-                    <tr>
-                        <th>NOMBRE</th>
-                        <th>TELÉFONO</th>
-                        <th>DÍA EVENTO</th>
-                        <th>HORA</th>
-                        <th>SUPERVISORA</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </section>
   </div>
   
   <script>
@@ -2003,7 +1984,6 @@
             if (!registro.hotel) registro.hotel = '';
             if (!registro.supervisora) registro.supervisora = '';
             if (!registro.id) registro.id = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-            if (registro.asistencia === undefined) registro.asistencia = null;
             return true;
         });
     }
@@ -2322,51 +2302,6 @@
               overlayMenu.classList.remove('abierto');
           });
       });
-      
-      // --- Funcionalidad de Asistencia ---
-      function marcarAsistencia(idRegistro, estado) {
-          const registro = window.registrosPremanifiesto.find(r => r.id === idRegistro);
-          if (registro) {
-              registro.asistencia = estado;
-              firebaseUpdateQueue.push(registro);
-              guardarRegistrosEnFirebaseOptimizado();
-              if (premanifiestoVisible) {
-                  if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
-                      aplicarFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
-                  } else if (busquedaActiva) {
-                      buscarPersonaEnTabla(terminoBusquedaActual);
-                  } else {
-                      actualizarTablaPremanifiesto(ultimaFechaFiltro);
-                  }
-              }
-              actualizarTablaNoAsistieron();
-              mostrarNotificacion(`Se marcó como ${estado === 'asistio' ? 'ASISTIÓ' : 'NO ASISTIÓ'}`);
-          }
-      }
-      
-      function actualizarTablaNoAsistieron() {
-          const tbody = document.querySelector('#tablaNoAsistieron tbody');
-          const section = document.getElementById('noAsistieronSection');
-          const noAsistieron = window.registrosPremanifiesto.filter(r => r.asistencia === 'no_asistio');
-          
-          if (noAsistieron.length > 0) {
-              section.style.display = 'block';
-              tbody.innerHTML = '';
-              noAsistieron.forEach(registro => {
-                  const tr = document.createElement('tr');
-                  tr.innerHTML = `
-                      <td>${registro.nombre || ''}</td>
-                      <td>${registro.telefono || ''}</td>
-                      <td>${registro.diaEvento || ''}</td>
-                      <td>${registro.hora || ''}</td>
-                      <td>${registro.supervisora || ''}</td>
-                  `;
-                  tbody.appendChild(tr);
-              });
-          } else {
-              section.style.display = 'none';
-          }
-      }
       
       // --- Análisis de Bases de Datos para Reporte de Citas ---
       function generarAnalisisBases(citasProximas) {
@@ -3005,7 +2940,6 @@
                           actualizarTablaPremanifiesto(ultimaFechaFiltro);
                       }
                   }
-                  actualizarTablaNoAsistieron();
                   actualizarEstadoSincronizacion(true);
               } else {
                   window.registrosPremanifiesto = [];
