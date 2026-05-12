@@ -2247,30 +2247,7 @@
         modalEmail.style.display = 'block';
     }
 
-    /** Colores por mes del día del evento (misma paleta que .encabezado-* en la tabla). Excel ARGB = AARRGGBB */
-    const PREMANIFIESTO_EXCEL_COLOR_POR_MES = [
-        { fill: 'FF2563EB', font: 'FFFFFFFF' },
-        { fill: 'FF7C3AED', font: 'FFFFFFFF' },
-        { fill: 'FF059669', font: 'FFFFFFFF' },
-        { fill: 'FFD97706', font: 'FFFFFFFF' },
-        { fill: 'FFDC2626', font: 'FFFFFFFF' },
-        { fill: 'FF0891B2', font: 'FFFFFFFF' },
-        { fill: 'FFF59E0B', font: 'FF0A2540' },
-        { fill: 'FFB45309', font: 'FFFFFFFF' },
-        { fill: 'FF4B5563', font: 'FFFFFFFF' },
-        { fill: 'FF8B5CF6', font: 'FFFFFFFF' },
-        { fill: 'FF1E293B', font: 'FFFFFFFF' },
-        { fill: 'FF047857', font: 'FFFFFFFF' }
-    ];
-
-    function premanifiestoMesIndexDesdeDiaEvento(diaEvento) {
-        if (diaEvento == null || diaEvento === '') return null;
-        const s = String(diaEvento).trim();
-        const d = new Date(/^\d{4}-\d{2}-\d{2}/.test(s) ? s + 'T12:00:00' : s);
-        if (isNaN(d.getTime())) return null;
-        return d.getMonth();
-    }
-
+    /** Nombre de archivo .xlsx sin acentos ni caracteres prohibidos en Windows */
     function nombreArchivoExcelSeguro(base) {
         let s = String(base || 'Premanifiesto')
             .normalize('NFD')
@@ -3795,99 +3772,240 @@
         });
       }
 
+      function esColorClaroParaExcelPremanifiesto(colorHex) {
+          const rgb = String(colorHex).substring(2);
+          if (rgb.length < 6) return true;
+          const r = parseInt(rgb.substring(0, 2), 16);
+          const g = parseInt(rgb.substring(2, 4), 16);
+          const b = parseInt(rgb.substring(4, 6), 16);
+          const luminosidad = (r * 0.299 + g * 0.587 + b * 0.114);
+          return luminosidad > 186;
+      }
+
       document.getElementById("descargarExcel").addEventListener("click", async () => {
-          if (!window.registrosPremanifiesto.length) { alert("NO HAY REGISTROS."); return; }
-          const registros = ordenarRegistrosPorCita([...window.registrosPremanifiesto]);
-          const filtroFechaEl = document.getElementById('filtroFecha');
-          let refDate = new Date();
-          if (filtroFechaEl && filtroFechaEl.value) {
-              const t = new Date(filtroFechaEl.value + 'T12:00:00');
-              if (!isNaN(t.getTime())) refDate = t;
+          if (window.registrosPremanifiesto.length === 0) {
+              alert("NO HAY REGISTROS AÚN.");
+              return;
           }
-          const y = refDate.getFullYear();
-          const mo = String(refDate.getMonth() + 1).padStart(2, '0');
-          const da = String(refDate.getDate()).padStart(2, '0');
-          const nombreArchivo = `${nombreArchivoExcelSeguro(`Premanifiesto_${y}-${mo}-${da}`)}.xlsx`;
 
-          const workbook = new ExcelJS.Workbook();
-          workbook.creator = 'Destination Connect Group';
-          workbook.created = new Date();
-          const worksheet = workbook.addWorksheet('PREMANIFIESTO', {
-              views: [{ state: 'frozen', ySplit: 4 }]
-          });
+          try {
+              const workbook = new ExcelJS.Workbook();
+              const worksheet = workbook.addWorksheet('PREMANIFIESTO');
 
-          const tituloLargo = `PREMANIFIESTO — ${refDate.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
-          const numCols = 17;
-          worksheet.mergeCells(1, 1, 1, numCols);
-          const tituloCell = worksheet.getCell(1, 1);
-          tituloCell.value = tituloLargo;
-          tituloCell.font = { size: 16, bold: true, color: { argb: 'FF0A2540' } };
-          tituloCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-          worksheet.getRow(1).height = 30;
+              const fechaFiltro = document.getElementById("filtroFecha").value;
 
-          worksheet.mergeCells(2, 1, 2, numCols);
-          const subCell = worksheet.getCell(2, 1);
-          subCell.value = `Generado: ${new Date().toLocaleString('es-MX')} · Total registros: ${registros.length}`;
-          subCell.font = { size: 10, italic: true, color: { argb: 'FF64748B' } };
-          subCell.alignment = { horizontal: 'center', vertical: 'middle' };
-          worksheet.addRow([]);
+              let fechaTitulo;
+              let titulo;
 
-          const headers = ['NUM CITA', 'NOMBRE DE INVITADOS', 'NUM PERSONA', 'ESTADO CIVIL', 'HORA', 'DÍA EVENTO', 'SALON', 'EDAD', 'INGRESOS', 'TARJETA', 'CALIF ORIGEN', 'GERENTE', 'OPERADOR', 'VENDEDOR', 'BASE DATOS', 'SUPERVISORA', 'TELÉFONO'];
-          const headerRow = worksheet.addRow(headers);
-          headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-          const thinBorder = {
-              top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-              left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-              bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-              right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
-          };
-          headerRow.eachCell((cell) => {
-              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0A2540' } };
-              cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-              cell.border = thinBorder;
-          });
+              if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
+                  const fechaInicioFormateada = new Date(fechaInicioFiltro).toLocaleDateString('es-MX');
+                  const fechaFinFormateada = new Date(fechaFinFiltro).toLocaleDateString('es-MX');
+                  const registrosSup = obtenerRegistrosPorFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
+                  if (registrosSup.length > 0) {
+                      titulo = `CITAS DE ${supervisoraFiltroActual} DEL ${fechaInicioFormateada} AL ${fechaFinFormateada} - ${registrosSup.length} REGISTROS`;
+                  } else {
+                      titulo = `CITAS DE ${supervisoraFiltroActual} DEL ${fechaInicioFormateada} AL ${fechaFinFormateada}`;
+                  }
+                  fechaTitulo = new Date(fechaInicioFiltro);
+              } else if (fechaFiltro) {
+                  fechaTitulo = new Date(fechaFiltro + 'T00:00:00');
+                  const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
+                  const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
+                  const diaSemana = fechaFormateada.split(' ')[0];
+                  const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
+                  titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
+              } else {
+                  fechaTitulo = new Date();
+                  const opciones = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
+                  const fechaFormateada = fechaTitulo.toLocaleDateString('es-MX', opciones);
+                  const diaSemana = fechaFormateada.split(' ')[0];
+                  const restoFecha = fechaFormateada.substring(fechaFormateada.indexOf(' ') + 1);
+                  titulo = `PREMANIFIESTO DEL ${diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)} ${restoFecha}`.toUpperCase();
+              }
 
-          registros.forEach((r) => {
-              if (!r) return;
-              const mesIdx = premanifiestoMesIndexDesdeDiaEvento(r.diaEvento);
-              const palette = mesIdx != null && PREMANIFIESTO_EXCEL_COLOR_POR_MES[mesIdx]
-                  ? PREMANIFIESTO_EXCEL_COLOR_POR_MES[mesIdx]
-                  : { fill: 'FFF1F5F9', font: 'FF0F172A' };
-              const row = worksheet.addRow([
-                  r.citaPorDia != null ? r.citaPorDia : (r.cita || ''),
-                  r.nombre || '',
-                  r.numPersonas || '',
-                  r.estadoCivil || '',
-                  r.hora || '',
-                  r.diaEvento || '',
-                  r.hotel || '',
-                  r.edad || '',
-                  r.ingresos || '',
-                  r.tarjeta || '',
-                  r.calificacionOrigen || '',
-                  r.calificacionOrigen || '',
-                  r.operador || '',
-                  r.vendedor || '',
-                  r.baseDatos || '',
-                  r.supervisora || '',
-                  r.telefono || ''
-              ]);
-              row.eachCell((cell) => {
-                  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: palette.fill } };
-                  cell.font = { color: { argb: palette.font } };
-                  cell.border = thinBorder;
+              const tituloRow = worksheet.addRow([titulo]);
+              tituloRow.font = { size: 16, bold: true };
+              tituloRow.alignment = { horizontal: 'center' };
+              worksheet.mergeCells('A1:R1');
+
+              worksheet.addRow([]);
+
+              const headers = [
+                  'NUM DE CITAS', 'FECHA', 'PAX', 'NOMBRES FAMILIA', 'EDAD', 'ESTADO CIVIL',
+                  'TARJETAS', 'ID', 'INGRESOS', 'VENDOR', 'OPERADOR', 'GERENTE',
+                  'SALA', 'HORA DE LLEGADA', 'BASE DE DATOS', 'SUPERVISOR', 'TELEFONO'
+              ].map(header => header.toUpperCase());
+
+              const headerRow = worksheet.addRow(headers);
+
+              const meses = [
+                  'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+                  'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+              ];
+              const mesActual = fechaTitulo.getMonth();
+              const nombreMes = meses[mesActual].toLowerCase();
+
+              const coloresPorMes = {
+                  'enero': 'FFFF0000',
+                  'febrero': 'FFFFA500',
+                  'marzo': 'FFA3E4D7',
+                  'abril': 'FFE67E22',
+                  'mayo': 'FFE74C3C',
+                  'junio': 'FF1ABC9C',
+                  'julio': 'FFF1C40F',
+                  'agosto': 'FFD35400',
+                  'septiembre': 'FF7F8C8D',
+                  'octubre': 'FF8E44AD',
+                  'noviembre': 'FF2C3E50',
+                  'diciembre': 'FF16A085'
+              };
+
+              const colorHeader = coloresPorMes[nombreMes] || 'FF3498DB';
+              const colorClaro = esColorClaroParaExcelPremanifiesto(colorHeader);
+
+              headerRow.eachCell((cell) => {
+                  cell.fill = {
+                      type: 'pattern',
+                      pattern: 'solid',
+                      fgColor: { argb: colorHeader }
+                  };
+                  cell.font = {
+                      bold: true,
+                      color: { argb: colorClaro ? 'FF000000' : 'FFFFFFFF' }
+                  };
+                  cell.alignment = { horizontal: 'center' };
+                  cell.border = {
+                      top: { style: 'thin' },
+                      left: { style: 'thin' },
+                      bottom: { style: 'thin' },
+                      right: { style: 'thin' }
+                  };
               });
-          });
 
-          worksheet.columns = [
-              { width: 10 }, { width: 30 }, { width: 12 }, { width: 14 }, { width: 11 },
-              { width: 14 }, { width: 20 }, { width: 8 }, { width: 12 }, { width: 14 },
-              { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 },
-              { width: 20 }, { width: 14 }
-          ];
+              let registrosParaExcel = window.registrosPremanifiesto;
+              if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
+                  registrosParaExcel = obtenerRegistrosPorFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
+              } else if (fechaFiltro) {
+                  registrosParaExcel = window.registrosPremanifiesto.filter(registro => {
+                      let fechaRegistroNormalizada = registro.diaEvento;
+                      try {
+                          const fechaObj = new Date(registro.diaEvento);
+                          if (!isNaN(fechaObj.getTime())) {
+                              fechaRegistroNormalizada = fechaObj.toISOString().split('T')[0];
+                          }
+                      } catch (error) {
+                          console.error("Error al normalizar fecha del registro:", error);
+                      }
 
-          const buffer = await workbook.xlsx.writeBuffer();
-          saveAs(new Blob([buffer]), nombreArchivo);
+                      let fechaFiltroNormalizada = fechaFiltro;
+                      try {
+                          const fechaObj = new Date(fechaFiltro);
+                          if (!isNaN(fechaObj.getTime())) {
+                              fechaFiltroNormalizada = fechaObj.toISOString().split('T')[0];
+                          }
+                      } catch (error) {
+                          console.error("Error al normalizar fecha de filtro:", error);
+                      }
+
+                      return fechaRegistroNormalizada === fechaFiltroNormalizada;
+                  });
+              }
+
+              registrosParaExcel = ordenarRegistrosPorCita([...registrosParaExcel]);
+
+              if (registrosParaExcel.length === 0) {
+                  alert("NO HAY REGISTROS PARA EXPORTAR CON LOS FILTROS ACTUALES.");
+                  return;
+              }
+
+              registrosParaExcel.forEach(registro => {
+                  const row = worksheet.addRow([
+                      registro.citaPorDia || registro.cita,
+                      registro.diaEvento ? String(registro.diaEvento).toUpperCase() : '',
+                      registro.numPersonas ? String(registro.numPersonas).toUpperCase() : '',
+                      registro.nombre ? String(registro.nombre).toUpperCase() : '',
+                      registro.edad ? String(registro.edad).toUpperCase() : '',
+                      registro.estadoCivil ? String(registro.estadoCivil).toUpperCase() : '',
+                      registro.tarjeta ? String(registro.tarjeta).toUpperCase() : '',
+                      '',
+                      registro.ingresos ? String(registro.ingresos).toUpperCase() : '',
+                      registro.vendedor ? String(registro.vendedor).toUpperCase() : '',
+                      registro.operador ? String(registro.operador).toUpperCase() : '',
+                      registro.calificacionOrigen ? String(registro.calificacionOrigen).toUpperCase() : '',
+                      registro.hotel ? String(registro.hotel).toUpperCase() : '',
+                      registro.hora ? String(registro.hora).toUpperCase() : '',
+                      registro.baseDatos ? String(registro.baseDatos).toUpperCase() : '',
+                      registro.supervisora ? String(registro.supervisora).toUpperCase() : '',
+                      registro.telefono ? String(registro.telefono).toUpperCase() : ''
+                  ]);
+
+                  const primeraCelda = row.getCell(1);
+                  primeraCelda.fill = {
+                      type: 'pattern',
+                      pattern: 'solid',
+                      fgColor: { argb: 'FF0000FF' }
+                  };
+                  primeraCelda.font = {
+                      bold: true,
+                      color: { argb: 'FFFFFFFF' }
+                  };
+                  primeraCelda.alignment = { horizontal: 'center' };
+
+                  row.eachCell((cell) => {
+                      cell.border = {
+                          top: { style: 'thin' },
+                          left: { style: 'thin' },
+                          bottom: { style: 'thin' },
+                          right: { style: 'thin' }
+                      };
+                  });
+              });
+
+              worksheet.columns = [
+                  { width: 15 },
+                  { width: 15 },
+                  { width: 10 },
+                  { width: 40 },
+                  { width: 12 },
+                  { width: 15 },
+                  { width: 25 },
+                  { width: 20 },
+                  { width: 18 },
+                  { width: 15 },
+                  { width: 25 },
+                  { width: 15 },
+                  { width: 25 },
+                  { width: 18 },
+                  { width: 20 },
+                  { width: 18 },
+                  { width: 18 }
+              ];
+
+              worksheet.eachRow((row, rowNumber) => {
+                  row.eachCell((cell) => {
+                      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                  });
+                  row.height = 25;
+              });
+
+              worksheet.autoFilter = {
+                  from: 'A3',
+                  to: 'Q' + worksheet.rowCount
+              };
+
+              worksheet.views = [
+                  { state: 'frozen', xSplit: 0, ySplit: 3, activeCell: 'A4' }
+              ];
+
+              const buffer = await workbook.xlsx.writeBuffer();
+              const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+              const nombreArchivo = `${nombreArchivoExcelSeguro(titulo)}.xlsx`;
+              saveAs(blob, nombreArchivo);
+          } catch (error) {
+              console.error('ERROR AL GENERAR EL EXCEL:', error);
+              alert('OCURRIÓ UN ERROR AL GENERAR EL ARCHIVO EXCEL.');
+          }
       });
 
       (function initScrollTeclasPremanifiesto() {
