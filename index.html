@@ -1457,8 +1457,6 @@
               <select id="briefingSupervisor" required>
                   <option value="">Seleccione supervisora</option>
               </select>
-              <label for="briefingWhatsAppDestino">WhatsApp destino</label>
-              <input type="tel" id="briefingWhatsAppDestino" placeholder="Obligatorio para enviar por WhatsApp" inputmode="numeric" maxlength="15" autocomplete="tel">
               <label for="briefingObjetivo">Objetivo de citas del día:</label>
               <input type="number" id="briefingObjetivo" required>
               <label for="briefingResultado">Resultado del día:</label>
@@ -1496,8 +1494,6 @@
               <div class="form-briefing-acciones">
                   <button type="button" class="cerrar-briefing btn-limpiar">Cancelar</button>
                   <button type="button" id="descargarBriefingExcel" style="background: #1b5e3a !important;"><i class="fas fa-download"></i> Descargar Excel</button>
-                  <button type="button" id="enviarBriefingWhatsApp" class="btn-enviar-wa"><i class="fab fa-whatsapp"></i> Enviar por WhatsApp</button>
-                  <button type="button" id="enviarBriefingEmail" class="btn-enviar-email"><i class="fas fa-envelope"></i> Enviar por Email</button>
                   <button type="submit" id="guardarBriefingBtn"><i class="fas fa-save"></i> Guardar Briefing</button>
               </div>
           </form>
@@ -2157,15 +2153,13 @@
             if (inputEl && inputEl.value.trim()) raw = inputEl.value.trim();
         }
         if (!raw) {
+            const inputElModal = document.getElementById('briefingWhatsAppDestino');
             const modalBrief = document.getElementById('modalBriefing');
             const modalAbierto = modalBrief && modalBrief.style.display === 'block';
-            if (modalAbierto) {
+            if (modalAbierto && inputElModal) {
                 mostrarNotificacion('Escriba el número de WhatsApp destino (10 dígitos), igual que en la invitación.', 'error');
-                const inputEl = document.getElementById('briefingWhatsAppDestino');
-                if (inputEl) {
-                    inputEl.focus();
-                    try { inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
-                }
+                inputElModal.focus();
+                try { inputElModal.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
                 return;
             }
             raw = window.prompt('Número de WhatsApp (10 dígitos, ej. 5517907958):') || '';
@@ -2734,44 +2728,6 @@
               console.error(err);
               mostrarNotificacion('Excel generado; no se pudo registrar la descarga en la nube', 'error');
           }
-      });
-      
-      // Enviar por WhatsApp (mismo criterio que invitación: número obligatorio desde el formulario)
-      document.getElementById('enviarBriefingWhatsApp').addEventListener('click', async () => {
-          const datosBriefing = datosBriefingDesdeFormulario();
-          if (!datosBriefing.supervisor) {
-              mostrarNotificacion('Seleccione la supervisora que elabora el briefing', 'error');
-              return;
-          }
-          const waInput = document.getElementById('briefingWhatsAppDestino');
-          const pre = waInput && waInput.value.trim() ? waInput.value.trim() : '';
-          if (!normalizarTelefonoWhatsApp(pre)) {
-              mostrarNotificacion('Escriba el WhatsApp destino con 10 dígitos (como el celular de la invitación).', 'error');
-              if (waInput) {
-                  waInput.focus();
-                  try { waInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
-              }
-              return;
-          }
-          const nombreBase = construirNombreBaseBriefingExcel(datosBriefing);
-          await generarExcelBriefing(datosBriefing, nombreBase);
-          try {
-              await registrarBriefingDescargaEnFirebase(datosBriefing);
-          } catch (err) {
-              console.error(err);
-              mostrarNotificacion('Excel descargado; no se pudo registrar la descarga en la nube', 'error');
-          }
-          enviarPorWhatsApp(datosBriefing, pre);
-      });
-      
-      // Enviar por Email
-      document.getElementById('enviarBriefingEmail').addEventListener('click', () => {
-          const datosBriefing = datosBriefingDesdeFormulario();
-          if (!datosBriefing.supervisor) {
-              mostrarNotificacion('Seleccione la supervisora que elabora el briefing', 'error');
-              return;
-          }
-          enviarPorEmail(datosBriefing);
       });
       
       formBriefing.addEventListener('submit', async (e) => {
