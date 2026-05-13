@@ -27,9 +27,6 @@
       margin: 0;
       padding: 0;
       font-family: 'SF Pro Display', 'Segoe UI', 'Inter', system-ui, sans-serif;
-      transform: translateZ(0);
-      backface-visibility: hidden;
-      perspective: 1000px;
     }
 
     html {
@@ -1384,7 +1381,7 @@
               <h3 id="tituloModalSeguimiento">Seguimiento de Operador</h3>
               <span class="cerrar-modal cerrar-seguimiento">&times;</span>
           </div>
-          <form id="formSeguimientoSupervisor">
+          <form id="formSeguimientoSupervisor" novalidate>
               <input type="hidden" id="seguimientoEditId" value="">
               <input type="hidden" id="seguimientoEditTimestamp" value="">
               <input type="hidden" id="seguimientoEditIdInterno" value="">
@@ -1767,6 +1764,7 @@
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
     let listaSupervisoras = ['ABRAHAM ROLDAN','LUIS COLULA', 'MACARENA ZAMORA', 'THALIA PINEDA', 'YARET NAJERA', 'MISAEL NAVARRO'];
+    let supervisorasRepaintTimer = null;
     let supervisorasCache = null;
     let cacheTimestamp = null;
     const CACHE_DURATION = 5 * 60 * 1000;
@@ -1850,6 +1848,28 @@
             });
             if (vr && listaSupervisoras.includes(vr)) reporteSel.value = vr;
         }
+    }
+
+    /** Rellena un solo select de supervisoras (evita repintar todos los selects al abrir un modal). */
+    function poblarUnSoloSelectSupervisor(selectId, textoPrimeraOpcion) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        const valorActual = select.value;
+        const primera = textoPrimeraOpcion != null ? textoPrimeraOpcion : 'Seleccione';
+        select.innerHTML = '';
+        const opt0 = document.createElement('option');
+        opt0.value = '';
+        opt0.textContent = primera;
+        select.appendChild(opt0);
+        listaSupervisoras.forEach(supervisora => {
+            if (supervisora && supervisora.trim() !== '') {
+                const option = document.createElement('option');
+                option.value = supervisora;
+                option.textContent = supervisora;
+                select.appendChild(option);
+            }
+        });
+        if (valorActual && listaSupervisoras.includes(valorActual)) select.value = valorActual;
     }
 
     /** Claves por supervisora para ver seguimientos (evitar acceso cruzado). Ajusta aquí las contraseñas. */
@@ -2266,6 +2286,7 @@
       const form = document.getElementById("invitationForm");
       window.registrosPremanifiesto = [];
       let premanifiestoVisible = false;
+      let registrosPaintDebounceTimer = null;
       let ultimaFechaFiltro = null;
       let registroEditando = null; 
       let edicionSnapshot = null;
@@ -2377,10 +2398,37 @@
           
           const analisis = generarAnalisisBases(citasProximas);
           
+          const totalCitasSup = citasProximas.length;
+          const countsPorDia = {};
+          citasProximas.forEach(cita => {
+              if (!cita.diaEvento) return;
+              let key;
+              try {
+                  const fe = new Date(cita.diaEvento);
+                  if (isNaN(fe.getTime())) return;
+                  key = fe.toISOString().split('T')[0];
+              } catch (_) { return; }
+              countsPorDia[key] = (countsPorDia[key] || 0) + 1;
+          });
+          const diasOrdenados = Object.keys(countsPorDia).sort();
+          
           let html = '';
           if (supFiltro) {
-              html += `<p style="margin-bottom:12px;padding:10px;background:#e8f0fe;border-radius:10px;"><strong>Filtro activo:</strong> solo citas de <strong>${supFiltro}</strong> (próximos 2 días).</p>`;
+              html += `<p style="margin-bottom:12px;padding:10px;background:#e8f0fe;border-radius:10px;"><strong>Filtro activo:</strong> solo citas de <strong>${segEscapeHtml(supFiltro)}</strong> (próximos 2 días).</p>`;
           }
+          
+          html += `<div style="margin-bottom:16px;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">`;
+          if (supFiltro) {
+              html += `<p style="margin:0 0 8px;"><strong>Supervisor:</strong> ${segEscapeHtml(supFiltro)} (${totalCitasSup} citas)</p>`;
+          }
+          html += `<p style="margin:0 0 8px;"><strong>Total de citas</strong> ${totalCitasSup}</p>`;
+          diasOrdenados.forEach(key => {
+              const d = new Date(key + 'T12:00:00');
+              const nombreDia = d.toLocaleDateString('es-MX', { weekday: 'long' });
+              const nombreDiaCap = nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1);
+              html += `<p style="margin:4px 0;"><strong>Para ${nombreDiaCap}:</strong> ${countsPorDia[key]}</p>`;
+          });
+          html += `</div>`;
           
           html += `<div class="analisis-container">
                       <h4>📊 ANÁLISIS DE RENDIMIENTO</h4>
@@ -2495,6 +2543,7 @@
                   mostrarNotificacion('No se encontró el seguimiento', 'error');
                   return;
               }
+              poblarUnSoloSelectSupervisor('seguimientoSupervisorSeleccion', 'Seleccione un supervisor');
               document.getElementById('seguimientoEditId').value = fbKey;
               document.getElementById('seguimientoEditTimestamp').value = s.timestamp != null ? String(s.timestamp) : '';
               document.getElementById('seguimientoEditIdInterno').value = s.id || '';
@@ -2595,7 +2644,7 @@
       }
 
       btnVerSeguimientosPorSupervisor.addEventListener('click', () => {
-          cargarSupervisoras();
+          poblarUnSoloSelectSupervisor('vistaSeguimientoSupervisorSelect');
           document.getElementById('contenidoSeguimientosPorSupervisor').innerHTML = '<p>Selecciona supervisora e ingresa la contraseña.</p>';
           document.getElementById('vistaSeguimientoPassword').value = '';
           document.getElementById('modalSeguimientosPorSupervisor').style.display = 'block';
@@ -2612,7 +2661,7 @@
       });
 
       btnSeguimientosSupervisor.addEventListener('click', () => {
-          cargarSupervisoras();
+          poblarUnSoloSelectSupervisor('seguimientoSupervisorSeleccion', 'Seleccione un supervisor');
           formSeguimiento.reset();
           resetSeguimientoFormYEstilo();
           modalSeguimiento.style.display = 'block';
@@ -2620,6 +2669,10 @@
 
       formSeguimiento.addEventListener('submit', async (e) => {
           e.preventDefault();
+          if (!formSeguimiento.checkValidity()) {
+              formSeguimiento.reportValidity();
+              return;
+          }
           const fbKey = document.getElementById('seguimientoEditId').value;
           const seguimiento = {
               supervisor: document.getElementById('seguimientoSupervisorSeleccion').value,
@@ -2668,7 +2721,7 @@
       const modalReporte = document.getElementById('modalReporteCitas');
       
       btnReporteCitas.addEventListener('click', () => {
-          cargarSupervisoras();
+          poblarUnSoloSelectSupervisor('reporteCitasSupervisorFiltro', 'Todas las supervisoras');
           mostrarReporteCitas();
           modalReporte.style.display = 'block';
       });
@@ -2698,7 +2751,7 @@
       });
       
       btnFormatoBriefing.addEventListener('click', () => {
-          cargarSupervisoras();
+          poblarUnSoloSelectSupervisor('briefingSupervisor');
           document.getElementById('briefingFecha').value = new Date().toISOString().split('T')[0];
           modalBriefing.style.display = 'block';
       });
@@ -2901,17 +2954,26 @@
                   const registrosRaw = Object.values(data).filter(item => item !== null);
                   window.registrosPremanifiesto = limpiarDatosCorruptos(registrosRaw);
                   if (premanifiestoVisible) {
-                      if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
-                          aplicarFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
-                      } else if (busquedaActiva) {
-                          buscarPersonaEnTabla(terminoBusquedaActual);
-                      } else {
-                          actualizarTablaPremanifiesto(ultimaFechaFiltro);
-                      }
+                      if (registrosPaintDebounceTimer) clearTimeout(registrosPaintDebounceTimer);
+                      registrosPaintDebounceTimer = setTimeout(() => {
+                          registrosPaintDebounceTimer = null;
+                          if (!premanifiestoVisible) return;
+                          if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
+                              aplicarFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
+                          } else if (busquedaActiva) {
+                              buscarPersonaEnTabla(terminoBusquedaActual);
+                          } else {
+                              actualizarTablaPremanifiesto(ultimaFechaFiltro);
+                          }
+                      }, 150);
                   }
                   actualizarEstadoSincronizacion(true);
               } else {
                   window.registrosPremanifiesto = [];
+                  if (registrosPaintDebounceTimer) {
+                      clearTimeout(registrosPaintDebounceTimer);
+                      registrosPaintDebounceTimer = null;
+                  }
               }
           }, manejarErrorFirebase);
           
@@ -2923,7 +2985,11 @@
                   listaSupervisoras = data;
                   supervisorasCache = [...data];
                   cacheTimestamp = Date.now();
-                  cargarSupervisoras();
+                  if (supervisorasRepaintTimer) clearTimeout(supervisorasRepaintTimer);
+                  supervisorasRepaintTimer = setTimeout(() => {
+                      supervisorasRepaintTimer = null;
+                      cargarSupervisoras();
+                  }, 120);
               } else if (listaSupervisoras.length > 0) {
                   database.ref('supervisoras').set(listaSupervisoras);
               }
@@ -3708,6 +3774,13 @@
         const whatsappURL = `https://wa.me/52${celular}?text=${encodeURIComponent(mensaje)}`;
         window.open(whatsappURL, '_blank');
         mostrarNotificacion("✅ Invitación generada correctamente");
+        const invForm = document.getElementById('invitationForm');
+        if (invForm) {
+            invForm.reset();
+            invForm.querySelectorAll('[required]').forEach(f => { f.style.borderColor = '#ddd'; });
+        }
+        const acCont = document.getElementById('acompanantesContainer');
+        if (acCont) acCont.innerHTML = '';
     } else {
         alert("Invitación actualizada descargada correctamente.");
     }
