@@ -1182,6 +1182,27 @@
       .briefing-item-acciones button {
         width: 100% !important;
       }
+      /* iOS/Android: evita zoom al enfocar y mejora toques en el formulario de invitación */
+      #invitationForm input:not([type="hidden"]),
+      #invitationForm select,
+      #invitationForm textarea,
+      #acompanantesContainer input {
+        font-size: 16px !important;
+        min-height: 48px;
+      }
+      .acompanante {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .acompanante input {
+        margin-right: 0;
+        width: 100%;
+      }
+      .acompanante .eliminarAcompanante {
+        align-self: flex-start;
+        width: auto;
+      }
       #modalBriefing .modal-contenido.modal-contenido-grande,
       #modalVerBriefings .modal-contenido.modal-contenido-grande {
         margin: 8px auto !important;
@@ -1311,7 +1332,7 @@
           </div>
           <div>
             <label for="editarTelefono">Teléfono:</label>
-            <input type="tel" id="editarTelefono" required pattern="[0-9]{10}">
+            <input type="tel" id="editarTelefono" required maxlength="10" inputmode="numeric" autocomplete="tel" pattern="[0-9]{10}">
           </div>
           <div>
             <label for="editarDiaEvento">Día del Evento:</label>
@@ -1569,7 +1590,7 @@
           <input type="date" id="diaEvento" required>
 
           <label for="celular">Número de Celular:</label>
-          <input type="tel" id="celular" required pattern="[0-9]{10}">
+          <input type="tel" id="celular" required maxlength="10" inputmode="numeric" autocomplete="tel" pattern="[0-9]{10}">
 
           <label for="codigo">Código de Acceso:</label>
           <input type="text" id="codigo" value="SF">
@@ -3003,25 +3024,28 @@
 
       function guardarRegistrosEnFirebaseOptimizado() {
           if (firebaseUpdateTimeout) clearTimeout(firebaseUpdateTimeout);
+          const debounceMs = (isIOS || (navigator.userAgent && /Android/i.test(navigator.userAgent))) ? 200 : 900;
           firebaseUpdateTimeout = setTimeout(() => {
-              if (firebaseUpdateQueue.length > 0) {
+              if (firebaseUpdateQueue.length === 0) return;
+              (async () => {
+                  const toSave = firebaseUpdateQueue.slice();
+                  const idsGuardados = new Set(toSave.map(function (r) { return r.id; }));
                   try {
+                      await firebaseConUsuarioListo();
                       const database = firebase.database();
                       const registrosObj = {};
-                      firebaseUpdateQueue.forEach(registro => {
+                      toSave.forEach(function (registro) {
                           registrosObj[registro.id] = registro;
                       });
-                      database.ref('registrosPremanifiesto').update(registrosObj)
-                          .then(() => {
-                              firebaseUpdateQueue = [];
-                              actualizarEstadoSincronizacion(true);
-                          })
-                          .catch(manejarErrorFirebase);
+                      await database.ref('registrosPremanifiesto').update(registrosObj);
+                      firebaseUpdateQueue = firebaseUpdateQueue.filter(function (r) { return !idsGuardados.has(r.id); });
+                      actualizarEstadoSincronizacion(true);
                   } catch (e) {
-                      console.error("Error crítico:", e);
+                      console.error('Error al guardar premanifiesto en Firebase:', e);
+                      manejarErrorFirebase(e);
                   }
-              }
-          }, 1000);
+              })();
+          }, debounceMs);
       }
 
       function actualizarEstadoSincronizacion(conectado) {
