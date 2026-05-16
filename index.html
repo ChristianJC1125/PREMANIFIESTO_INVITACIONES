@@ -2016,6 +2016,7 @@
         if (!registrosPremanifiesto || !Array.isArray(registrosPremanifiesto)) return [];
         return registrosPremanifiesto.filter(registro => {
             if (typeof registro !== 'object' || registro === null) return false;
+            if (registro._deleted) return false;
             if (!registro.nombre) registro.nombre = '';
             if (!registro.telefono) registro.telefono = '';
             if (!registro.hotel) registro.hotel = '';
@@ -3028,17 +3029,29 @@
           firebaseUpdateTimeout = setTimeout(() => {
               if (firebaseUpdateQueue.length === 0) return;
               (async () => {
-                  const toSave = firebaseUpdateQueue.slice();
-                  const idsGuardados = new Set(toSave.map(function (r) { return r.id; }));
-                  try {
-                      await firebaseConUsuarioListo();
-                      const database = firebase.database();
-                      const registrosObj = {};
-                      toSave.forEach(function (registro) {
+              const toSave = firebaseUpdateQueue.slice();
+              const idsGuardados = new Set(toSave.map(function (r) { return r.id; }));
+              try {
+                  await firebaseConUsuarioListo();
+                  const database = firebase.database();
+                  const registrosObj = {};
+                  const idsEliminar = [];
+                  toSave.forEach(function (registro) {
+                      if (registro._deleted) {
+                          idsEliminar.push(registro.id);
+                      } else {
                           registrosObj[registro.id] = registro;
-                      });
-                      await database.ref('registrosPremanifiesto').update(registrosObj);
-                      firebaseUpdateQueue = firebaseUpdateQueue.filter(function (r) { return !idsGuardados.has(r.id); });
+                      }
+                  });
+                  const promesas = [];
+                  if (Object.keys(registrosObj).length > 0) {
+                      promesas.push(database.ref('registrosPremanifiesto').update(registrosObj));
+                  }
+                  idsEliminar.forEach(function (id) {
+                      promesas.push(database.ref('registrosPremanifiesto/' + id).remove());
+                  });
+                  if (promesas.length > 0) await Promise.all(promesas);
+                  firebaseUpdateQueue = firebaseUpdateQueue.filter(function (r) { return !idsGuardados.has(r.id); });
                       actualizarEstadoSincronizacion(true);
                   } catch (e) {
                       console.error('Error al guardar premanifiesto en Firebase:', e);
@@ -3500,7 +3513,7 @@
               baseDatos: baseDatos,
               supervisora: supervisora,
               vendedor: vendedor,
-              gerente: calificacion,
+              gerente: document.getElementById("gerente").value,
               calificacionOrigen: calificacion,
               telefono: telefono,
               fechaRegistro: new Date().toISOString().split('T')[0],
