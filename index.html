@@ -969,6 +969,45 @@
         border-radius: 12px;
         margin-top: 10px;
     }
+
+    .reporte-semana-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        margin: 12px 0 4px;
+    }
+    .reporte-dia-celda {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 8px;
+        background: #fff;
+        font-size: 0.82rem;
+        min-height: 88px;
+    }
+    .reporte-dia-celda--vacio {
+        background: #f8fafc;
+        color: #94a3b8;
+    }
+    .reporte-dia-celda--top {
+        border-color: #0a2540;
+        background: #e8f0fe;
+    }
+    .reporte-dia-titulo {
+        font-weight: 700;
+        color: #0a2540;
+        margin-bottom: 6px;
+        font-size: 0.78rem;
+        line-height: 1.2;
+    }
+    .reporte-base-linea {
+        margin: 2px 0;
+        line-height: 1.25;
+    }
+    @media (max-width: 900px) {
+        .reporte-semana-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
     
     /* Botones de envío */
     .btn-enviar-wa {
@@ -2302,6 +2341,129 @@
         return s.substring(0, 120);
     }
 
+    function reporteEscapeHtml(t) {
+        if (t == null) return '';
+        return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function fechaLocalISO(d) {
+        const x = d instanceof Date ? d : new Date(d);
+        if (isNaN(x.getTime())) return null;
+        const y = x.getFullYear();
+        const m = String(x.getMonth() + 1).padStart(2, '0');
+        const day = String(x.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+    }
+
+    function parseDiaEventoISO(diaEvento) {
+        if (!diaEvento) return null;
+        const s = String(diaEvento).trim();
+        const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (m) return m[1];
+        const d = new Date(s.length <= 10 ? s + 'T12:00:00' : s);
+        if (isNaN(d.getTime())) return null;
+        return fechaLocalISO(d);
+    }
+
+    function inicioDelDia(d) {
+        const x = new Date(d || Date.now());
+        x.setHours(0, 0, 0, 0);
+        return x;
+    }
+
+    function addDaysLocal(d, n) {
+        const x = new Date(d);
+        x.setDate(x.getDate() + n);
+        return x;
+    }
+
+    function getLunesDeSemana(d) {
+        const x = inicioDelDia(d);
+        const dow = x.getDay();
+        const diff = dow === 0 ? -6 : 1 - dow;
+        x.setDate(x.getDate() + diff);
+        return x;
+    }
+
+    function getSemanaPasadaRango(ref) {
+        const lunesEsta = getLunesDeSemana(ref);
+        const lunesPasada = addDaysLocal(lunesEsta, -7);
+        const domingoPasada = addDaysLocal(lunesPasada, 6);
+        return {
+            inicioISO: fechaLocalISO(lunesPasada),
+            finISO: fechaLocalISO(domingoPasada),
+            lunesDate: lunesPasada
+        };
+    }
+
+    function formatearResumenCitasPorDia(countsPorDia) {
+        const keys = Object.keys(countsPorDia).sort();
+        if (!keys.length) return 'No hay citas en los próximos días.';
+        const partes = keys.map(function (key) {
+            const n = countsPorDia[key];
+            const d = new Date(key + 'T12:00:00');
+            const dia = d.toLocaleDateString('es-MX', { weekday: 'long' });
+            const palabra = n === 1 ? 'cita' : 'citas';
+            return n + ' ' + palabra + ' de ' + dia;
+        });
+        if (partes.length === 1) return partes[0];
+        if (partes.length === 2) return partes[0] + ' y ' + partes[1];
+        return partes.slice(0, -1).join(', ') + ' y ' + partes[partes.length - 1];
+    }
+
+    function agruparOperadoresConCitas(citas) {
+        const map = {};
+        citas.forEach(function (c) {
+            const op = (c.operador && String(c.operador).trim()) ? String(c.operador).trim() : 'Sin operador';
+            if (!map[op]) map[op] = { total: 0, bases: {} };
+            map[op].total += 1;
+            const base = (c.baseDatos && String(c.baseDatos).trim()) ? String(c.baseDatos).trim() : 'Sin base';
+            map[op].bases[base] = (map[op].bases[base] || 0) + 1;
+        });
+        return Object.entries(map).sort(function (a, b) { return b[1].total - a[1].total; });
+    }
+
+    function htmlCalendarioSemanaPasada(registros, supFiltro, ref) {
+        const sem = getSemanaPasadaRango(ref);
+        const citasSemana = registros.filter(function (r) {
+            if (supFiltro && r.supervisora !== supFiltro) return false;
+            const iso = parseDiaEventoISO(r.diaEvento);
+            if (!iso) return false;
+            return iso >= sem.inicioISO && iso <= sem.finISO;
+        });
+        const inicioFmt = new Date(sem.inicioISO + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+        const finFmt = new Date(sem.finISO + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+        let html = '<div class="analisis-container" style="background:#fffef8;border-left-color:#d4af37;">';
+        html += '<h4 style="margin:0 0 8px;">📆 Semana pasada — bases que sirvieron</h4>';
+        html += '<p style="margin:0 0 10px;font-size:0.9rem;color:#475569;">Del <strong>' + inicioFmt + '</strong> al <strong>' + finFmt + '</strong> (por día del evento). Total: <strong>' + citasSemana.length + '</strong> cita(s).</p>';
+        html += '<div class="reporte-semana-grid">';
+        for (let i = 0; i < 7; i++) {
+            const diaDate = addDaysLocal(sem.lunesDate, i);
+            const iso = fechaLocalISO(diaDate);
+            const citasDia = citasSemana.filter(function (c) { return parseDiaEventoISO(c.diaEvento) === iso; });
+            const bases = {};
+            citasDia.forEach(function (c) {
+                const b = (c.baseDatos && String(c.baseDatos).trim()) ? String(c.baseDatos).trim() : 'Sin base';
+                bases[b] = (bases[b] || 0) + 1;
+            });
+            const basesOrden = Object.entries(bases).sort(function (a, b) { return b[1] - a[1]; });
+            const nombreCorto = diaDate.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric' });
+            const claseCelda = citasDia.length ? 'reporte-dia-celda reporte-dia-celda--top' : 'reporte-dia-celda reporte-dia-celda--vacio';
+            html += '<div class="' + claseCelda + '">';
+            html += '<div class="reporte-dia-titulo">' + reporteEscapeHtml(nombreCorto) + '<br><span style="font-weight:400;color:#64748b;">' + citasDia.length + ' cita(s)</span></div>';
+            if (!basesOrden.length) {
+                html += '<span style="color:#94a3b8;">Sin citas</span>';
+            } else {
+                basesOrden.forEach(function (par) {
+                    html += '<div class="reporte-base-linea"><strong>' + reporteEscapeHtml(par[0]) + '</strong>: ' + par[1] + '</div>';
+                });
+            }
+            html += '</div>';
+        }
+        html += '</div></div>';
+        return html;
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
       console.log("Iniciando aplicación...");
 
@@ -2404,54 +2566,95 @@
           };
       }
       
+      function htmlListaOperadoresReporte(titulo, citas) {
+          const lista = agruparOperadoresConCitas(citas);
+          let h = '<div class="analisis-container" style="background:#f0fdf4;border-left-color:#10b981;"><h4 style="margin:0 0 8px;">' + titulo + '</h4>';
+          if (!lista.length) {
+              h += '<p style="margin:0;color:#64748b;">Ningún operador con citas en este periodo.</p></div>';
+              return h;
+          }
+          h += '<table style="width:100%;border-collapse:collapse;font-size:0.9rem;"><thead><tr style="background:#0a2540;color:white;"><th>Operador</th><th>Citas sacadas</th><th>Bases</th></tr></thead><tbody>';
+          lista.forEach(function (par) {
+              const info = par[1];
+              const basesTxt = Object.entries(info.bases).sort(function (a, b) { return b[1] - a[1]; }).map(function (b) {
+                  return b[0] + ' (' + b[1] + ')';
+              }).join(', ');
+              h += '<tr><td>' + reporteEscapeHtml(par[0]) + '</td><td style="text-align:center;"><strong>' + info.total + '</strong></td><td>' + reporteEscapeHtml(basesTxt) + '</td></tr>';
+          });
+          h += '</tbody></table></div>';
+          return h;
+      }
+
       function mostrarReporteCitas() {
           const supFiltro = document.getElementById('reporteCitasSupervisorFiltro') ? document.getElementById('reporteCitasSupervisorFiltro').value : '';
-          const hoy = new Date();
-          const limite = new Date();
-          limite.setDate(hoy.getDate() + 2);
-          
-          const citasProximas = window.registrosPremanifiesto.filter(registro => {
-              if (!registro.diaEvento) return false;
-              const fechaEvento = new Date(registro.diaEvento);
-              if (fechaEvento < hoy || fechaEvento > limite) return false;
+          const hoy = inicioDelDia();
+          const hoyISO = fechaLocalISO(hoy);
+          const maxISO = fechaLocalISO(addDaysLocal(hoy, 2));
+          const mananaISO = fechaLocalISO(addDaysLocal(hoy, 1));
+          const registros = window.registrosPremanifiesto || [];
+
+          const citasProximas = registros.filter(function (registro) {
+              const iso = parseDiaEventoISO(registro.diaEvento);
+              if (!iso) return false;
+              if (iso < hoyISO || iso > maxISO) return false;
               if (supFiltro && registro.supervisora !== supFiltro) return false;
               return true;
-          }).sort((a, b) => new Date(a.diaEvento) - new Date(b.diaEvento));
+          }).sort(function (a, b) {
+              const ia = parseDiaEventoISO(a.diaEvento) || '';
+              const ib = parseDiaEventoISO(b.diaEvento) || '';
+              return ia.localeCompare(ib) || String(a.hora || '').localeCompare(String(b.hora || ''));
+          });
           
           const analisis = generarAnalisisBases(citasProximas);
           
           const totalCitasSup = citasProximas.length;
           const countsPorDia = {};
-          citasProximas.forEach(cita => {
-              if (!cita.diaEvento) return;
-              let key;
-              try {
-                  const fe = new Date(cita.diaEvento);
-                  if (isNaN(fe.getTime())) return;
-                  key = fe.toISOString().split('T')[0];
-              } catch (_) { return; }
+          citasProximas.forEach(function (cita) {
+              const key = parseDiaEventoISO(cita.diaEvento);
+              if (!key) return;
               countsPorDia[key] = (countsPorDia[key] || 0) + 1;
           });
           const diasOrdenados = Object.keys(countsPorDia).sort();
-          
+          const resumenFrase = formatearResumenCitasPorDia(countsPorDia);
+          const citasManana = countsPorDia[mananaISO] || 0;
+          const semPasada = getSemanaPasadaRango(hoy);
+          const citasRegistradasSemanaPasada = registros.filter(function (r) {
+              if (supFiltro && r.supervisora !== supFiltro) return false;
+              const iso = parseDiaEventoISO(r.fechaRegistro);
+              if (!iso) return false;
+              return iso >= semPasada.inicioISO && iso <= semPasada.finISO;
+          });
+
           let html = '';
           if (supFiltro) {
-              html += `<p style="margin-bottom:12px;padding:10px;background:#e8f0fe;border-radius:10px;"><strong>Filtro activo:</strong> solo citas de <strong>${segEscapeHtml(supFiltro)}</strong> (próximos 2 días).</p>`;
+              html += '<p style="margin-bottom:12px;padding:10px;background:#e8f0fe;border-radius:10px;"><strong>Filtro activo:</strong> solo citas de <strong>' + reporteEscapeHtml(supFiltro) + '</strong>.</p>';
           }
-          
-          html += `<div style="margin-bottom:16px;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">`;
+
+          html += '<div style="margin-bottom:16px;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">';
+          html += '<h4 style="margin:0 0 10px;color:#0a2540;">📅 Citas próximas (hoy y siguientes 2 días)</h4>';
           if (supFiltro) {
-              html += `<p style="margin:0 0 8px;"><strong>Supervisor:</strong> ${segEscapeHtml(supFiltro)} (${totalCitasSup} citas)</p>`;
+              html += '<p style="margin:0 0 8px;"><strong>Supervisor:</strong> ' + reporteEscapeHtml(supFiltro) + ' (' + totalCitasSup + ' citas)</p>';
           }
-          html += `<p style="margin:0 0 8px;"><strong>Total de citas</strong> ${totalCitasSup}</p>`;
-          diasOrdenados.forEach(key => {
+          html += '<p style="margin:0 0 8px;"><strong>Total:</strong> ' + totalCitasSup + ' cita(s)</p>';
+          if (citasManana > 0) {
+              const dMan = new Date(mananaISO + 'T12:00:00');
+              const nomMan = dMan.toLocaleDateString('es-MX', { weekday: 'long' });
+              html += '<p style="margin:0 0 8px;padding:8px 10px;background:#e8f5e9;border-radius:8px;"><strong>Mañana (' + nomMan + '):</strong> ' + citasManana + ' cita(s)</p>';
+          }
+          html += '<p style="margin:8px 0 4px;font-size:1.05rem;"><strong>Resumen:</strong> ' + reporteEscapeHtml(resumenFrase) + '</p>';
+          diasOrdenados.forEach(function (key) {
               const d = new Date(key + 'T12:00:00');
               const nombreDia = d.toLocaleDateString('es-MX', { weekday: 'long' });
               const nombreDiaCap = nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1);
-              html += `<p style="margin:4px 0;"><strong>Para ${nombreDiaCap}:</strong> ${countsPorDia[key]}</p>`;
+              const fechaCorta = d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+              html += '<p style="margin:4px 0;"><strong>Para ' + nombreDiaCap + ' (' + fechaCorta + '):</strong> ' + countsPorDia[key] + ' cita(s)</p>';
           });
-          html += `</div>`;
-          
+          html += '</div>';
+
+          html += htmlCalendarioSemanaPasada(registros, supFiltro, hoy);
+          html += htmlListaOperadoresReporte('👤 Operadores que sacaron cita (próximos días)', citasProximas);
+          html += htmlListaOperadoresReporte('👤 Operadores que registraron cita la semana pasada', citasRegistradasSemanaPasada);
+
           html += `<div class="analisis-container">
                       <h4>📊 ANÁLISIS DE RENDIMIENTO</h4>
                       <p><strong>👥 Supervisor con mayor volumen:</strong> ${analisis.supervisorTop || 'Ninguno'} (${analisis.maxSup} citas)</p>
@@ -2466,27 +2669,19 @@
                    </div>`;
           
           if (citasProximas.length === 0) {
-              html += '<p>No hay citas programadas para los próximos 2 días.</p>';
+              html += '<p>No hay citas programadas para los próximos días.</p>';
           } else {
-              html += '<h4>📅 Citas programadas:</h4>';
-              html += '<table style="width:100%; border-collapse:collapse;"><thead><tr style="background:#0a2540; color:white;"><th>Fecha</th><th>Hora</th><th>Nombre</th><th>Teléfono</th><th>Hotel</th><th>Base Datos</th><th>Supervisor</th></tr></thead><tbody>';
-              citasProximas.forEach(cita => {
-                  html += `<tr>
-                      <td>${cita.diaEvento || ''}</td>
-                      <td>${cita.hora || ''}</td>
-                      <td>${cita.nombre || ''}</td>
-                      <td>${cita.telefono || ''}</td>
-                      <td>${cita.hotel || ''}</td>
-                      <td>${cita.baseDatos || ''}</td>
-                      <td>${cita.supervisora || ''}</td>
-                   </tr>`;
+              html += '<h4 style="margin-top:16px;">📋 Detalle de citas programadas</h4>';
+              html += '<table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#0a2540;color:white;"><th>Fecha</th><th>Hora</th><th>Nombre</th><th>Teléfono</th><th>Operador</th><th>Hotel</th><th>Base</th><th>Supervisor</th></tr></thead><tbody>';
+              citasProximas.forEach(function (cita) {
+                  html += '<tr><td>' + reporteEscapeHtml(cita.diaEvento || '') + '</td><td>' + reporteEscapeHtml(cita.hora || '') + '</td><td>' + reporteEscapeHtml(cita.nombre || '') + '</td><td>' + reporteEscapeHtml(cita.telefono || '') + '</td><td>' + reporteEscapeHtml(cita.operador || '') + '</td><td>' + reporteEscapeHtml(cita.hotel || '') + '</td><td>' + reporteEscapeHtml(cita.baseDatos || '') + '</td><td>' + reporteEscapeHtml(cita.supervisora || '') + '</td></tr>';
               });
               html += '</tbody></table>';
           }
-          
+
           document.getElementById('contenidoReporteCitas').innerHTML = html;
       }
-      
+
       // --- Seguimiento Supervisor ---
       const modalSeguimiento = document.getElementById('modalSeguimientoSupervisor');
       const formSeguimiento = document.getElementById('formSeguimientoSupervisor');
@@ -2754,6 +2949,10 @@
               mostrarReporteCitas();
               mostrarNotificacion('Reporte actualizado');
           });
+      }
+      const reporteCitasSupervisorSel = document.getElementById('reporteCitasSupervisorFiltro');
+      if (reporteCitasSupervisorSel) {
+          reporteCitasSupervisorSel.addEventListener('change', () => mostrarReporteCitas());
       }
       
       // --- Formato Briefing con envíos ---
