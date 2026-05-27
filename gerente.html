@@ -1086,13 +1086,13 @@
       </div>
     </section>
 
-    <!-- REPORTE SEMANAL POR SUPERVISORA -->
+    <!-- REPORTE POR DÍA: MAÑANA / JUEVES / VIERNES -->
     <section class="citas-agregadas-hoy" id="citasAgregadasHoy">
-      <h2><i class="fas fa-user-tie"></i> REPORTE SEMANAL DE CITAS POR SUPERVISORA</h2>
+      <h2><i class="fas fa-calendar-day"></i> REPORTE DE CITAS (MAÑANA / JUEVES / VIERNES)</h2>
       <div class="citas-agregadas-grid" id="citasAgregadasGrid">
         <div class="cargando">
           <i class="fas fa-spinner"></i>
-          <p>CARGANDO REPORTE SEMANAL...</p>
+          <p>CARGANDO CONTEO POR DÍA...</p>
         </div>
       </div>
     </section>
@@ -1110,7 +1110,7 @@
 
     <!-- Panel del Gerente -->
     <section class="gerente-panel">
-      <h2><i class="fas fa-chart-line"></i> REPORTE SEMANAL POR SUPERVISORA</h2>
+      <h2><i class="fas fa-chart-line"></i> ESTADÍSTICAS POR SUPERVISORA</h2>
       
       <!-- Controles para el panel del gerente -->
       <div class="panel-controls">
@@ -1372,6 +1372,33 @@
           if (!esSupervisoraDeFirebase(reg.supervisora || '')) return false;
           return fechaRegistro >= inicioSemana && fechaRegistro <= finSemana;
         });
+      }
+
+      function formatearFechaLocal(fecha) {
+        const anio = fecha.getFullYear();
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const dia = String(fecha.getDate()).padStart(2, '0');
+        return `${anio}-${mes}-${dia}`;
+      }
+
+      function obtenerProximoDiaSemana(diaSemana) {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const resultado = new Date(hoy);
+        let diff = diaSemana - hoy.getDay();
+        if (diff <= 0) diff += 7;
+        resultado.setDate(hoy.getDate() + diff);
+        return resultado;
+      }
+
+      function contarCitasPorFecha(fechaObjetivo) {
+        const fechaStr = formatearFechaLocal(fechaObjetivo);
+        return registrosPremanifiesto.filter(reg => {
+          if (!esSupervisoraDeFirebase(reg.supervisora || '')) return false;
+          const fecha = obtenerFechaValidaRegistro(reg);
+          if (!fecha) return false;
+          return formatearFechaLocal(fecha) === fechaStr;
+        }).length;
       }
 
       // REPORTE SEMANAL POR BASE
@@ -1708,77 +1735,53 @@
 
       function actualizarCitasAgregadasHoy() {
         const citasAgregadasGrid = document.getElementById('citasAgregadasGrid');
-        const registrosSemanales = obtenerRegistrosSemanalesValidos();
-        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
-        
-        const citasHoyPorSupervisora = {};
-        let totalCitasHoy = 0;
-        
-        console.log(`📅 CITAS SEMANALES ENCONTRADAS: ${registrosSemanales.length}`);
-        
-        // Contar por supervisora (solo las registradas en Firebase)
-        registrosSemanales.forEach(cita => {
-            const supervisora = cita.supervisora || 'SIN SUPERVISORA';
-            if (!esSupervisoraDeFirebase(supervisora)) return;
-            if (!citasHoyPorSupervisora[supervisora]) {
-                citasHoyPorSupervisora[supervisora] = 0;
-            }
-            citasHoyPorSupervisora[supervisora]++;
-            totalCitasHoy++;
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        const fechaManana = new Date(hoy);
+        fechaManana.setDate(hoy.getDate() + 1);
+        const fechaJueves = obtenerProximoDiaSemana(4);
+        const fechaViernes = obtenerProximoDiaSemana(5);
+
+        const diasReporte = [
+          { etiqueta: 'MAÑANA', fecha: fechaManana },
+          { etiqueta: 'JUEVES', fecha: fechaJueves },
+          { etiqueta: 'VIERNES', fecha: fechaViernes }
+        ];
+
+        const conteos = diasReporte.map(dia => ({
+          ...dia,
+          cantidad: contarCitasPorFecha(dia.fecha),
+          fechaTexto: dia.fecha.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })
+        }));
+
+        const fechasContadas = new Set();
+        let totalReporte = 0;
+        conteos.forEach(dia => {
+          const claveFecha = formatearFechaLocal(dia.fecha);
+          if (fechasContadas.has(claveFecha)) return;
+          fechasContadas.add(claveFecha);
+          totalReporte += dia.cantidad;
         });
-        
-        // También incluir supervisoras con 0 citas semanales
-        listaSupervisoras.forEach(supervisora => {
-            if (!citasHoyPorSupervisora[supervisora]) {
-                citasHoyPorSupervisora[supervisora] = 0;
-            }
-        });
-        
-        const supervisorasOrdenadas = Object.keys(citasHoyPorSupervisora).sort((a, b) => 
-            citasHoyPorSupervisora[b] - citasHoyPorSupervisora[a]
-        );
-        
-        let html = '';
-        
-        // Agregar fila para el total semanal
-        html += `
-            <div class="cita-agregada-item" style="border-left: 4px solid var(--gold);">
-                <div class="cita-agregada-supervisora">🏆 TOTAL DE CITAS DE LA SEMANA</div>
-                <div class="cita-agregada-cantidad">${totalCitasHoy} CITAS</div>
-                <div class="cita-agregada-eficiencia eficiencia-excelente">
-                    ${inicioSemana.toLocaleDateString('es-MX')} - ${finSemana.toLocaleDateString('es-MX')}
-                </div>
-            </div>
+
+        let html = `
+          <div class="cita-agregada-item" style="border-left: 4px solid var(--gold); background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(244, 208, 63, 0.05));">
+            <div class="cita-agregada-supervisora">🏆 TOTAL DEL REPORTE</div>
+            <div class="cita-agregada-cantidad">${totalReporte} CITAS</div>
+            <div class="cita-agregada-eficiencia eficiencia-excelente">MAÑANA + JUEVES + VIERNES</div>
+          </div>
         `;
-        
-        supervisorasOrdenadas.forEach(supervisora => {
-            const citasHoy = citasHoyPorSupervisora[supervisora];
-            const eficiencia = calcularEficienciaSupervisora(supervisora, citasHoy);
-            const claseEficiencia = obtenerClaseEficiencia(eficiencia);
-            const textoEficiencia = obtenerTextoEficiencia(supervisora, citasHoy, eficiencia);
-            
-            // Agregar emoji según eficiencia
-            let emoji = '❌';
-            if (eficiencia > 0) emoji = '📊';
-            if (eficiencia >= 50) emoji = '⚠️';
-            if (eficiencia >= 80) emoji = '✅';
-            if (eficiencia >= 100) emoji = '🎯';
-            
-            html += `
-                <div class="cita-agregada-item">
-                    <div class="cita-agregada-supervisora">${emoji} ${supervisora}</div>
-                    <div class="cita-agregada-cantidad">${citasHoy} CITAS</div>
-                    <div class="cita-agregada-eficiencia ${claseEficiencia}">
-                        ${textoEficiencia} | ${totalCitasHoy > 0 ? Math.round((citasHoy / totalCitasHoy) * 100) : 0}% DEL TOTAL
-                    </div>
-                </div>
-            `;
+
+        conteos.forEach(dia => {
+          html += `
+            <div class="cita-agregada-item">
+              <div class="cita-agregada-supervisora">📅 ${dia.etiqueta}</div>
+              <div class="cita-agregada-cantidad">${dia.cantidad} CITAS</div>
+              <div class="cita-agregada-eficiencia">${dia.fechaTexto}</div>
+            </div>
+          `;
         });
-        
-        if (html === '') {
-            html = '<div class="sin-datos">NO HAY CITAS REGISTRADAS EN LA SEMANA ACTUAL</div>';
-        }
-        
+
         citasAgregadasGrid.innerHTML = html;
       }
 
