@@ -1063,7 +1063,7 @@
 
     <!-- SECCIÓN Q & NQ -->
     <section class="qnq-section" id="qnqSection">
-      <h2><i class="fas fa-chart-pie"></i> CALIFICACIÓN Q & NQ HOY</h2>
+      <h2><i class="fas fa-chart-pie"></i> REPORTE SEMANAL DE CALIFICACIÓN (Q & NQ)</h2>
       <div class="qnq-grid" id="qnqGrid">
         <div class="cargando">
           <i class="fas fa-spinner"></i>
@@ -1075,31 +1075,31 @@
       </div>
     </section>
 
-    <!-- <<< --- CORRECCIÓN: NUEVA SECCIÓN PARA CITAS DE MAÑANA --- >>> -->
+    <!-- REPORTE SEMANAL POR BASE -->
     <section class="citas-agregadas-hoy" id="citasMananaSection">
-      <h2><i class="fas fa-calendar-day"></i> CITAS PROGRAMADAS PARA MAÑANA</h2>
+      <h2><i class="fas fa-database"></i> REPORTE SEMANAL DE CITAS POR BASE</h2>
       <div class="citas-agregadas-grid" id="citasMananaGrid">
         <div class="cargando">
           <i class="fas fa-spinner"></i>
-          <p>CARGANDO CITAS DE MAÑANA...</p>
+          <p>CARGANDO REPORTE SEMANAL...</p>
         </div>
       </div>
     </section>
 
-    <!-- NUEVA SECCIÓN: Citas Agregadas Hoy -->
+    <!-- REPORTE SEMANAL POR SUPERVISORA -->
     <section class="citas-agregadas-hoy" id="citasAgregadasHoy">
-      <h2><i class="fas fa-calendar-plus"></i> CITAS AGREGADAS HOY</h2>
+      <h2><i class="fas fa-user-tie"></i> REPORTE SEMANAL DE CITAS POR SUPERVISORA</h2>
       <div class="citas-agregadas-grid" id="citasAgregadasGrid">
         <div class="cargando">
           <i class="fas fa-spinner"></i>
-          <p>CARGANDO CITAS DE HOY...</p>
+          <p>CARGANDO REPORTE SEMANAL...</p>
         </div>
       </div>
     </section>
 
     <!-- Gráfico de distribución -->
     <div class="grafico-container">
-      <h2><i class="fas fa-chart-bar"></i> DISTRIBUCIÓN DE CITAS POR SUPERVISORA</h2>
+      <h2><i class="fas fa-chart-bar"></i> DISTRIBUCIÓN SEMANAL DE CITAS POR SUPERVISORA</h2>
       <div id="graficoBarras">
         <div class="cargando">
           <i class="fas fa-spinner"></i>
@@ -1110,7 +1110,7 @@
 
     <!-- Panel del Gerente -->
     <section class="gerente-panel">
-      <h2><i class="fas fa-chart-line"></i> ESTADÍSTICAS POR SUPERVISORA</h2>
+      <h2><i class="fas fa-chart-line"></i> REPORTE SEMANAL POR SUPERVISORA</h2>
       
       <!-- Controles para el panel del gerente -->
       <div class="panel-controls">
@@ -1340,99 +1340,92 @@
         }
       }
 
-      // <<< --- CORRECCIÓN: NUEVA FUNCIÓN PARA MOSTRAR CITAS DE MAÑANA EN TIEMPO REAL --- >>>
+      function obtenerFechaValidaRegistro(registro) {
+        const fuenteFecha = registro.diaEvento || registro.fechaRegistro;
+        if (!fuenteFecha) return null;
+        const fecha = new Date(fuenteFecha);
+        if (isNaN(fecha.getTime())) return null;
+        return fecha;
+      }
+
+      function obtenerRangoSemanaActual() {
+        const hoy = new Date();
+        const inicioSemana = new Date(hoy);
+        const dia = hoy.getDay();
+        const diasDesdeLunes = dia === 0 ? 6 : dia - 1;
+        inicioSemana.setDate(hoy.getDate() - diasDesdeLunes);
+        inicioSemana.setHours(0, 0, 0, 0);
+
+        const finSemana = new Date(inicioSemana);
+        finSemana.setDate(inicioSemana.getDate() + 6);
+        finSemana.setHours(23, 59, 59, 999);
+
+        return { inicioSemana, finSemana };
+      }
+
+      function obtenerRegistrosSemanalesValidos() {
+        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
+
+        return registrosPremanifiesto.filter(reg => {
+          const fechaRegistro = obtenerFechaValidaRegistro(reg);
+          if (!fechaRegistro) return false;
+          if (!esSupervisoraDeFirebase(reg.supervisora || '')) return false;
+          return fechaRegistro >= inicioSemana && fechaRegistro <= finSemana;
+        });
+      }
+
+      // REPORTE SEMANAL POR BASE
       function actualizarCitasManana() {
         const citasMananaGrid = document.getElementById('citasMananaGrid');
-        const hoy = new Date();
-        const manana = new Date(hoy);
-        manana.setDate(hoy.getDate() + 1);
-        
-        // Formatear la fecha de mañana para comparación (YYYY-MM-DD)
-        const anioManana = manana.getFullYear();
-        const mesManana = String(manana.getMonth() + 1).padStart(2, '0');
-        const diaManana = String(manana.getDate()).padStart(2, '0');
-        const fechaMananaStr = `${anioManana}-${mesManana}-${diaManana}`;
-        
-        // Filtrar citas para mañana basándose en 'diaEvento' o 'fechaRegistro'
-        const citasManana = registrosPremanifiesto.filter(reg => {
-            const supervisoraRegistro = reg.supervisora || '';
-            if (!esSupervisoraDeFirebase(supervisoraRegistro)) return false;
-            let fechaEvento = reg.diaEvento; // Priorizar diaEvento
-            if (!fechaEvento) fechaEvento = reg.fechaRegistro; // Usar fechaRegistro como fallback
-            if (!fechaEvento) return false;
-            
-            // Normalizar la fecha a string YYYY-MM-DD para comparar
-            let fechaComparar = fechaEvento;
-            try {
-                const fechaObj = new Date(fechaEvento);
-                if (!isNaN(fechaObj.getTime())) {
-                    fechaComparar = fechaObj.toISOString().split('T')[0];
-                }
-            } catch(e) { /* Ignorar si falla */ }
-            
-            return fechaComparar === fechaMananaStr;
-        });
-        
-        console.log(`📅 CITAS PARA MAÑANA (${fechaMananaStr}) ENCONTRADAS: ${citasManana.length}`);
-        
-        if (citasManana.length === 0) {
-            citasMananaGrid.innerHTML = '<div class="sin-datos"><i class="fas fa-calendar-times"></i> NO HAY CITAS PROGRAMADAS PARA MAÑANA</div>';
+        const registrosSemanales = obtenerRegistrosSemanalesValidos();
+        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
+
+        if (registrosSemanales.length === 0) {
+            citasMananaGrid.innerHTML = '<div class="sin-datos"><i class="fas fa-calendar-times"></i> NO HAY CITAS EN LA SEMANA ACTUAL</div>';
             return;
         }
-        
-        // Agrupar por supervisora para una mejor visualización
-        const citasPorSupervisora = {};
-        citasManana.forEach(cita => {
-            const supervisora = cita.supervisora || 'SIN SUPERVISORA';
-            if (!citasPorSupervisora[supervisora]) {
-                citasPorSupervisora[supervisora] = [];
+
+        const citasPorBase = {};
+        registrosSemanales.forEach(cita => {
+            const base = cita.baseDatos || cita.base || 'SIN BASE';
+            if (!citasPorBase[base]) {
+                citasPorBase[base] = [];
             }
-            citasPorSupervisora[supervisora].push(cita);
+            citasPorBase[base].push(cita);
         });
-        
-        let html = '';
-        // Mostrar total de citas para mañana
-        html += `
+
+        const basesOrdenadas = Object.keys(citasPorBase).sort((a, b) => citasPorBase[b].length - citasPorBase[a].length);
+        const baseLider = basesOrdenadas[0];
+        const porcentajeBaseLider = Math.round((citasPorBase[baseLider].length / registrosSemanales.length) * 100);
+
+        let html = `
             <div class="cita-agregada-item" style="border-left: 4px solid var(--gold); background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(244, 208, 63, 0.05));">
-                <div class="cita-agregada-supervisora">🏆 TOTAL DE CITAS PARA MAÑANA</div>
-                <div class="cita-agregada-cantidad">${citasManana.length} CITAS</div>
+                <div class="cita-agregada-supervisora">🏆 TOTAL SEMANAL DE CITAS</div>
+                <div class="cita-agregada-cantidad">${registrosSemanales.length} CITAS</div>
                 <div class="cita-agregada-eficiencia eficiencia-excelente">
-                    ${manana.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    ${inicioSemana.toLocaleDateString('es-MX')} - ${finSemana.toLocaleDateString('es-MX')}
                 </div>
             </div>
+            <div class="cita-agregada-item" style="border-left: 4px solid var(--accent);">
+                <div class="cita-agregada-supervisora">📌 BASE LÍDER DE LA SEMANA</div>
+                <div class="cita-agregada-cantidad">${baseLider}</div>
+                <div class="cita-agregada-eficiencia">PARTICIPACIÓN: ${porcentajeBaseLider}%</div>
+            </div>
         `;
-        
-        // Mostrar desglose por supervisora
-        Object.keys(citasPorSupervisora).sort().forEach(supervisora => {
-            const citas = citasPorSupervisora[supervisora];
+
+        basesOrdenadas.forEach(base => {
+            const citas = citasPorBase[base];
             html += `
                 <div class="cita-agregada-item">
-                    <div class="cita-agregada-supervisora">👩‍💼 ${supervisora}</div>
+                    <div class="cita-agregada-supervisora">🗂️ ${base}</div>
                     <div class="cita-agregada-cantidad">${citas.length} CITAS</div>
                     <div class="cita-agregada-eficiencia">
-                        <details>
-                            <summary>Ver detalles (${citas.length})</summary>
-                            <ul style="margin-top: 10px; list-style: none; padding-left: 0;">
-            `;
-            
-            citas.forEach((cita, idx) => {
-                const nombreCliente = cita.nombre || cita.cliente || 'CLIENTE NO ESPECIFICADO';
-                const hora = cita.hora || 'Hora no especificada';
-                const telefono = cita.telefono || '';
-                html += `<li style="margin-bottom: 8px; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 5px;">
-                            <strong>${idx+1}. ${nombreCliente}</strong><br>
-                            <small>🕒 ${hora} | 📞 ${telefono}</small>
-                         </li>`;
-            });
-            
-            html += `
-                            </ul>
-                        </details>
+                        ${Math.round((citas.length / registrosSemanales.length) * 100)}% DEL TOTAL SEMANAL
                     </div>
                 </div>
             `;
         });
-        
+
         citasMananaGrid.innerHTML = html;
       }
 
@@ -1501,20 +1494,14 @@
       // --- FUNCIONES Q & NQ ---
 
       function actualizarQnqTotales() {
-        const hoy = new Date().toISOString().split('T')[0];
-        
-        // Contar Q y NQ del día de hoy
-        const citasHoy = registrosPremanifiesto.filter(reg => 
-            reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
-        );
+        const citasSemana = obtenerRegistrosSemanalesValidos();
         
         let totalQ = 0;
         let totalNQ = 0;
         qDetalles = [];
         nqDetalles = [];
         
-        citasHoy.forEach(registro => {
-            if (!esSupervisoraDeFirebase(registro.supervisora || '')) return;
+        citasSemana.forEach(registro => {
             const calificacion = registro.calificacionOrigen || '';
             const esQ = calificacion.toUpperCase().includes('Q') || 
                         calificacion.toUpperCase() === 'CALIFICADO' ||
@@ -1528,7 +1515,7 @@
                 calificacion: calificacion || 'SIN CALIFICACIÓN',
                 cliente: registro.nombre || 'SIN NOMBRE',
                 personas: registro.numPersonas || '0',
-                fecha: registro.fechaRegistro || hoy
+                fecha: registro.fechaRegistro || registro.diaEvento || 'SIN FECHA'
             };
             
             if (esQ) {
@@ -1548,13 +1535,13 @@
             <div class="qnq-icono"><i class="fas fa-check-circle"></i></div>
             <div class="qnq-titulo">CALIFICADOS (Q)</div>
             <div class="qnq-cantidad" id="totalQ">${totalQ}</div>
-            <div class="qnq-detalle">Citas calificadas para venta</div>
+            <div class="qnq-detalle">Citas calificadas de la semana</div>
           </div>
           <div class="qnq-card nq" data-tipo="NQ">
             <div class="qnq-icono"><i class="fas fa-times-circle"></i></div>
             <div class="qnq-titulo">NO CALIFICADOS (NQ)</div>
             <div class="qnq-cantidad" id="totalNQ">${totalNQ}</div>
-            <div class="qnq-detalle">Citas no calificadas</div>
+            <div class="qnq-detalle">Citas no calificadas de la semana</div>
           </div>
         `;
         
@@ -1581,8 +1568,8 @@
           detallesContainer.innerHTML = `
             <div class="sin-datos" style="text-align: center; padding: 30px; color: var(--text-secondary); font-style: italic;">
               <i class="fas fa-${icono}" style="font-size: 3rem; color: ${color}; margin-bottom: 15px;"></i>
-              <h3 style="color: ${color};">NO HAY CITAS ${titulo} HOY</h3>
-              <p>No se encontraron registros ${titulo.toLowerCase()} para el día de hoy</p>
+              <h3 style="color: ${color};">NO HAY CITAS ${titulo} ESTA SEMANA</h3>
+              <p>No se encontraron registros ${titulo.toLowerCase()} en la semana actual</p>
             </div>
           `;
         } else {
@@ -1671,33 +1658,12 @@
 
       function actualizarResumenGeneral() {
         const resumenContainer = document.getElementById('resumenGeneral');
-        
-        // ✅ CORRECCIÓN IMPORTANTE: Contar TODAS las citas correctamente
+
         const totalCitas = registrosPremanifiesto.length;
-        console.log("🔢 TOTAL DE CITAS CONTADAS:", totalCitas);
-        
-        const hoy = new Date().toISOString().split('T')[0];
-        
-        // ✅ CORRECCIÓN: Contar citas de hoy correctamente
-        const citasHoy = registrosPremanifiesto.filter(reg => {
-          if (!reg.fechaRegistro) return false;
-          
-          // Buscar la fecha en cualquier formato
-          const fechaReg = reg.fechaRegistro.toString();
-          const hoyFormateado1 = hoy; // Formato YYYY-MM-DD
-          const hoyFormateado2 = hoy.replace(/-/g, '/'); // Formato YYYY/MM/DD
-          const hoyFormateado3 = new Date().toLocaleDateString('es-MX'); // Formato local
-          
-          return fechaReg.includes(hoyFormateado1) || 
-                 fechaReg.includes(hoyFormateado2) ||
-                 fechaReg.includes(hoyFormateado3) ||
-                 fechaReg.includes(new Date().getDate().toString()); // Solo el día
-        }).length;
-        
-        console.log("📅 CITAS HOY CONTADAS:", citasHoy);
-        
+        const citasSemana = obtenerRegistrosSemanalesValidos().length;
         const supervisorasActivas = listaSupervisoras.length;
-        const eficienciaGeneral = calcularEficienciaGeneral(citasHoy);
+        const eficienciaGeneral = calcularEficienciaGeneral(citasSemana);
+        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
         
         // Determinar clase de eficiencia general
         let claseEficienciaGeneral = 'eficiencia-baja';
@@ -1716,8 +1682,11 @@
           </div>
           <div class="resumen-item">
             <div class="icono"><i class="fas fa-calendar-day"></i></div>
-            <div class="valor">${citasHoy}</div>
-            <div class="etiqueta">CITAS HOY</div>
+            <div class="valor">${citasSemana}</div>
+            <div class="etiqueta">CITAS DE LA SEMANA</div>
+            <div class="eficiencia-indicator eficiencia-alta">
+              ${inicioSemana.toLocaleDateString('es-MX')} - ${finSemana.toLocaleDateString('es-MX')}
+            </div>
           </div>
           <div class="resumen-item">
             <div class="icono"><i class="fas fa-users"></i></div>
@@ -1727,11 +1696,11 @@
           <div class="resumen-item">
             <div class="icono"><i class="fas fa-chart-line"></i></div>
             <div class="valor">${eficienciaGeneral}%</div>
-            <div class="etiqueta">EFICIENCIA DEL EQUIPO</div>
+            <div class="etiqueta">EFICIENCIA SEMANAL DEL EQUIPO</div>
             <div class="eficiencia-indicator ${claseEficienciaGeneral}">
               ${eficienciaGeneral >= 100 ? 
                 `🎯 SUPERÓ LA META EN ${eficienciaGeneral - 100}%` : 
-                `META DEL EQUIPO: ${Math.max(supervisorasActivas, 1) * 8} CITAS = 100%`}
+                `META SEMANAL BASE: ${Math.max(supervisorasActivas, 1) * 8} CITAS = 100%`}
             </div>
           </div>
         `;
@@ -1739,29 +1708,16 @@
 
       function actualizarCitasAgregadasHoy() {
         const citasAgregadasGrid = document.getElementById('citasAgregadasGrid');
-        const hoy = new Date().toISOString().split('T')[0];
+        const registrosSemanales = obtenerRegistrosSemanalesValidos();
+        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
         
         const citasHoyPorSupervisora = {};
         let totalCitasHoy = 0;
         
-        // Filtrar SOLO citas de hoy
-        const citasDeHoy = registrosPremanifiesto.filter(reg => {
-            if (!reg.fechaRegistro) return false;
-            
-            // Verificar diferentes formatos de fecha
-            const fechaReg = reg.fechaRegistro.toString();
-            const hoyFormateado1 = hoy; // YYYY-MM-DD
-            const hoyFormateado2 = hoy.replace(/-/g, '/'); // YYYY/MM/DD
-            
-            return fechaReg.includes(hoyFormateado1) || 
-                   fechaReg.includes(hoyFormateado2) ||
-                   fechaReg.includes(new Date().getDate().toString()); // Solo el día
-        });
-        
-        console.log(`📅 CITAS DE HOY ENCONTRADAS: ${citasDeHoy.length}`);
+        console.log(`📅 CITAS SEMANALES ENCONTRADAS: ${registrosSemanales.length}`);
         
         // Contar por supervisora (solo las registradas en Firebase)
-        citasDeHoy.forEach(cita => {
+        registrosSemanales.forEach(cita => {
             const supervisora = cita.supervisora || 'SIN SUPERVISORA';
             if (!esSupervisoraDeFirebase(supervisora)) return;
             if (!citasHoyPorSupervisora[supervisora]) {
@@ -1771,7 +1727,7 @@
             totalCitasHoy++;
         });
         
-        // También incluir supervisoras que no tengan citas hoy (mostrar 0)
+        // También incluir supervisoras con 0 citas semanales
         listaSupervisoras.forEach(supervisora => {
             if (!citasHoyPorSupervisora[supervisora]) {
                 citasHoyPorSupervisora[supervisora] = 0;
@@ -1784,13 +1740,13 @@
         
         let html = '';
         
-        // Agregar fila para el total de hoy
+        // Agregar fila para el total semanal
         html += `
             <div class="cita-agregada-item" style="border-left: 4px solid var(--gold);">
-                <div class="cita-agregada-supervisora">🏆 TOTAL DE CITAS HOY</div>
+                <div class="cita-agregada-supervisora">🏆 TOTAL DE CITAS DE LA SEMANA</div>
                 <div class="cita-agregada-cantidad">${totalCitasHoy} CITAS</div>
                 <div class="cita-agregada-eficiencia eficiencia-excelente">
-                    ${new Date().toLocaleDateString('es-MX')}
+                    ${inicioSemana.toLocaleDateString('es-MX')} - ${finSemana.toLocaleDateString('es-MX')}
                 </div>
             </div>
         `;
@@ -1813,14 +1769,14 @@
                     <div class="cita-agregada-supervisora">${emoji} ${supervisora}</div>
                     <div class="cita-agregada-cantidad">${citasHoy} CITAS</div>
                     <div class="cita-agregada-eficiencia ${claseEficiencia}">
-                        ${textoEficiencia}
+                        ${textoEficiencia} | ${totalCitasHoy > 0 ? Math.round((citasHoy / totalCitasHoy) * 100) : 0}% DEL TOTAL
                     </div>
                 </div>
             `;
         });
         
         if (html === '') {
-            html = '<div class="sin-datos">NO SE HAN AGREGADO CITAS HOY</div>';
+            html = '<div class="sin-datos">NO HAY CITAS REGISTRADAS EN LA SEMANA ACTUAL</div>';
         }
         
         citasAgregadasGrid.innerHTML = html;
@@ -1843,13 +1799,19 @@
         const statsContainer = document.getElementById('statsContainer');
         const filtroFecha = document.getElementById('filtroFecha').value;
         const filtroSupervisora = document.getElementById('filtroSupervisora').value;
+        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
         
-        let registrosFiltrados = [...registrosPremanifiesto];
+        let registrosFiltrados = registrosPremanifiesto.filter(reg => esSupervisoraDeFirebase(reg.supervisora || ''));
         
         if (filtroFecha) {
             registrosFiltrados = registrosFiltrados.filter(reg => 
                 reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
             );
+        } else {
+            registrosFiltrados = registrosFiltrados.filter(reg => {
+                const fecha = obtenerFechaValidaRegistro(reg);
+                return fecha && fecha >= inicioSemana && fecha <= finSemana;
+            });
         }
         
         if (filtroSupervisora) {
@@ -1899,11 +1861,11 @@
                 <div class="count">${totalCitasFiltradas}</div>
                 <div class="supervisora">TOTAL DE CITAS</div>
                 <div class="conteo-dia">
-                    <div class="titulo">CITAS HOY</div>
+                    <div class="titulo">CITAS DEL DÍA</div>
                     <div class="valor-dia">${totalCitasHoyFiltradas}</div>
                 </div>
                 <div class="eficiencia-indicator eficiencia-excelente">
-                    META DEL EQUIPO: ${Math.max(listaSupervisoras.length, 1) * 8} CITAS = 100%
+                    REPORTE: ${filtroFecha ? 'FECHA FILTRADA' : 'SEMANA ACTUAL'}
                 </div>
             </div>
         `;
@@ -1918,13 +1880,13 @@
                     <div class="count">${stats.total}</div>
                     <div class="supervisora">TOTAL DE CITAS</div>
                     <div class="conteo-dia">
-                        <div class="titulo">CITAS HOY</div>
+                        <div class="titulo">CITAS DEL DÍA</div>
                         <div class="valor-dia">${stats.hoy}</div>
                     </div>
                     <div class="eficiencia-indicator ${stats.claseEficiencia}">
                         ${stats.textoEficiencia}
                     </div>
-                    ${esLider ? '<div class="supervisora">🏆 LÍDER DEL DÍA</div>' : ''}
+                    ${esLider ? '<div class="supervisora">🏆 LÍDER DEL REPORTE</div>' : ''}
                 </div>
             `;
         });
@@ -1936,13 +1898,19 @@
         const graficoContainer = document.getElementById('graficoBarras');
         const filtroFecha = document.getElementById('filtroFecha').value;
         const filtroSupervisora = document.getElementById('filtroSupervisora').value;
+        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
         
-        let registrosFiltrados = [...registrosPremanifiesto];
+        let registrosFiltrados = registrosPremanifiesto.filter(reg => esSupervisoraDeFirebase(reg.supervisora || ''));
         
         if (filtroFecha) {
           registrosFiltrados = registrosFiltrados.filter(reg => 
             reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
           );
+        } else {
+          registrosFiltrados = registrosFiltrados.filter(reg => {
+            const fecha = obtenerFechaValidaRegistro(reg);
+            return fecha && fecha >= inicioSemana && fecha <= finSemana;
+          });
         }
         
         if (filtroSupervisora) {
@@ -1997,13 +1965,19 @@
         const detalleContainer = document.getElementById('supervisoraDetalle');
         const filtroFecha = document.getElementById('filtroFecha').value;
         const filtroSupervisora = document.getElementById('filtroSupervisora').value;
+        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
         
-        let registrosFiltrados = [...registrosPremanifiesto];
+        let registrosFiltrados = registrosPremanifiesto.filter(reg => esSupervisoraDeFirebase(reg.supervisora || ''));
         
         if (filtroFecha) {
           registrosFiltrados = registrosFiltrados.filter(reg => 
             reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
           );
+        } else {
+          registrosFiltrados = registrosFiltrados.filter(reg => {
+            const fecha = obtenerFechaValidaRegistro(reg);
+            return fecha && fecha >= inicioSemana && fecha <= finSemana;
+          });
         }
         
         if (filtroSupervisora) {
@@ -2024,7 +1998,7 @@
         if (registrosFiltrados.length > 0) {
           html += `
             <div class="supervisora-detalle">
-              <h3><i class="fas fa-chart-pie"></i> TOTAL DE CITAS - ${registrosFiltrados.length} REGISTROS</h3>
+              <h3><i class="fas fa-chart-pie"></i> REPORTE GENERAL SEMANAL - ${registrosFiltrados.length} REGISTROS</h3>
               <div class="supervisora-citas">
           `;
           
