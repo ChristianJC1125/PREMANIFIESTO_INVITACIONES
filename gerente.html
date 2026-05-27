@@ -440,6 +440,119 @@
       gap: 10px;
     }
 
+    .reporte-block {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .reporte-block h2 {
+      color: var(--gold);
+      font-size: 1.35rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .reporte-rango {
+      color: var(--text-secondary);
+      margin-bottom: 18px;
+      font-size: 0.95rem;
+    }
+
+    .reporte-dias-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 14px;
+    }
+
+    .reporte-dia-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .reporte-dia-card.hoy {
+      border-color: var(--gold);
+      background: linear-gradient(145deg, rgba(212, 175, 55, 0.15), rgba(244, 208, 63, 0.05));
+    }
+
+    .reporte-dia-card .dia-nombre {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .reporte-dia-card .dia-cantidad {
+      color: var(--gold);
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .reporte-dia-card .dia-fecha {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      margin-top: 6px;
+    }
+
+    .estado-tiempo-real {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(16, 185, 129, 0.6);
+      background: rgba(16, 185, 129, 0.12);
+      color: #6ee7b7;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .tiempo-real-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #10B981;
+      animation: pulsoTiempoReal 1.6s infinite;
+    }
+
+    @keyframes pulsoTiempoReal {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .live-strip {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.12));
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-weight: 600;
+    }
+
+    .live-strip .hora-live {
+      color: #6ee7b7;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
     .citas-agregadas-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -999,18 +1112,16 @@
         </div>
         <div class="logo-text">
           <h1>BLUE ELEGANCE</h1>
-          <p>PANEL DE CONTROL - GERENTE</p>
+          <p>REPORTE DE SUPERVISIÓN SEMANAL</p>
+          <div class="estado-tiempo-real">
+            <span class="tiempo-real-dot"></span>
+            TIEMPO REAL ACTIVO
+          </div>
         </div>
       </div>
       <div class="header-controls">
         <button class="btn-filtro" id="actualizarBtn">
-          <i class="fas fa-sync-alt"></i> ACTUALIZAR
-        </button>
-        <button class="btn-filtro btn-citas-mes" id="btnCitasMes">
-          <i class="fas fa-calendar-alt"></i> VER CITAS DEL MES
-        </button>
-        <button class="btn-filtro btn-exportar" id="exportarEstadisticas">
-          <i class="fas fa-file-excel"></i> EXPORTAR ESTADÍSTICAS
+          <i class="fas fa-sync-alt"></i> ACTUALIZAR REPORTE
         </button>
         <button class="btn-filtro btn-volver" onclick="window.location.href='index.html'">
           <i class="fas fa-arrow-left"></i> VOLVER AL SISTEMA
@@ -1053,53 +1164,52 @@
       </div>
     </div>
 
-    <!-- Resumen General -->
+    <div class="live-strip">
+      <div><strong>Supervisión semanal en tiempo real</strong> · citas y eficiencia por base de datos</div>
+      <div class="hora-live" id="relojTiempoReal">--:--:--</div>
+    </div>
+
+    <!-- Resumen del reporte semanal -->
     <section class="resumen-general" id="resumenGeneral">
       <div class="cargando">
         <i class="fas fa-spinner"></i>
-        <p>CARGANDO DATOS...</p>
+        <p>CARGANDO REPORTE...</p>
       </div>
     </section>
 
-    <!-- SECCIÓN Q & NQ -->
+    <!-- Citas por día de la semana -->
+    <section class="reporte-block">
+      <h2><i class="fas fa-calendar-week"></i> CITAS DE LA SEMANA (POR DÍA)</h2>
+      <p class="reporte-rango" id="rangoSemanaTexto">Cargando rango de la semana...</p>
+      <div class="reporte-dias-grid" id="reporteDiasGrid">
+        <div class="cargando"><i class="fas fa-spinner"></i><p>CARGANDO...</p></div>
+      </div>
+    </section>
+
+    <!-- Eficiencia y citas por base -->
+    <section class="reporte-block">
+      <h2><i class="fas fa-database"></i> EFICIENCIA Y CITAS POR BASE</h2>
+      <p class="reporte-rango">Ordenado por base con más citas en la semana actual</p>
+      <div class="citas-agregadas-grid" id="reporteBasesGrid">
+        <div class="cargando"><i class="fas fa-spinner"></i><p>CARGANDO BASES...</p></div>
+      </div>
+    </section>
+
+    <!-- Q & NQ semanal -->
     <section class="qnq-section" id="qnqSection">
-      <h2><i class="fas fa-chart-pie"></i> REPORTE SEMANAL DE CALIFICACIÓN (Q & NQ)</h2>
+      <h2><i class="fas fa-chart-pie"></i> CALIFICACIÓN SEMANAL (Q & NQ)</h2>
       <div class="qnq-grid" id="qnqGrid">
         <div class="cargando">
           <i class="fas fa-spinner"></i>
           <p>CARGANDO Q & NQ...</p>
         </div>
       </div>
-      <div class="qnq-detalles-container" id="qnqDetalles">
-        <!-- Los detalles se cargarán dinámicamente -->
-      </div>
+      <div class="qnq-detalles-container" id="qnqDetalles"></div>
     </section>
 
-    <!-- REPORTE SEMANAL POR BASE -->
-    <section class="citas-agregadas-hoy" id="citasMananaSection">
-      <h2><i class="fas fa-database"></i> REPORTE SEMANAL DE CITAS POR BASE</h2>
-      <div class="citas-agregadas-grid" id="citasMananaGrid">
-        <div class="cargando">
-          <i class="fas fa-spinner"></i>
-          <p>CARGANDO REPORTE SEMANAL...</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- REPORTE POR DÍA: MAÑANA / JUEVES / VIERNES -->
-    <section class="citas-agregadas-hoy" id="citasAgregadasHoy">
-      <h2><i class="fas fa-calendar-day"></i> REPORTE DE CITAS (MAÑANA / JUEVES / VIERNES)</h2>
-      <div class="citas-agregadas-grid" id="citasAgregadasGrid">
-        <div class="cargando">
-          <i class="fas fa-spinner"></i>
-          <p>CARGANDO CONTEO POR DÍA...</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Gráfico de distribución -->
+    <!-- Gráfico por base -->
     <div class="grafico-container">
-      <h2><i class="fas fa-chart-bar"></i> DISTRIBUCIÓN SEMANAL DE CITAS POR SUPERVISORA</h2>
+      <h2><i class="fas fa-chart-bar"></i> DISTRIBUCIÓN SEMANAL POR BASE</h2>
       <div id="graficoBarras">
         <div class="cargando">
           <i class="fas fa-spinner"></i>
@@ -1107,63 +1217,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Panel del Gerente -->
-    <section class="gerente-panel">
-      <h2><i class="fas fa-chart-line"></i> ESTADÍSTICAS POR SUPERVISORA</h2>
-      
-      <!-- Controles para el panel del gerente -->
-      <div class="panel-controls">
-        <div class="filtro-group">
-          <label for="filtroFecha"><i class="fas fa-calendar-alt"></i> FILTRAR POR FECHA:</label>
-          <input type="date" id="filtroFecha">
-        </div>
-        
-        <div class="filtro-group">
-          <label for="filtroSupervisora"><i class="fas fa-user-tie"></i> FILTRAR POR SUPERVISORA:</label>
-          <select id="filtroSupervisora">
-            <option value="">CARGANDO SUPERVISORAS...</option>
-          </select>
-        </div>
-        
-        <!-- NUEVOS CONTROLES PARA RANGO DE FECHAS -->
-        <div class="filtro-group">
-          <label for="fechaInicio"><i class="fas fa-calendar-day"></i> FECHA INICIO:</label>
-          <input type="date" id="fechaInicio">
-        </div>
-
-        <div class="filtro-group">
-          <label for="fechaFin"><i class="fas fa-calendar-day"></i> FECHA FIN:</label>
-          <input type="date" id="fechaFin">
-        </div>
-        
-        <div class="btn-group">
-          <button type="button" id="aplicarFiltro" class="btn-filtro">
-            <i class="fas fa-filter"></i> APLICAR FILTROS
-          </button>
-          <button type="button" id="limpiarFiltro" class="btn-filtro btn-limpiar">
-            <i class="fas fa-broom"></i> LIMPIAR
-          </button>
-          <button type="button" id="btnBuscarPorFechas" class="btn-filtro">
-            <i class="fas fa-search"></i> BUSCAR POR FECHAS
-          </button>
-        </div>
-      </div>
-      
-      <div class="stats-container" id="statsContainer">
-        <div class="cargando">
-          <i class="fas fa-spinner"></i>
-          <p>CARGANDO ESTADÍSTICAS...</p>
-        </div>
-      </div>
-      
-      <div class="supervisora-detalle" id="supervisoraDetalle">
-        <div class="cargando">
-          <i class="fas fa-spinner"></i>
-          <p>CARGANDO DETALLES DE CITAS...</p>
-        </div>
-      </div>
-    </section>
   </div>
 
   <!-- Librerías necesarias -->
@@ -1197,6 +1250,13 @@
     let diaActual = new Date().toDateString(); // Para controlar el cambio de día
 
     document.addEventListener("DOMContentLoaded", function () {
+      function actualizarRelojTiempoReal() {
+        const reloj = document.getElementById('relojTiempoReal');
+        if (reloj) reloj.textContent = new Date().toLocaleTimeString('es-MX');
+      }
+      actualizarRelojTiempoReal();
+      setInterval(actualizarRelojTiempoReal, 1000);
+
       // --- FUNCIONES PRINCIPALES ---
 
       // FUNCIÓN MEJORADA: Convertir datos de Firebase a array
@@ -1232,11 +1292,8 @@
               console.log("🔄 ¡NUEVO DÍA DETECTADO! REINICIANDO CONTADORES...");
               diaActual = hoy;
               
-              // Actualizar fecha en el filtro
-              const hoyISO = new Date().toISOString().split('T')[0];
-              document.getElementById('filtroFecha').value = hoyISO;
-              
-              mostrarNotificacion("¡NUEVO DÍA! CONTADORES DIARIOS REINICIADOS", 'success');
+              mostrarNotificacion("¡NUEVO DÍA! REPORTE SEMANAL ACTUALIZADO", 'success');
+              actualizarTodoElPanel();
               
               return true;
           }
@@ -1304,7 +1361,6 @@
               listaSupervisoras = [];
             }
             
-            cargarListaSupervisoras();
             console.log("✅ SUPERVISORAS ACTUALIZADAS:", listaSupervisoras);
             
             if (registrosPremanifiesto.length > 0) {
@@ -1313,7 +1369,6 @@
           } else {
             console.log("❌ NO HAY DATOS DE SUPERVISORAS");
             listaSupervisoras = [];
-            cargarListaSupervisoras();
           }
         }, (error) => {
           console.error("🔥 ERROR AL CARGAR SUPERVISORAS:", error);
@@ -1328,12 +1383,10 @@
         
         try {
           actualizarResumenGeneral();
+          actualizarReporteDiasSemana();
+          actualizarReporteBases();
           actualizarQnqTotales();
-          actualizarCitasManana(); // <<< --- CORRECCIÓN: Llamada a la nueva función
-          actualizarCitasAgregadasHoy();
-          actualizarEstadisticasSupervisoras();
           actualizarGraficoBarras();
-          actualizarDetallesCitas();
         } catch (error) {
           console.error("❌ ERROR AL ACTUALIZAR EL PANEL:", error);
           mostrarNotificacion("ERROR AL ACTUALIZAR LA INFORMACIÓN", 'error');
@@ -1381,16 +1434,6 @@
         return `${anio}-${mes}-${dia}`;
       }
 
-      function obtenerProximoDiaSemana(diaSemana) {
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
-        const resultado = new Date(hoy);
-        let diff = diaSemana - hoy.getDay();
-        if (diff <= 0) diff += 7;
-        resultado.setDate(hoy.getDate() + diff);
-        return resultado;
-      }
-
       function contarCitasPorFecha(fechaObjetivo) {
         const fechaStr = formatearFechaLocal(fechaObjetivo);
         return registrosPremanifiesto.filter(reg => {
@@ -1401,59 +1444,109 @@
         }).length;
       }
 
-      // REPORTE SEMANAL POR BASE
-      function actualizarCitasManana() {
-        const citasMananaGrid = document.getElementById('citasMananaGrid');
+      function calcularEficienciaBase(citasBase) {
+        const metaBaseSemanal = 8;
+        if (citasBase === 0) return 0;
+        let eficiencia = Math.round((citasBase / metaBaseSemanal) * 100);
+        if (citasBase > metaBaseSemanal) {
+          eficiencia = 100 + Math.round(((citasBase - metaBaseSemanal) / metaBaseSemanal) * 100);
+        }
+        return eficiencia;
+      }
+
+      function actualizarReporteDiasSemana() {
+        const grid = document.getElementById('reporteDiasGrid');
+        const rangoTexto = document.getElementById('rangoSemanaTexto');
+        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
+        const hoyStr = formatearFechaLocal(new Date());
+        const nombresDia = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+
+        if (rangoTexto) {
+          rangoTexto.textContent = `Semana del ${inicioSemana.toLocaleDateString('es-MX')} al ${finSemana.toLocaleDateString('es-MX')}`;
+        }
+
+        let totalSemana = 0;
+        let html = '';
+
+        for (let i = 0; i < 7; i++) {
+          const fecha = new Date(inicioSemana);
+          fecha.setDate(inicioSemana.getDate() + i);
+          const cantidad = contarCitasPorFecha(fecha);
+          totalSemana += cantidad;
+          const esHoy = formatearFechaLocal(fecha) === hoyStr;
+
+          html += `
+            <div class="reporte-dia-card ${esHoy ? 'hoy' : ''}">
+              <div class="dia-nombre">${nombresDia[i]}${esHoy ? ' · HOY' : ''}</div>
+              <div class="dia-cantidad">${cantidad}</div>
+              <div class="dia-fecha">${cantidad === 1 ? 'cita' : 'citas'}</div>
+              <div class="dia-fecha">${fecha.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</div>
+            </div>
+          `;
+        }
+
+        html = `
+          <div class="reporte-dia-card hoy" style="grid-column: 1 / -1; max-width: 320px; margin: 0 auto 8px;">
+            <div class="dia-nombre">TOTAL SEMANAL</div>
+            <div class="dia-cantidad">${totalSemana}</div>
+            <div class="dia-fecha">citas en la semana</div>
+          </div>
+        ` + html;
+
+        grid.innerHTML = html;
+      }
+
+      function actualizarReporteBases() {
+        const grid = document.getElementById('reporteBasesGrid');
         const registrosSemanales = obtenerRegistrosSemanalesValidos();
         const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
 
         if (registrosSemanales.length === 0) {
-            citasMananaGrid.innerHTML = '<div class="sin-datos"><i class="fas fa-calendar-times"></i> NO HAY CITAS EN LA SEMANA ACTUAL</div>';
-            return;
+          grid.innerHTML = '<div class="sin-datos"><i class="fas fa-database"></i> NO HAY CITAS POR BASE EN ESTA SEMANA</div>';
+          return;
         }
 
         const citasPorBase = {};
         registrosSemanales.forEach(cita => {
-            const base = cita.baseDatos || cita.base || 'SIN BASE';
-            if (!citasPorBase[base]) {
-                citasPorBase[base] = [];
-            }
-            citasPorBase[base].push(cita);
+          const base = cita.baseDatos || cita.base || 'SIN BASE';
+          if (!citasPorBase[base]) citasPorBase[base] = 0;
+          citasPorBase[base]++;
         });
 
-        const basesOrdenadas = Object.keys(citasPorBase).sort((a, b) => citasPorBase[b].length - citasPorBase[a].length);
+        const basesOrdenadas = Object.keys(citasPorBase).sort((a, b) => citasPorBase[b] - citasPorBase[a]);
         const baseLider = basesOrdenadas[0];
-        const porcentajeBaseLider = Math.round((citasPorBase[baseLider].length / registrosSemanales.length) * 100);
+        const citasLider = citasPorBase[baseLider];
+        const eficienciaLider = calcularEficienciaBase(citasLider);
+        const participacionLider = Math.round((citasLider / registrosSemanales.length) * 100);
 
         let html = `
-            <div class="cita-agregada-item" style="border-left: 4px solid var(--gold); background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(244, 208, 63, 0.05));">
-                <div class="cita-agregada-supervisora">🏆 TOTAL SEMANAL DE CITAS</div>
-                <div class="cita-agregada-cantidad">${registrosSemanales.length} CITAS</div>
-                <div class="cita-agregada-eficiencia eficiencia-excelente">
-                    ${inicioSemana.toLocaleDateString('es-MX')} - ${finSemana.toLocaleDateString('es-MX')}
-                </div>
+          <div class="cita-agregada-item" style="border-left: 4px solid var(--gold); background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(244, 208, 63, 0.05));">
+            <div class="cita-agregada-supervisora">🏆 BASE LÍDER</div>
+            <div class="cita-agregada-cantidad">${baseLider}</div>
+            <div class="cita-agregada-eficiencia eficiencia-excelente">
+              ${citasLider} CITAS · ${participacionLider}% · EFICIENCIA ${eficienciaLider}%
             </div>
-            <div class="cita-agregada-item" style="border-left: 4px solid var(--accent);">
-                <div class="cita-agregada-supervisora">📌 BASE LÍDER DE LA SEMANA</div>
-                <div class="cita-agregada-cantidad">${baseLider}</div>
-                <div class="cita-agregada-eficiencia">PARTICIPACIÓN: ${porcentajeBaseLider}%</div>
-            </div>
+          </div>
         `;
 
         basesOrdenadas.forEach(base => {
-            const citas = citasPorBase[base];
-            html += `
-                <div class="cita-agregada-item">
-                    <div class="cita-agregada-supervisora">🗂️ ${base}</div>
-                    <div class="cita-agregada-cantidad">${citas.length} CITAS</div>
-                    <div class="cita-agregada-eficiencia">
-                        ${Math.round((citas.length / registrosSemanales.length) * 100)}% DEL TOTAL SEMANAL
-                    </div>
-                </div>
-            `;
+          const cantidad = citasPorBase[base];
+          const participacion = Math.round((cantidad / registrosSemanales.length) * 100);
+          const eficiencia = calcularEficienciaBase(cantidad);
+          const claseEf = obtenerClaseEficiencia(eficiencia);
+
+          html += `
+            <div class="cita-agregada-item">
+              <div class="cita-agregada-supervisora">🗂️ ${base}</div>
+              <div class="cita-agregada-cantidad">${cantidad} CITAS</div>
+              <div class="cita-agregada-eficiencia ${claseEf}">
+                PARTICIPACIÓN ${participacion}% · EFICIENCIA ${eficiencia}%
+              </div>
+            </div>
+          `;
         });
 
-        citasMananaGrid.innerHTML = html;
+        grid.innerHTML = html;
       }
 
       // --- FUNCIONES DE CÁLCULO DE EFICIENCIA ---
@@ -1600,61 +1693,38 @@
             </div>
           `;
         } else {
-          const porSupervisora = {};
-          datos.forEach(dato => {
-            const supervisora = dato.supervisora;
-            if (!porSupervisora[supervisora]) {
-              porSupervisora[supervisora] = {
-                total: 0,
-                bases: {}
-              };
-            }
-            porSupervisora[supervisora].total++;
-            
-            const base = dato.base;
-            if (!porSupervisora[supervisora].bases[base]) {
-              porSupervisora[supervisora].bases[base] = 0;
-            }
-            porSupervisora[supervisora].bases[base]++;
-          });
-          
           let html = `
             <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid ${color};">
               <h3 style="color: ${color}; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
                 <i class="fas ${icono}"></i> ${titulo} - ${datos.length} CITAS
               </h3>
-              <p style="color: var(--text-secondary);">Desglose por supervisora y base de datos</p>
+              <p style="color: var(--text-secondary);">Desglose por base de datos</p>
             </div>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
           `;
-          
-          Object.keys(porSupervisora).forEach(supervisora => {
-            const info = porSupervisora[supervisora];
-            
+
+          const porBase = {};
+          datos.forEach(dato => {
+            const base = dato.base;
+            if (!porBase[base]) porBase[base] = 0;
+            porBase[base]++;
+          });
+
+          Object.keys(porBase).sort((a, b) => porBase[b] - porBase[a]).forEach(base => {
+            const cantidad = porBase[base];
+            const porcentaje = datos.length > 0 ? Math.round((cantidad / datos.length) * 100) : 0;
+
             html += `
               <div class="supervisora-qnq" style="border-left-color: ${color};">
                 <div class="supervisora-qnq-header">
-                  <div class="supervisora-qnq-nombre">${supervisora}</div>
-                  <div class="supervisora-qnq-contador" style="background: ${color};">${info.total} CITAS</div>
+                  <div class="supervisora-qnq-nombre">🗂️ ${base}</div>
+                  <div class="supervisora-qnq-contador" style="background: ${color};">${cantidad} CITAS</div>
                 </div>
-                
                 <div class="bases-container">
-                  <div class="bases-titulo">BASES DE DATOS UTILIZADAS:</div>
-                  <div class="bases-lista">
-            `;
-            
-            Object.keys(info.bases).forEach(base => {
-              const cantidad = info.bases[base];
-              html += `
-                <div class="base-item">
-                  <span class="base-nombre">${base}</span>
-                  <span class="base-cantidad" style="color: ${color};">${cantidad}</span>
-                </div>
-              `;
-            });
-            
-            html += `
+                  <div class="bases-titulo">PARTICIPACIÓN EN ${titulo}</div>
+                  <div class="base-item">
+                    <span class="base-nombre">${porcentaje}% del total semanal</span>
                   </div>
                 </div>
               </div>
@@ -1685,30 +1755,26 @@
 
       function actualizarResumenGeneral() {
         const resumenContainer = document.getElementById('resumenGeneral');
-
-        const totalCitas = registrosPremanifiesto.length;
-        const citasSemana = obtenerRegistrosSemanalesValidos().length;
-        const supervisorasActivas = listaSupervisoras.length;
-        const eficienciaGeneral = calcularEficienciaGeneral(citasSemana);
+        const registrosSemanales = obtenerRegistrosSemanalesValidos();
+        const citasSemana = registrosSemanales.length;
         const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
-        
-        // Determinar clase de eficiencia general
-        let claseEficienciaGeneral = 'eficiencia-baja';
-        if (eficienciaGeneral >= 50) claseEficienciaGeneral = 'eficiencia-media';
-        if (eficienciaGeneral >= 80) claseEficienciaGeneral = 'eficiencia-alta';
-        if (eficienciaGeneral >= 100) claseEficienciaGeneral = 'eficiencia-excelente';
+
+        const citasPorBase = {};
+        registrosSemanales.forEach(cita => {
+          const base = cita.baseDatos || cita.base || 'SIN BASE';
+          citasPorBase[base] = (citasPorBase[base] || 0) + 1;
+        });
+        const basesOrdenadas = Object.keys(citasPorBase).sort((a, b) => citasPorBase[b] - citasPorBase[a]);
+        const baseLider = basesOrdenadas[0] || 'SIN BASE';
+        const citasBaseLider = citasPorBase[baseLider] || 0;
+        const eficienciaBaseLider = calcularEficienciaBase(citasBaseLider);
+        const participacionBase = citasSemana > 0 ? Math.round((citasBaseLider / citasSemana) * 100) : 0;
+
+        const claseEficiencia = obtenerClaseEficiencia(eficienciaBaseLider);
         
         resumenContainer.innerHTML = `
           <div class="resumen-item">
-            <div class="icono"><i class="fas fa-calendar-check"></i></div>
-            <div class="valor" id="totalCitasCount">${totalCitas}</div>
-            <div class="etiqueta">TOTAL DE CITAS</div>
-            <div class="eficiencia-indicator eficiencia-excelente">
-              ${totalCitas} CITAS REGISTRADAS
-            </div>
-          </div>
-          <div class="resumen-item">
-            <div class="icono"><i class="fas fa-calendar-day"></i></div>
+            <div class="icono"><i class="fas fa-calendar-week"></i></div>
             <div class="valor">${citasSemana}</div>
             <div class="etiqueta">CITAS DE LA SEMANA</div>
             <div class="eficiencia-indicator eficiencia-alta">
@@ -1716,370 +1782,64 @@
             </div>
           </div>
           <div class="resumen-item">
-            <div class="icono"><i class="fas fa-users"></i></div>
-            <div class="valor">${supervisorasActivas}</div>
-            <div class="etiqueta">SUPERVISORAS ACTIVAS</div>
+            <div class="icono"><i class="fas fa-database"></i></div>
+            <div class="valor" style="font-size: 1.4rem;">${baseLider}</div>
+            <div class="etiqueta">BASE CON MÁS CITAS</div>
+            <div class="eficiencia-indicator eficiencia-excelente">${citasBaseLider} CITAS (${participacionBase}%)</div>
           </div>
           <div class="resumen-item">
             <div class="icono"><i class="fas fa-chart-line"></i></div>
-            <div class="valor">${eficienciaGeneral}%</div>
-            <div class="etiqueta">EFICIENCIA SEMANAL DEL EQUIPO</div>
-            <div class="eficiencia-indicator ${claseEficienciaGeneral}">
-              ${eficienciaGeneral >= 100 ? 
-                `🎯 SUPERÓ LA META EN ${eficienciaGeneral - 100}%` : 
-                `META SEMANAL BASE: ${Math.max(supervisorasActivas, 1) * 8} CITAS = 100%`}
-            </div>
+            <div class="valor">${eficienciaBaseLider}%</div>
+            <div class="etiqueta">EFICIENCIA BASE LÍDER</div>
+            <div class="eficiencia-indicator ${claseEficiencia}">META SEMANAL: 8 CITAS = 100%</div>
+          </div>
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-layer-group"></i></div>
+            <div class="valor">${basesOrdenadas.length}</div>
+            <div class="etiqueta">BASES ACTIVAS</div>
+            <div class="eficiencia-indicator eficiencia-media">EN LA SEMANA ACTUAL</div>
           </div>
         `;
-      }
-
-      function actualizarCitasAgregadasHoy() {
-        const citasAgregadasGrid = document.getElementById('citasAgregadasGrid');
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
-
-        const fechaManana = new Date(hoy);
-        fechaManana.setDate(hoy.getDate() + 1);
-        const fechaJueves = obtenerProximoDiaSemana(4);
-        const fechaViernes = obtenerProximoDiaSemana(5);
-
-        const diasReporte = [
-          { etiqueta: 'MAÑANA', fecha: fechaManana },
-          { etiqueta: 'JUEVES', fecha: fechaJueves },
-          { etiqueta: 'VIERNES', fecha: fechaViernes }
-        ];
-
-        const conteos = diasReporte.map(dia => ({
-          ...dia,
-          cantidad: contarCitasPorFecha(dia.fecha),
-          fechaTexto: dia.fecha.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })
-        }));
-
-        const fechasContadas = new Set();
-        let totalReporte = 0;
-        conteos.forEach(dia => {
-          const claveFecha = formatearFechaLocal(dia.fecha);
-          if (fechasContadas.has(claveFecha)) return;
-          fechasContadas.add(claveFecha);
-          totalReporte += dia.cantidad;
-        });
-
-        let html = `
-          <div class="cita-agregada-item" style="border-left: 4px solid var(--gold); background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(244, 208, 63, 0.05));">
-            <div class="cita-agregada-supervisora">🏆 TOTAL DEL REPORTE</div>
-            <div class="cita-agregada-cantidad">${totalReporte} CITAS</div>
-            <div class="cita-agregada-eficiencia eficiencia-excelente">MAÑANA + JUEVES + VIERNES</div>
-          </div>
-        `;
-
-        conteos.forEach(dia => {
-          html += `
-            <div class="cita-agregada-item">
-              <div class="cita-agregada-supervisora">📅 ${dia.etiqueta}</div>
-              <div class="cita-agregada-cantidad">${dia.cantidad} CITAS</div>
-              <div class="cita-agregada-eficiencia">${dia.fechaTexto}</div>
-            </div>
-          `;
-        });
-
-        citasAgregadasGrid.innerHTML = html;
-      }
-
-      function cargarListaSupervisoras() {
-        const selectFiltro = document.getElementById('filtroSupervisora');
-        
-        selectFiltro.innerHTML = '<option value="">TODAS LAS SUPERVISORAS</option>';
-        
-        listaSupervisoras.forEach(supervisora => {
-          const optionFiltro = document.createElement('option');
-          optionFiltro.value = supervisora;
-          optionFiltro.textContent = supervisora;
-          selectFiltro.appendChild(optionFiltro);
-        });
-      }
-
-      function actualizarEstadisticasSupervisoras() {
-        const statsContainer = document.getElementById('statsContainer');
-        const filtroFecha = document.getElementById('filtroFecha').value;
-        const filtroSupervisora = document.getElementById('filtroSupervisora').value;
-        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
-        
-        let registrosFiltrados = registrosPremanifiesto.filter(reg => esSupervisoraDeFirebase(reg.supervisora || ''));
-        
-        if (filtroFecha) {
-            registrosFiltrados = registrosFiltrados.filter(reg => 
-                reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
-            );
-        } else {
-            registrosFiltrados = registrosFiltrados.filter(reg => {
-                const fecha = obtenerFechaValidaRegistro(reg);
-                return fecha && fecha >= inicioSemana && fecha <= finSemana;
-            });
-        }
-        
-        if (filtroSupervisora) {
-            registrosFiltrados = registrosFiltrados.filter(reg => 
-                reg.supervisora === filtroSupervisora
-            );
-        }
-        
-        const statsPorSupervisora = {};
-        const hoy = new Date().toISOString().split('T')[0];
-        
-        listaSupervisoras.forEach(supervisora => {
-            const citasSupervisora = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
-            const citasHoy = citasSupervisora.filter(reg => 
-                reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
-            ).length;
-            
-            // ✅ CORREGIDO: Se pasa supervisora como primer parámetro
-            const eficiencia = calcularEficienciaSupervisora(supervisora, citasHoy);
-            const claseEficiencia = obtenerClaseEficiencia(eficiencia);
-            const textoEficiencia = obtenerTextoEficiencia(supervisora, citasHoy, eficiencia);
-            
-            statsPorSupervisora[supervisora] = {
-                total: citasSupervisora.length,
-                hoy: citasHoy,
-                eficiencia: eficiencia,
-                claseEficiencia: claseEficiencia,
-                textoEficiencia: textoEficiencia
-            };
-        });
-        
-        const supervisorasOrdenadas = Object.keys(statsPorSupervisora).sort((a, b) => 
-            statsPorSupervisora[b].total - statsPorSupervisora[a].total
-        );
-        
-        let html = '';
-        
-        // Agregar tarjeta de TOTALES
-        const totalCitasFiltradas = registrosFiltrados.length;
-        const totalCitasHoyFiltradas = registrosFiltrados.filter(reg => 
-            reg.fechaRegistro && reg.fechaRegistro.toString().includes(hoy)
-        ).length;
-        
-        html += `
-            <div class="stat-card leader">
-                <h3>🏆 TOTAL GENERAL</h3>
-                <div class="count">${totalCitasFiltradas}</div>
-                <div class="supervisora">TOTAL DE CITAS</div>
-                <div class="conteo-dia">
-                    <div class="titulo">CITAS DEL DÍA</div>
-                    <div class="valor-dia">${totalCitasHoyFiltradas}</div>
-                </div>
-                <div class="eficiencia-indicator eficiencia-excelente">
-                    REPORTE: ${filtroFecha ? 'FECHA FILTRADA' : 'SEMANA ACTUAL'}
-                </div>
-            </div>
-        `;
-        
-        supervisorasOrdenadas.forEach((supervisora, index) => {
-            const stats = statsPorSupervisora[supervisora];
-            const esLider = index === 0 && stats.total > 0;
-            
-            html += `
-                <div class="stat-card ${esLider ? 'leader' : ''}">
-                    <h3>${supervisora}</h3>
-                    <div class="count">${stats.total}</div>
-                    <div class="supervisora">TOTAL DE CITAS</div>
-                    <div class="conteo-dia">
-                        <div class="titulo">CITAS DEL DÍA</div>
-                        <div class="valor-dia">${stats.hoy}</div>
-                    </div>
-                    <div class="eficiencia-indicator ${stats.claseEficiencia}">
-                        ${stats.textoEficiencia}
-                    </div>
-                    ${esLider ? '<div class="supervisora">🏆 LÍDER DEL REPORTE</div>' : ''}
-                </div>
-            `;
-        });
-        
-        statsContainer.innerHTML = html || '<div class="sin-datos">NO HAY DATOS DISPONIBLES</div>';
       }
 
       function actualizarGraficoBarras() {
         const graficoContainer = document.getElementById('graficoBarras');
-        const filtroFecha = document.getElementById('filtroFecha').value;
-        const filtroSupervisora = document.getElementById('filtroSupervisora').value;
-        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
-        
-        let registrosFiltrados = registrosPremanifiesto.filter(reg => esSupervisoraDeFirebase(reg.supervisora || ''));
-        
-        if (filtroFecha) {
-          registrosFiltrados = registrosFiltrados.filter(reg => 
-            reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
-          );
-        } else {
-          registrosFiltrados = registrosFiltrados.filter(reg => {
-            const fecha = obtenerFechaValidaRegistro(reg);
-            return fecha && fecha >= inicioSemana && fecha <= finSemana;
-          });
+        const registrosSemanales = obtenerRegistrosSemanalesValidos();
+        const totalCitas = registrosSemanales.length;
+
+        if (totalCitas === 0) {
+          graficoContainer.innerHTML = '<div class="sin-datos">NO HAY CITAS PARA MOSTRAR ESTA SEMANA</div>';
+          return;
         }
-        
-        if (filtroSupervisora) {
-          registrosFiltrados = registrosFiltrados.filter(reg => 
-            reg.supervisora === filtroSupervisora
-          );
-        }
-        
-        const statsPorSupervisora = {};
-        const totalCitas = registrosFiltrados.length;
-        
-        listaSupervisoras.forEach(supervisora => {
-          const citasSupervisora = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
-          statsPorSupervisora[supervisora] = citasSupervisora.length;
+
+        const citasPorBase = {};
+        registrosSemanales.forEach(cita => {
+          const base = cita.baseDatos || cita.base || 'SIN BASE';
+          citasPorBase[base] = (citasPorBase[base] || 0) + 1;
         });
-        
-        // Agregar "TOTAL" al gráfico
-        statsPorSupervisora["TOTAL"] = totalCitas;
-        
-        const supervisorasOrdenadas = Object.keys(statsPorSupervisora).sort((a, b) => {
-          if (a === "TOTAL") return -1; // Total siempre primero
-          if (b === "TOTAL") return 1;
-          return statsPorSupervisora[b] - statsPorSupervisora[a];
-        });
-        
+
+        const basesOrdenadas = Object.keys(citasPorBase).sort((a, b) => citasPorBase[b] - citasPorBase[a]);
         let html = '';
-        
-        supervisorasOrdenadas.forEach(supervisora => {
-          const count = statsPorSupervisora[supervisora];
-          const porcentaje = totalCitas > 0 ? Math.round((count / totalCitas) * 100) : 0;
-          
-          // Color especial para TOTAL
-          const esTotal = supervisora === "TOTAL";
-          const colorEspecial = esTotal ? "background: linear-gradient(90deg, var(--gold), #f4d03f);" : "";
-          
+
+        basesOrdenadas.forEach(base => {
+          const count = citasPorBase[base];
+          const porcentaje = Math.round((count / totalCitas) * 100);
+          const esLider = base === basesOrdenadas[0];
+          const colorEspecial = esLider ? 'background: linear-gradient(90deg, var(--gold), #f4d03f);' : '';
+
           html += `
             <div class="barra">
-              <div class="barra-label">${esTotal ? "🏆 " : ""}${supervisora}</div>
+              <div class="barra-label">${esLider ? '🏆 ' : ''}${base}</div>
               <div class="barra-progreso">
                 <div class="barra-relleno" style="width: ${porcentaje}%; ${colorEspecial}">
-                  ${count} (${porcentaje}%)
+                  ${count} citas (${porcentaje}%)
                 </div>
               </div>
             </div>
           `;
         });
-        
-        graficoContainer.innerHTML = html || '<div class="sin-datos">NO HAY DATOS PARA MOSTRAR</div>';
-      }
 
-      function actualizarDetallesCitas() {
-        const detalleContainer = document.getElementById('supervisoraDetalle');
-        const filtroFecha = document.getElementById('filtroFecha').value;
-        const filtroSupervisora = document.getElementById('filtroSupervisora').value;
-        const { inicioSemana, finSemana } = obtenerRangoSemanaActual();
-        
-        let registrosFiltrados = registrosPremanifiesto.filter(reg => esSupervisoraDeFirebase(reg.supervisora || ''));
-        
-        if (filtroFecha) {
-          registrosFiltrados = registrosFiltrados.filter(reg => 
-            reg.fechaRegistro && reg.fechaRegistro.toString().includes(filtroFecha)
-          );
-        } else {
-          registrosFiltrados = registrosFiltrados.filter(reg => {
-            const fecha = obtenerFechaValidaRegistro(reg);
-            return fecha && fecha >= inicioSemana && fecha <= finSemana;
-          });
-        }
-        
-        if (filtroSupervisora) {
-          registrosFiltrados = registrosFiltrados.filter(reg => 
-            reg.supervisora === filtroSupervisora
-          );
-        }
-        
-        const citasPorSupervisora = {};
-        
-        listaSupervisoras.forEach(supervisora => {
-          citasPorSupervisora[supervisora] = registrosFiltrados.filter(reg => reg.supervisora === supervisora);
-        });
-        
-        let html = '';
-        
-        // Agregar sección de TOTAL primero
-        if (registrosFiltrados.length > 0) {
-          html += `
-            <div class="supervisora-detalle">
-              <h3><i class="fas fa-chart-pie"></i> REPORTE GENERAL SEMANAL - ${registrosFiltrados.length} REGISTROS</h3>
-              <div class="supervisora-citas">
-          `;
-          
-          // Mostrar todas las citas (limitado a 20 para no saturar)
-          const citasParaMostrar = registrosFiltrados.slice(0, 20);
-          
-          citasParaMostrar.forEach((cita, index) => {
-            const numeroCita = cita.citaPorDia || cita.cita || (index + 1);
-            const nombreCliente = cita.nombre || cita.cliente || 'CLIENTE NO ESPECIFICADO';
-            const supervisoraNombre = cita.supervisora || 'SIN SUPERVISORA';
-            
-            html += `
-              <div class="cita-item">
-                <div class="cita-numero">CITA #${numeroCita}</div>
-                <div class="cita-cliente">${nombreCliente}</div>
-                <div class="cita-detalles">
-                  <div><strong>Supervisora:</strong> ${supervisoraNombre}</div>
-                  <div><strong>Fecha:</strong> ${cita.fechaRegistro || 'NO ESPECIFICADA'}</div>
-                  <div><strong>Hora:</strong> ${cita.hora || 'NO ESPECIFICADA'}</div>
-                  <div><small>PERSONAS: ${cita.numPersonas || 'N/A'} | EDAD: ${cita.edad || 'N/A'} | HOTEL: ${cita.hotel || 'N/A'}</small></div>
-                </div>
-              </div>
-            `;
-          });
-          
-          if (registrosFiltrados.length > 20) {
-            html += `
-              <div class="cita-item" style="text-align: center; background: rgba(30, 64, 175, 0.3);">
-                <div class="cita-numero">...</div>
-                <div class="cita-cliente">Y ${registrosFiltrados.length - 20} CITAS MÁS</div>
-                <div class="cita-detalles">
-                  <small>Mostrando 20 de ${registrosFiltrados.length} citas</small>
-                </div>
-              </div>
-            `;
-          }
-          
-          html += `
-              </div>
-            </div>
-          `;
-        }
-        
-        // Luego mostrar por supervisora
-        Object.keys(citasPorSupervisora).forEach(supervisora => {
-          const citas = citasPorSupervisora[supervisora];
-          
-          if (citas.length > 0) {
-            html += `
-              <div class="supervisora-detalle">
-                <h3><i class="fas fa-user-tie"></i> ${supervisora} - ${citas.length} CITAS</h3>
-                <div class="supervisora-citas">
-            `;
-            
-            citas.forEach((cita, index) => {
-              const numeroCita = cita.citaPorDia || cita.cita || (index + 1);
-              const nombreCliente = cita.nombre || cita.cliente || 'CLIENTE NO ESPECIFICADO';
-              
-              html += `
-                <div class="cita-item">
-                  <div class="cita-numero">CITA #${numeroCita}</div>
-                  <div class="cita-cliente">${nombreCliente}</div>
-                  <div class="cita-hora">${cita.hora || 'NO ESPECIFICADA'} - ${cita.fechaRegistro || 'NO ESPECIFICADA'}</div>
-                  <div class="cita-detalles">
-                    <small>PERSONAS: ${cita.numPersonas || 'N/A'} | EDAD: ${cita.edad || 'N/A'} | HOTEL: ${cita.hotel || 'N/A'}</small>
-                  </div>
-                </div>
-              `;
-            });
-            
-            html += `
-                </div>
-              </div>
-            `;
-          }
-        });
-        
-        detalleContainer.innerHTML = html || '<div class="sin-datos">NO HAY CITAS PARA MOSTRAR CON LOS FILTROS ACTUALES</div>';
+        graficoContainer.innerHTML = html;
       }
 
       // --- NUEVAS FUNCIONALIDADES ---
@@ -2861,28 +2621,10 @@
       // --- INICIALIZACIÓN ---
 
       function inicializarSistema() {
-        console.log("🚀 INICIALIZANDO SISTEMA DE TIEMPO REAL...");
+        console.log("🚀 INICIALIZANDO REPORTE SEMANAL EN TIEMPO REAL...");
         
-        // Llenar selector de años
         llenarSelectorAnios();
-        
         configurarFirebase();
-        
-        const hoy = new Date();
-        const fechaInicioInput = document.getElementById('fechaInicio');
-        const fechaFinInput = document.getElementById('fechaFin');
-        
-        // Configurar fechas por defecto (primer día del mes hasta hoy)
-        const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-        const hoyFormateado = hoy.toISOString().split('T')[0];
-        
-        document.getElementById('filtroFecha').value = hoyFormateado;
-        
-        if (fechaInicioInput && fechaFinInput) {
-          fechaInicioInput.value = primerDiaMes.toISOString().split('T')[0];
-          fechaFinInput.value = hoyFormateado;
-        }
-        
         configurarEventListeners();
         
         // Configurar verificación diaria periódica (cada hora)
@@ -2893,17 +2635,9 @@
 
       function configurarEventListeners() {
         const actualizarBtn = document.getElementById('actualizarBtn');
-        const exportarBtn = document.getElementById('exportarEstadisticas');
-        const aplicarFiltroBtn = document.getElementById('aplicarFiltro');
-        const limpiarFiltroBtn = document.getElementById('limpiarFiltro');
-        const btnCitasMes = document.getElementById('btnCitasMes');
-        const btnBuscarPorFechas = document.getElementById('btnBuscarPorFechas');
         const btnDescargarMesSeleccionado = document.getElementById('btnDescargarMesSeleccionado');
-        const modal = document.getElementById('modalCitasMes');
-        const cerrarModal = document.querySelector('.cerrar-modal');
         
-        if (!actualizarBtn || !exportarBtn || !aplicarFiltroBtn || !limpiarFiltroBtn) {
-          console.error("❌ NO SE ENCONTRARON TODOS LOS ELEMENTOS DEL DOM");
+        if (!actualizarBtn || !btnDescargarMesSeleccionado) {
           setTimeout(configurarEventListeners, 1000);
           return;
         }
@@ -2911,65 +2645,17 @@
         actualizarBtn.addEventListener('click', function() {
           const btn = this;
           const icono = btn.querySelector('i');
-          
           icono.classList.add('actualizando');
           btn.disabled = true;
-          
           setTimeout(() => {
             actualizarTodoElPanel();
             icono.classList.remove('actualizando');
             btn.disabled = false;
-            mostrarNotificacion('DATOS ACTUALIZADOS MANUALMENTE - ' + registrosPremanifiesto.length + ' CITAS');
-          }, 1000);
+            mostrarNotificacion('REPORTE ACTUALIZADO · ' + obtenerRegistrosSemanalesValidos().length + ' CITAS ESTA SEMANA');
+          }, 600);
         });
         
-        aplicarFiltroBtn.addEventListener('click', function() {
-          actualizarTodoElPanel();
-        });
-        
-        limpiarFiltroBtn.addEventListener('click', function() {
-          // Establecer fecha de hoy
-          const hoy = new Date().toISOString().split('T')[0];
-          document.getElementById('filtroFecha').value = hoy;
-          document.getElementById('filtroSupervisora').value = '';
-          
-          // También limpiar rango de fechas
-          const primerDiaMes = new Date().getDate() === 1 ? 
-            new Date().toISOString().split('T')[0] : 
-            new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-          
-          document.getElementById('fechaInicio').value = primerDiaMes;
-          document.getElementById('fechaFin').value = hoy;
-          
-          actualizarTodoElPanel();
-          mostrarNotificacion("FILTROS REINICIADOS A VALORES POR DEFECTO");
-        });
-        
-        exportarBtn.addEventListener("click", function() {
-          exportarEstadisticasConRegistros();
-        });
-        
-        btnCitasMes.addEventListener('click', mostrarCitasDelMes);
-        
-        // NUEVOS EVENT LISTENERS
-        if (btnBuscarPorFechas) {
-          btnBuscarPorFechas.addEventListener('click', mostrarCitasPorFechas);
-        }
-        
-        if (btnDescargarMesSeleccionado) {
-          btnDescargarMesSeleccionado.addEventListener('click', descargarPremanifiestoPorMes);
-        }
-        
-        // CORRECCIÓN DEL BOTÓN CERRAR
-        cerrarModal.addEventListener('click', function() {
-          modal.style.display = 'none';
-        });
-        
-        window.addEventListener('click', function(event) {
-          if (event.target === modal) {
-            modal.style.display = 'none';
-          }
-        });
+        btnDescargarMesSeleccionado.addEventListener('click', descargarPremanifiestoPorMes);
       }
 
       // ✅ FUNCIÓN CORREGIDA: Exportar estadísticas con información de registros
