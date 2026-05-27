@@ -1355,6 +1355,8 @@
         
         // Filtrar citas para mañana basándose en 'diaEvento' o 'fechaRegistro'
         const citasManana = registrosPremanifiesto.filter(reg => {
+            const supervisoraRegistro = reg.supervisora || '';
+            if (!esSupervisoraDeFirebase(supervisoraRegistro)) return false;
             let fechaEvento = reg.diaEvento; // Priorizar diaEvento
             if (!fechaEvento) fechaEvento = reg.fechaRegistro; // Usar fechaRegistro como fallback
             if (!fechaEvento) return false;
@@ -1435,12 +1437,18 @@
       }
 
       // --- FUNCIONES DE CÁLCULO DE EFICIENCIA ---
+      function normalizarNombreSupervisora(nombre) {
+        return (nombre || '').toString().trim().toUpperCase();
+      }
+
+      function esSupervisoraDeFirebase(nombre) {
+        const nombreNormalizado = normalizarNombreSupervisora(nombre);
+        if (!nombreNormalizado || listaSupervisoras.length === 0) return false;
+        return listaSupervisoras.some(s => normalizarNombreSupervisora(s) === nombreNormalizado);
+      }
       
       function calcularEficienciaSupervisora(supervisora, citasHoy) {
-        // ✅ CAMBIO: Solo Abraham tiene 5 citas = 100%, los demás mantienen 8
-        const metaSupervisora = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham") 
-          ? 5  // Abraham: 5 citas = 100%
-          : 8; // Los demás: 8 citas = 100%
+        const metaSupervisora = 8;
         
         if (citasHoy === 0) return 0;
         
@@ -1455,10 +1463,7 @@
       }
 
       function obtenerTextoEficiencia(supervisora, citasHoy, eficiencia) {
-        // ✅ CAMBIO: Meta diferente para Abraham
-        const metaSupervisora = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham")
-          ? 5  // Abraham: 5 citas
-          : 8; // Los demás: 8 citas
+        const metaSupervisora = 8;
         
         if (eficiencia === 0) {
           return `META: ${metaSupervisora} CITAS/DÍA (${metaSupervisora} FALTANTES)`;
@@ -1473,8 +1478,8 @@
       }
 
       function calcularEficienciaGeneral(citasHoyTotal) {
-        // ✅ CAMBIO: EFICIENCIA GENERAL DEL EQUIPO ajustada a 32 CITAS = 100%
-        const metaTotal = 32; // 32 citas = 100% eficiencia general entre los 5 supervisores
+        const supervisorasActivas = listaSupervisoras.length;
+        const metaTotal = Math.max(supervisorasActivas, 1) * 8;
         let eficienciaGeneral = Math.round((citasHoyTotal / metaTotal) * 100);
         
         // Permitir eficiencia mayor al 100%
@@ -1509,6 +1514,7 @@
         nqDetalles = [];
         
         citasHoy.forEach(registro => {
+            if (!esSupervisoraDeFirebase(registro.supervisora || '')) return;
             const calificacion = registro.calificacionOrigen || '';
             const esQ = calificacion.toUpperCase().includes('Q') || 
                         calificacion.toUpperCase() === 'CALIFICADO' ||
@@ -1725,7 +1731,7 @@
             <div class="eficiencia-indicator ${claseEficienciaGeneral}">
               ${eficienciaGeneral >= 100 ? 
                 `🎯 SUPERÓ LA META EN ${eficienciaGeneral - 100}%` : 
-                `META DEL EQUIPO: 32 CITAS = 100%`}
+                `META DEL EQUIPO: ${Math.max(supervisorasActivas, 1) * 8} CITAS = 100%`}
             </div>
           </div>
         `;
@@ -1754,9 +1760,10 @@
         
         console.log(`📅 CITAS DE HOY ENCONTRADAS: ${citasDeHoy.length}`);
         
-        // Contar por supervisora
+        // Contar por supervisora (solo las registradas en Firebase)
         citasDeHoy.forEach(cita => {
             const supervisora = cita.supervisora || 'SIN SUPERVISORA';
+            if (!esSupervisoraDeFirebase(supervisora)) return;
             if (!citasHoyPorSupervisora[supervisora]) {
                 citasHoyPorSupervisora[supervisora] = 0;
             }
@@ -1801,17 +1808,12 @@
             if (eficiencia >= 80) emoji = '✅';
             if (eficiencia >= 100) emoji = '🎯';
             
-            // Destacar a Abraham
-            const esAbraham = supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham");
-            const destacado = esAbraham ? 'style="border-left: 4px solid var(--gold); background: rgba(212, 175, 55, 0.1);"' : '';
-            
             html += `
-                <div class="cita-agregada-item" ${destacado}>
-                    <div class="cita-agregada-supervisora">${emoji} ${supervisora} ${esAbraham ? '🎯' : ''}</div>
+                <div class="cita-agregada-item">
+                    <div class="cita-agregada-supervisora">${emoji} ${supervisora}</div>
                     <div class="cita-agregada-cantidad">${citasHoy} CITAS</div>
                     <div class="cita-agregada-eficiencia ${claseEficiencia}">
                         ${textoEficiencia}
-                        ${esAbraham ? '<br><small>META ESPECIAL: 5 CITAS = 100%</small>' : ''}
                     </div>
                 </div>
             `;
@@ -1875,8 +1877,7 @@
                 hoy: citasHoy,
                 eficiencia: eficiencia,
                 claseEficiencia: claseEficiencia,
-                textoEficiencia: textoEficiencia,
-                esAbraham: supervisora === "ABRAHAM" || supervisora === "Abraham" || supervisora.toLowerCase().includes("abraham")
+                textoEficiencia: textoEficiencia
             };
         });
         
@@ -1902,7 +1903,7 @@
                     <div class="valor-dia">${totalCitasHoyFiltradas}</div>
                 </div>
                 <div class="eficiencia-indicator eficiencia-excelente">
-                    META DEL EQUIPO: 32 CITAS = 100%
+                    META DEL EQUIPO: ${Math.max(listaSupervisoras.length, 1) * 8} CITAS = 100%
                 </div>
             </div>
         `;
@@ -1910,14 +1911,10 @@
         supervisorasOrdenadas.forEach((supervisora, index) => {
             const stats = statsPorSupervisora[supervisora];
             const esLider = index === 0 && stats.total > 0;
-            const esAbraham = stats.esAbraham;
-            
-            // Destacar tarjeta de Abraham
-            const claseEspecial = esAbraham ? ' style="border-top: 4px solid var(--gold); background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(244, 208, 63, 0.05));"' : '';
             
             html += `
-                <div class="stat-card ${esLider ? 'leader' : ''}"${claseEspecial}>
-                    <h3>${supervisora} ${esAbraham ? '🎯' : ''}</h3>
+                <div class="stat-card ${esLider ? 'leader' : ''}">
+                    <h3>${supervisora}</h3>
                     <div class="count">${stats.total}</div>
                     <div class="supervisora">TOTAL DE CITAS</div>
                     <div class="conteo-dia">
@@ -1928,7 +1925,6 @@
                         ${stats.textoEficiencia}
                     </div>
                     ${esLider ? '<div class="supervisora">🏆 LÍDER DEL DÍA</div>' : ''}
-                    ${esAbraham ? '<div class="supervisora" style="color: var(--gold);">META ESPECIAL: 5 CITAS</div>' : ''}
                 </div>
             `;
         });
