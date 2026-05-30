@@ -1071,12 +1071,12 @@
       }
 
       function obtenerRegistrosSemanales() {
-        const { inicioSemana, finSemana } = obtenerRangoSemana();
-        return registrosPremanifiesto.filter(reg => {
-          const fecha = obtenerFechaValida(reg);
-          return fecha && fecha >= inicioSemana && fecha <= finSemana;
-        });
-      }
+  // Retorna TODOS los registros, sin filtrar por semana
+  return registrosPremanifiesto.filter(reg => {
+    const fecha = obtenerFechaValida(reg);
+    return fecha !== null; // Solo requiere que tenga fecha válida
+  });
+}
 
       function formatearFechaLocal(fecha) {
         return `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}-${String(fecha.getDate()).padStart(2,'0')}`;
