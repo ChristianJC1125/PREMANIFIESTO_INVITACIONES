@@ -1,4 +1,4 @@
-<DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -888,7 +888,6 @@
   </style>
 </head>
 <body>
-  <!-- Modal para citas del mes -->
   <div id="modalCitasMes" class="modal">
     <div class="modal-contenido">
       <div class="modal-header">
@@ -978,7 +977,7 @@
 
     <section class="reporte-block">
       <h2><i class="fas fa-database"></i> EFICIENCIA Y CITAS POR BASE</h2>
-      <p class="reporte-rango">Ordenado por base con más citas en la semana actual</p>
+      <p class="reporte-rango">Ordenado por base con más citas en total</p>
       <div class="citas-agregadas-grid" id="reporteBasesGrid">
         <div class="cargando"><i class="fas fa-spinner"></i><p>CARGANDO BASES...</p></div>
       </div>
@@ -993,7 +992,7 @@
     </section>
 
     <div class="grafico-container">
-      <h2><i class="fas fa-chart-bar"></i> DISTRIBUCIÓN SEMANAL POR BASE</h2>
+      <h2><i class="fas fa-chart-bar"></i> DISTRIBUCIÓN POR BASE</h2>
       <div id="graficoBarras">
         <div class="cargando"><i class="fas fa-spinner"></i><p>CARGANDO GRÁFICO...</p></div>
       </div>
@@ -1022,7 +1021,6 @@
     let registrosPremanifiesto = [];
     let qDetalles = [];
     let nqDetalles = [];
-    let diaActual = new Date().toDateString();
 
     document.addEventListener("DOMContentLoaded", function() {
       function actualizarReloj() {
@@ -1039,19 +1037,9 @@
         return [];
       }
 
-      function verificarNuevoDia() {
-        const hoy = new Date().toDateString();
-        if (hoy !== diaActual) {
-          diaActual = hoy;
-          mostrarNotificacion("¡NUEVO DÍA! REPORTE ACTUALIZADO", 'success');
-          actualizarTodoElPanel();
-          return true;
-        }
-        return false;
-      }
-
       function obtenerFechaValida(reg) {
-        const fecha = reg.diaEvento || reg.fechaRegistro;
+        if (!reg) return null;
+        let fecha = reg.diaEvento || reg.fechaRegistro;
         if (!fecha) return null;
         const d = new Date(fecha);
         return isNaN(d.getTime()) ? null : d;
@@ -1071,12 +1059,12 @@
       }
 
       function obtenerRegistrosSemanales() {
-  // Retorna TODOS los registros, sin filtrar por semana
-  return registrosPremanifiesto.filter(reg => {
-    const fecha = obtenerFechaValida(reg);
-    return fecha !== null; // Solo requiere que tenga fecha válida
-  });
-}
+        const { inicioSemana, finSemana } = obtenerRangoSemana();
+        return registrosPremanifiesto.filter(reg => {
+          const fecha = obtenerFechaValida(reg);
+          return fecha && fecha >= inicioSemana && fecha <= finSemana;
+        });
+      }
 
       function formatearFechaLocal(fecha) {
         return `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}-${String(fecha.getDate()).padStart(2,'0')}`;
@@ -1085,8 +1073,11 @@
       function contarCitasPorFecha(fechaObj) {
         const fechaStr = formatearFechaLocal(fechaObj);
         return registrosPremanifiesto.filter(reg => {
-          const f = obtenerFechaValida(reg);
-          return f && formatearFechaLocal(f) === fechaStr;
+          const fechaEvento = reg.diaEvento ? new Date(reg.diaEvento) : null;
+          const fechaReg = reg.fechaRegistro ? new Date(reg.fechaRegistro) : null;
+          const fechaEventoStr = fechaEvento ? formatearFechaLocal(fechaEvento) : null;
+          const fechaRegStr = fechaReg ? formatearFechaLocal(fechaReg) : null;
+          return fechaEventoStr === fechaStr || fechaRegStr === fechaStr;
         }).length;
       }
 
@@ -1112,7 +1103,11 @@
         const { inicioSemana, finSemana } = obtenerRangoSemana();
         const hoyStr = formatearFechaLocal(new Date());
         const nombres = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
-        if (rangoTexto) rangoTexto.textContent = `Semana del ${inicioSemana.toLocaleDateString('es-MX')} al ${finSemana.toLocaleDateString('es-MX')}`;
+        
+        if (rangoTexto) {
+          rangoTexto.textContent = `Semana del ${inicioSemana.toLocaleDateString('es-MX')} al ${finSemana.toLocaleDateString('es-MX')}`;
+        }
+        
         let total = 0, html = '';
         for (let i = 0; i < 7; i++) {
           const fecha = new Date(inicioSemana);
@@ -1120,30 +1115,49 @@
           const cant = contarCitasPorFecha(fecha);
           total += cant;
           const esHoy = formatearFechaLocal(fecha) === hoyStr;
-          html += `<div class="reporte-dia-card ${esHoy ? 'hoy' : ''}"><div class="dia-nombre">${nombres[i]}${esHoy ? ' · HOY' : ''}</div><div class="dia-cantidad">${cant}</div><div class="dia-fecha">${fecha.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</div></div>`;
+          html += `<div class="reporte-dia-card ${esHoy ? 'hoy' : ''}">
+                      <div class="dia-nombre">${nombres[i]}${esHoy ? ' · HOY' : ''}</div>
+                      <div class="dia-cantidad">${cant}</div>
+                      <div class="dia-fecha">${fecha.toLocaleDateString('es-MX', {day:'numeric', month:'short'})}</div>
+                    </div>`;
         }
-        grid.innerHTML = `<div class="reporte-dia-card hoy" style="grid-column:1/-1;max-width:320px;margin:0 auto 8px;"><div class="dia-nombre">TOTAL SEMANAL</div><div class="dia-cantidad">${total}</div><div class="dia-fecha">citas</div></div>` + html;
+        grid.innerHTML = `<div class="reporte-dia-card hoy" style="grid-column:1/-1;max-width:320px;margin:0 auto 8px;">
+                            <div class="dia-nombre">TOTAL SEMANAL</div>
+                            <div class="dia-cantidad">${total}</div>
+                            <div class="dia-fecha">citas</div>
+                          </div>` + html;
       }
 
       function actualizarReporteBases() {
         const grid = document.getElementById('reporteBasesGrid');
-        const registrosSemana = obtenerRegistrosSemanales();
-        if (registrosSemana.length === 0) {
-          grid.innerHTML = '<div class="sin-datos">NO HAY CITAS ESTA SEMANA</div>';
+        const registrosFiltrados = registrosPremanifiesto.filter(reg => obtenerFechaValida(reg) !== null);
+        
+        if (registrosFiltrados.length === 0) {
+          grid.innerHTML = '<div class="sin-datos">NO HAY CITAS REGISTRADAS</div>';
           return;
         }
+        
         const citasPorBase = {};
-        registrosSemana.forEach(r => { const b = r.baseDatos || r.base || 'SIN BASE'; citasPorBase[b] = (citasPorBase[b] || 0) + 1; });
+        registrosFiltrados.forEach(r => { 
+          const b = r.baseDatos || r.base || 'SIN BASE'; 
+          citasPorBase[b] = (citasPorBase[b] || 0) + 1; 
+        });
+        
         const ordenadas = Object.keys(citasPorBase).sort((a,b)=>citasPorBase[b]-citasPorBase[a]);
-        const total = registrosSemana.length;
+        const total = registrosFiltrados.length;
         let html = '';
+        
         ordenadas.forEach((base, idx) => {
           const cant = citasPorBase[base];
           const pct = Math.round((cant/total)*100);
           const ef = calcularEficienciaBase(cant);
           const claseEf = obtenerClaseEficiencia(ef);
           const esLider = idx === 0;
-          html += `<div class="cita-agregada-item ${esLider ? 'base-lider' : ''}"><div class="cita-agregada-supervisora">${esLider ? '🏆 ' : '📊 '}${base}</div><div class="cita-agregada-cantidad">${cant} CITAS (${pct}%)</div><div class="cita-agregada-eficiencia ${claseEf}">EFICIENCIA: ${ef}% | META: 8 CITAS</div></div>`;
+          html += `<div class="cita-agregada-item">
+                      <div class="cita-agregada-supervisora">${esLider ? '🏆 ' : '📊 '}${base}</div>
+                      <div class="cita-agregada-cantidad">${cant} CITAS (${pct}%)</div>
+                      <div class="cita-agregada-eficiencia ${claseEf}">EFICIENCIA: ${ef}%</div>
+                    </div>`;
         });
         grid.innerHTML = html;
       }
@@ -1152,16 +1166,34 @@
         const registrosSemana = obtenerRegistrosSemanales();
         let totalQ = 0, totalNQ = 0;
         qDetalles = []; nqDetalles = [];
+        
         registrosSemana.forEach(reg => {
           const calif = (reg.calificacionOrigen || '').toUpperCase();
-          const esQ = calif.includes('Q') || calif === 'CALIFICADO' || calif === 'CALIFICADA';
-          const base = reg.baseDatos || reg.base || 'SIN BASE';
-          const detalle = { supervisora: reg.supervisora || 'SIN SUPERVISORA', base: base, calificacion: reg.calificacionOrigen || 'SIN CALIFICACIÓN', cliente: reg.nombre || 'SIN NOMBRE', personas: reg.numPersonas || '0', fecha: reg.fechaRegistro || reg.diaEvento || 'SIN FECHA' };
-          if (esQ) { totalQ++; qDetalles.push(detalle); } else { totalNQ++; nqDetalles.push(detalle); }
+          const esQ = calif.includes('Q') || calif === 'CALIFICADO' || calif === 'CALIFICADA' || calif === 'Q - CALIFICADO';
+          const detalle = {
+            supervisora: reg.supervisora || 'SIN SUPERVISORA',
+            base: reg.baseDatos || reg.base || 'SIN BASE',
+            calificacion: reg.calificacionOrigen || 'SIN CALIFICACIÓN',
+            cliente: reg.nombre || 'SIN NOMBRE'
+          };
+          if (esQ) { totalQ++; qDetalles.push(detalle); } 
+          else { totalNQ++; nqDetalles.push(detalle); }
         });
+        
         const grid = document.getElementById('qnqGrid');
-        let html = `<div class="qnq-card q" data-tipo="Q"><div class="qnq-icono"><i class="fas fa-check-circle"></i></div><div class="qnq-titulo">CALIFICADOS (Q)</div><div class="qnq-cantidad">${totalQ}</div><div class="qnq-detalle">Citas calificadas de la semana</div></div><div class="qnq-card nq" data-tipo="NQ"><div class="qnq-icono"><i class="fas fa-times-circle"></i></div><div class="qnq-titulo">NO CALIFICADOS (NQ)</div><div class="qnq-cantidad">${totalNQ}</div><div class="qnq-detalle">Citas no calificadas de la semana</div></div>`;
-        grid.innerHTML = html;
+        grid.innerHTML = `<div class="qnq-card q" data-tipo="Q">
+                            <div class="qnq-icono"><i class="fas fa-check-circle"></i></div>
+                            <div class="qnq-titulo">CALIFICADOS (Q)</div>
+                            <div class="qnq-cantidad">${totalQ}</div>
+                            <div class="qnq-detalle">Citas calificadas de la semana</div>
+                          </div>
+                          <div class="qnq-card nq" data-tipo="NQ">
+                            <div class="qnq-icono"><i class="fas fa-times-circle"></i></div>
+                            <div class="qnq-titulo">NO CALIFICADOS (NQ)</div>
+                            <div class="qnq-cantidad">${totalNQ}</div>
+                            <div class="qnq-detalle">Citas no calificadas de la semana</div>
+                          </div>`;
+        
         document.querySelectorAll('.qnq-card[data-tipo]').forEach(card => {
           card.addEventListener('click', () => mostrarDetallesQnq(card.getAttribute('data-tipo')));
         });
@@ -1172,20 +1204,28 @@
         const esQ = tipo === 'Q';
         const datos = esQ ? qDetalles : nqDetalles;
         const color = esQ ? 'var(--success)' : 'var(--danger)';
-        const icono = esQ ? 'fa-check-circle' : 'fa-times-circle';
         const titulo = esQ ? 'CALIFICADOS (Q)' : 'NO CALIFICADOS (NQ)';
+        
         if (datos.length === 0) {
           container.innerHTML = `<div class="sin-datos">NO HAY CITAS ${titulo} ESTA SEMANA</div>`;
         } else {
           const porBase = {};
           datos.forEach(d => { porBase[d.base] = (porBase[d.base] || 0) + 1; });
-          let html = `<div style="border-bottom:1px solid ${color};"><h3 style="color:${color};"><i class="fas ${icono}"></i> ${titulo} - ${datos.length} CITAS</h3></div><div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:15px; margin-top:15px;">`;
+          let html = `<div style="border-bottom:1px solid ${color};"><h3 style="color:${color};">${titulo} - ${datos.length} CITAS</h3></div>`;
+          html += `<div style="display:grid; gap:10px; margin-top:15px;">`;
           Object.keys(porBase).sort((a,b)=>porBase[b]-porBase[a]).forEach(base => {
-            const cant = porBase[base];
-            const pct = Math.round((cant/datos.length)*100);
-            html += `<div class="supervisora-qnq" style="border-left-color:${color};"><div class="supervisora-qnq-header"><div class="supervisora-qnq-nombre">🗂️ ${base}</div><div class="supervisora-qnq-contador" style="background:${color};">${cant} CITAS</div></div><div>${pct}% del total</div></div>`;
+            html += `<div class="supervisora-qnq" style="border-left-color:${color};">
+                        <div class="supervisora-qnq-header">
+                          <div class="supervisora-qnq-nombre">${base}</div>
+                          <div class="supervisora-qnq-contador" style="background:${color};">${porBase[base]} CITAS</div>
+                        </div>
+                      </div>`;
           });
-          html += `<div style="margin-top:20px; text-align:center;"><button onclick="cerrarDetallesQnq()" style="background:${color}; color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer;"><i class="fas fa-times"></i> CERRAR</button></div>`;
+          html += `<div style="margin-top:20px; text-align:center;">
+                      <button onclick="cerrarDetallesQnq()" style="background:${color}; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; color:white;">
+                        <i class="fas fa-times"></i> CERRAR
+                      </button>
+                    </div>`;
           container.innerHTML = html;
         }
         container.style.display = 'block';
@@ -1200,35 +1240,75 @@
         const registrosSemana = obtenerRegistrosSemanales();
         const total = registrosSemana.length;
         const { inicioSemana, finSemana } = obtenerRangoSemana();
+        
         const citasPorBase = {};
-        registrosSemana.forEach(r => { const b = r.baseDatos || r.base || 'SIN BASE'; citasPorBase[b] = (citasPorBase[b] || 0) + 1; });
+        registrosSemana.forEach(r => { 
+          const b = r.baseDatos || r.base || 'SIN BASE'; 
+          citasPorBase[b] = (citasPorBase[b] || 0) + 1; 
+        });
+        
         const ordenadas = Object.keys(citasPorBase).sort((a,b)=>citasPorBase[b]-citasPorBase[a]);
         const lider = ordenadas[0] || 'SIN BASE';
         const citasLider = citasPorBase[lider] || 0;
         const efLider = calcularEficienciaBase(citasLider);
         const pctLider = total > 0 ? Math.round((citasLider/total)*100) : 0;
-        container.innerHTML = `
-          <div class="resumen-item"><div class="icono"><i class="fas fa-calendar-week"></i></div><div class="valor">${total}</div><div class="etiqueta">CITAS DE LA SEMANA</div><div class="eficiencia-indicator eficiencia-alta">${inicioSemana.toLocaleDateString('es-MX')} - ${finSemana.toLocaleDateString('es-MX')}</div></div>
-          <div class="resumen-item"><div class="icono"><i class="fas fa-database"></i></div><div class="valor" style="font-size:1.4rem;">${lider}</div><div class="etiqueta">BASE CON MÁS CITAS</div><div class="eficiencia-indicator eficiencia-excelente">${citasLider} CITAS (${pctLider}%)</div></div>
-          <div class="resumen-item"><div class="icono"><i class="fas fa-chart-line"></i></div><div class="valor">${efLider}%</div><div class="etiqueta">EFICIENCIA BASE LÍDER</div><div class="eficiencia-indicator ${obtenerClaseEficiencia(efLider)}">META SEMANAL: 8 CITAS = 100%</div></div>
-          <div class="resumen-item"><div class="icono"><i class="fas fa-layer-group"></i></div><div class="valor">${ordenadas.length}</div><div class="etiqueta">BASES ACTIVAS</div><div class="eficiencia-indicator eficiencia-media">EN LA SEMANA ACTUAL</div></div>
-        `;
+        
+        container.innerHTML = `<div class="resumen-item">
+                                <div class="icono"><i class="fas fa-calendar-week"></i></div>
+                                <div class="valor">${total}</div>
+                                <div class="etiqueta">CITAS DE LA SEMANA</div>
+                                <div class="eficiencia-indicator eficiencia-alta">${inicioSemana.toLocaleDateString('es-MX')} - ${finSemana.toLocaleDateString('es-MX')}</div>
+                              </div>
+                              <div class="resumen-item">
+                                <div class="icono"><i class="fas fa-database"></i></div>
+                                <div class="valor" style="font-size:1.4rem;">${lider}</div>
+                                <div class="etiqueta">BASE CON MÁS CITAS</div>
+                                <div class="eficiencia-indicator eficiencia-excelente">${citasLider} CITAS (${pctLider}%)</div>
+                              </div>
+                              <div class="resumen-item">
+                                <div class="icono"><i class="fas fa-chart-line"></i></div>
+                                <div class="valor">${efLider}%</div>
+                                <div class="etiqueta">EFICIENCIA BASE LÍDER</div>
+                                <div class="eficiencia-indicator ${obtenerClaseEficiencia(efLider)}">META: 8 CITAS</div>
+                              </div>
+                              <div class="resumen-item">
+                                <div class="icono"><i class="fas fa-layer-group"></i></div>
+                                <div class="valor">${ordenadas.length}</div>
+                                <div class="etiqueta">BASES ACTIVAS</div>
+                                <div class="eficiencia-indicator eficiencia-media">ESTA SEMANA</div>
+                              </div>`;
       }
 
       function actualizarGraficoBarras() {
         const container = document.getElementById('graficoBarras');
         const registrosSemana = obtenerRegistrosSemanales();
-        if (registrosSemana.length === 0) { container.innerHTML = '<div class="sin-datos">NO HAY CITAS ESTA SEMANA</div>'; return; }
+        if (registrosSemana.length === 0) { 
+          container.innerHTML = '<div class="sin-datos">NO HAY CITAS ESTA SEMANA</div>'; 
+          return; 
+        }
+        
         const citasPorBase = {};
-        registrosSemana.forEach(r => { const b = r.baseDatos || r.base || 'SIN BASE'; citasPorBase[b] = (citasPorBase[b] || 0) + 1; });
+        registrosSemana.forEach(r => { 
+          const b = r.baseDatos || r.base || 'SIN BASE'; 
+          citasPorBase[b] = (citasPorBase[b] || 0) + 1; 
+        });
+        
         const ordenadas = Object.keys(citasPorBase).sort((a,b)=>citasPorBase[b]-citasPorBase[a]);
         const total = registrosSemana.length;
         let html = '';
+        
         ordenadas.forEach(base => {
           const cant = citasPorBase[base];
           const pct = Math.round((cant/total)*100);
           const esLider = base === ordenadas[0];
-          html += `<div class="barra"><div class="barra-label">${esLider ? '🏆 ' : ''}${base}</div><div class="barra-progreso"><div class="barra-relleno" style="width:${pct}%; ${esLider ? 'background:linear-gradient(90deg, var(--gold), #f4d03f);' : ''}">${cant} citas (${pct}%)</div></div></div>`;
+          html += `<div class="barra">
+                      <div class="barra-label">${esLider ? '🏆 ' : ''}${base}</div>
+                      <div class="barra-progreso">
+                        <div class="barra-relleno" style="width:${pct}%; ${esLider ? 'background:linear-gradient(90deg, var(--gold), #f4d03f);' : ''}">
+                          ${cant} citas (${pct}%)
+                        </div>
+                      </div>
+                    </div>`;
         });
         container.innerHTML = html;
       }
@@ -1258,15 +1338,18 @@
         const año = parseInt(document.getElementById('añoDescarga').value);
         const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
         const nombreMes = meses[mes];
+        
         const registrosMes = registrosPremanifiesto.filter(r => {
           if (!r.diaEvento) return false;
           const f = new Date(r.diaEvento);
           return !isNaN(f.getTime()) && f.getMonth() === mes && f.getFullYear() === año;
         });
+        
         if (registrosMes.length === 0) {
           mostrarNotificacion(`NO HAY REGISTROS PARA ${nombreMes} ${año}`, 'error');
           return;
         }
+        
         const porDia = {};
         registrosMes.forEach(r => {
           const f = r.diaEvento;
@@ -1275,11 +1358,13 @@
           if (!porDia[f]) porDia[f] = [];
           porDia[f].push(r);
         });
+        
         const fechas = Object.keys(porDia).sort();
         if (fechas.length === 0) {
           mostrarNotificacion(`NO HAY REGISTROS (EXCLUYENDO LUNES)`, 'error');
           return;
         }
+        
         const workbook = new ExcelJS.Workbook();
         const resumenWS = workbook.addWorksheet("RESUMEN MENSUAL");
         resumenWS.addRow([`PREMANIFIESTO MENSUAL - ${nombreMes} ${año}`]).mergeCells('A1:M1');
@@ -1287,6 +1372,7 @@
         resumenWS.addRow([`GENERADO EL: ${new Date().toLocaleDateString('es-MX')}`]).mergeCells('A2:M2');
         resumenWS.addRow([]);
         resumenWS.addRow(['BASE DE DATOS', 'TOTAL CITAS', 'CALIFICADOS (Q)', 'NO CALIFICADOS (NQ)', 'EFICIENCIA', 'PARTICIPACIÓN']);
+        
         const porBase = {};
         registrosMes.forEach(r => {
           const b = r.baseDatos || r.base || 'SIN BASE';
@@ -1296,28 +1382,37 @@
           porBase[b].total++;
           if (esQ) porBase[b].q++; else porBase[b].nq++;
         });
+        
         Object.keys(porBase).sort((a,b)=>porBase[b].total-porBase[a].total).forEach(b => {
           const s = porBase[b];
           const ef = Math.round((s.total/8)*100);
           const pct = Math.round((s.total/registrosMes.length)*100);
           resumenWS.addRow([b, s.total, s.q, s.nq, `${ef}%`, `${pct}%`]);
         });
+        
         fechas.forEach(fecha => {
           const fd = new Date(fecha);
           const diaNum = fd.getDate();
           const mesAbr = fd.toLocaleDateString('es-MX',{month:'short'}).toUpperCase().replace('.','');
           const nombreHoja = `PREMANIFIESTO ${String(diaNum).padStart(2,'0')} ${mesAbr}`.substring(0,31);
           const ws = workbook.addWorksheet(nombreHoja);
+          
           ws.addRow([`PREMANIFIESTO DEL ${fd.toLocaleDateString('es-MX',{weekday:'long'}).toUpperCase()}, ${diaNum} DE ${nombreMes} DE ${año}`]).mergeCells('A1:M1');
           ws.getRow(1).font = { size: 16, bold: true, color: { argb: 'FFD4AF37' } };
           ws.addRow([]);
           ws.addRow(['NUM DE CITA','FECHA','PAX','NOMBRES FAMILIA','EDAD','ESTADO CIVIL','TARJETAS','ID','INGRESOS','VENDEDOR','OPERADOR','SUPERVISOR','TELEFONO']);
-          ws.getRow(3).eachCell(c => { c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF0F172A' } }; c.font = { bold:true, color:{ argb:'FFFFFFFF' } }; });
+          ws.getRow(3).eachCell(c => { 
+            c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF0F172A' } }; 
+            c.font = { bold:true, color:{ argb:'FFFFFFFF' } }; 
+          });
+          
           porDia[fecha].forEach((r,idx) => {
             ws.addRow([r.citaPorDia || idx+1, fecha, r.numPersonas || '', r.nombre || '', r.edad || '', r.estadoCivil || '', r.tarjeta || '', '---', r.ingresos || '', r.vendedor || '', r.operador || '', r.supervisora || '', r.telefono || '']);
           });
+          
           ws.columns = [{width:12},{width:12},{width:8},{width:35},{width:10},{width:15},{width:15},{width:10},{width:12},{width:15},{width:15},{width:15},{width:18}];
         });
+        
         workbook.xlsx.writeBuffer().then(buffer => {
           saveAs(new Blob([buffer]), `PREMANIFIESTO_${nombreMes}_${año}.xlsx`);
           mostrarNotificacion(`✅ PREMANIFIESTO DE ${nombreMes} ${año} DESCARGADO`);
@@ -1332,8 +1427,10 @@
         const mes = hoy.getMonth();
         const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
         const nombreMes = meses[mes];
+        
         const porDia = {};
         let totalCitas = 0;
+        
         registrosPremanifiesto.forEach(r => {
           if (!r.diaEvento) return;
           const f = new Date(r.diaEvento);
@@ -1344,13 +1441,21 @@
             totalCitas++;
           }
         });
+        
         const fechas = Object.keys(porDia).sort();
         if (fechas.length === 0) {
           contenido.innerHTML = `<div class="sin-datos">NO HAY CITAS EN ${nombreMes} ${año}</div>`;
           modal.style.display = 'block';
           return;
         }
-        let html = `<div class="resumen-citas-mes"><div class="resumen-mes-item"><div class="titulo">TOTAL CITAS</div><div class="valor">${totalCitas}</div><div class="detalle">${nombreMes} ${año}</div></div><div class="resumen-mes-item"><div class="titulo">DÍAS CON CITAS</div><div class="valor">${fechas.length}</div><div class="detalle">Excluyendo lunes</div></div><div class="resumen-mes-item"><div class="titulo">PROMEDIO/DÍA</div><div class="valor">${Math.round(totalCitas/fechas.length)}</div><div class="detalle">citas por día</div></div></div><div class="pestanas-mes" id="pestanasMes">`;
+        
+        let html = `<div class="resumen-citas-mes">
+                      <div class="resumen-mes-item"><div class="titulo">TOTAL CITAS</div><div class="valor">${totalCitas}</div><div class="detalle">${nombreMes} ${año}</div></div>
+                      <div class="resumen-mes-item"><div class="titulo">DÍAS CON CITAS</div><div class="valor">${fechas.length}</div><div class="detalle">Excluyendo lunes</div></div>
+                      <div class="resumen-mes-item"><div class="titulo">PROMEDIO/DÍA</div><div class="valor">${Math.round(totalCitas/fechas.length)}</div><div class="detalle">citas por día</div></div>
+                    </div>
+                    <div class="pestanas-mes" id="pestanasMes">`;
+        
         fechas.forEach((f, i) => {
           const fd = new Date(f);
           const d = fd.getDate();
@@ -1358,16 +1463,43 @@
           html += `<div class="pestana-dia ${i===0?'activa':''}" data-fecha="${f}">PREMANIFIESTO DEL ${String(d).padStart(2,'0')} DE ${ma}</div>`;
         });
         html += `</div>`;
+        
         fechas.forEach((f, i) => {
           const fd = new Date(f);
-          html += `<div class="contenido-pestana ${i===0?'activa':''}" id="contenido-${f}"><h4>${fd.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase()}</h4><div style="overflow-x:auto;"><table><thead><tr><th>NUM</th><th>FECHA</th><th>PAX</th><th>NOMBRES</th><th>EDAD</th><th>ESTADO CIVIL</th><th>TARJETAS</th><th>ID</th><th>INGRESOS</th><th>VENDEDOR</th><th>OPERADOR</th><th>SUPERVISOR</th><th>TELEFONO</th></tr></thead><tbody>`;
+          html += `<div class="contenido-pestana ${i===0?'activa':''}" id="contenido-${f}">
+                      <h4>${fd.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase()}</h4>
+                      <div style="overflow-x:auto;">
+                        <table>
+                          <thead>
+                            <tr><th>NUM</th><th>FECHA</th><th>PAX</th><th>NOMBRES</th><th>EDAD</th><th>ESTADO CIVIL</th><th>TARJETAS</th><th>ID</th><th>INGRESOS</th><th>VENDEDOR</th><th>OPERADOR</th><th>SUPERVISOR</th><th>TELEFONO</th></tr>
+                          </thead>
+                          <tbody>`;
           porDia[f].forEach((r,idx) => {
-            html += `<tr><td style="text-align:center">${r.citaPorDia || idx+1}</td><td style="text-align:center">${f}</td><td style="text-align:center">${r.numPersonas || ''}</td><td style="text-align:center">${r.nombre || ''}</td><td style="text-align:center">${r.edad || ''}</td><td style="text-align:center">${r.estadoCivil || ''}</td><td style="text-align:center">${r.tarjeta || ''}</td><td style="text-align:center">---</td><td style="text-align:center">${r.ingresos || ''}</td><td style="text-align:center">${r.vendedor || ''}</td><td style="text-align:center">${r.operador || ''}</td><td style="text-align:center">${r.supervisora || ''}</td><td style="text-align:center">${r.telefono || ''}</td></tr>`;
+            html += `<tr>
+                       <td style="text-align:center">${r.citaPorDia || idx+1}</td>
+                       <td style="text-align:center">${f}</td>
+                       <td style="text-align:center">${r.numPersonas || ''}</td>
+                       <td>${r.nombre || ''}</td>
+                       <td style="text-align:center">${r.edad || ''}</td>
+                       <td style="text-align:center">${r.estadoCivil || ''}</td>
+                       <td style="text-align:center">${r.tarjeta || ''}</td>
+                       <td style="text-align:center">---</td>
+                       <td style="text-align:center">${r.ingresos || ''}</td>
+                       <td style="text-align:center">${r.vendedor || ''}</td>
+                       <td style="text-align:center">${r.operador || ''}</td>
+                       <td style="text-align:center">${r.supervisora || ''}</td>
+                       <td style="text-align:center">${r.telefono || ''}</td>
+                     </tr>`;
           });
-          html += `</tbody></table></div></div>`;
+          html += `</tbody>
+                        </table>
+                      </div>
+                    </div>`;
         });
+        
         contenido.innerHTML = html;
         modal.style.display = 'block';
+        
         document.querySelectorAll('.pestana-dia').forEach(p => {
           p.addEventListener('click', function() {
             const fecha = this.getAttribute('data-fecha');
@@ -1391,9 +1523,10 @@
         const db = firebase.database();
         db.ref('registrosPremanifiesto').on('value', snap => {
           registrosPremanifiesto = convertirDatosFirebase(snap.val());
-          verificarNuevoDia();
           actualizarTodoElPanel();
-          if (registrosPremanifiesto.length) mostrarNotificacion(`✅ DATOS ACTUALIZADOS - ${registrosPremanifiesto.length} CITAS`);
+          if (registrosPremanifiesto.length) {
+            mostrarNotificacion(`✅ DATOS ACTUALIZADOS - ${registrosPremanifiesto.length} CITAS TOTALES`);
+          }
         });
         db.ref('supervisoras').on('value', snap => {
           const data = snap.val();
@@ -1405,12 +1538,17 @@
       function inicializar() {
         llenarSelectorAnios();
         configurarFirebase();
-        document.getElementById('actualizarBtn').addEventListener('click', () => { actualizarTodoElPanel(); mostrarNotificacion('REPORTE ACTUALIZADO'); });
+        document.getElementById('actualizarBtn').addEventListener('click', () => { 
+          actualizarTodoElPanel(); 
+          mostrarNotificacion('REPORTE ACTUALIZADO'); 
+        });
         document.getElementById('btnDescargarMesSeleccionado').addEventListener('click', descargarPremanifiestoPorMes);
         document.getElementById('btnCitasMes').addEventListener('click', mostrarCitasDelMes);
         document.querySelector('.cerrar-modal').addEventListener('click', () => document.getElementById('modalCitasMes').style.display = 'none');
-        window.addEventListener('click', e => { if (e.target === document.getElementById('modalCitasMes')) document.getElementById('modalCitasMes').style.display = 'none'; });
-        setInterval(verificarNuevoDia, 3600000);
+        window.addEventListener('click', e => { 
+          if (e.target === document.getElementById('modalCitasMes')) 
+            document.getElementById('modalCitasMes').style.display = 'none'; 
+        });
       }
       inicializar();
     });
