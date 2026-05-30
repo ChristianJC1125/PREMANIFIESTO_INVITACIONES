@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -9,6 +9,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Flatpickr para calendario -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <style>
     :root {
       --primary: #0F172A;
@@ -22,6 +25,7 @@
       --text-primary: #F8FAFC;
       --text-secondary: #CBD5E1;
       --background: #0B1120;
+      --reprogramada: #F59E0B;
     }
 
     * {
@@ -51,7 +55,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      flex-wrap: wrap;
+      gap: 15px;
       border: 1px solid rgba(212, 175, 55, 0.3);
     }
 
@@ -80,7 +85,6 @@
     .logo-text h1 {
       font-size: 1.8rem;
       font-weight: 700;
-      letter-spacing: 1px;
       background: linear-gradient(135deg, var(--gold), #F4D03F);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -123,23 +127,9 @@
       box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
     }
 
-    .btn-filtro i {
-      font-size: 1.1rem;
-    }
-
-    .btn-exportar {
-      background: var(--success);
-      border-color: var(--success);
-    }
-
     .btn-volver {
       background: var(--secondary);
       border-color: var(--secondary);
-    }
-
-    .btn-citas-mes {
-      background: var(--accent);
-      border-color: var(--accent);
     }
 
     .mes-selector {
@@ -222,6 +212,104 @@
       box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
     }
 
+    .calendario-container {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+
+    .calendario-container h2 {
+      color: var(--gold);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .calendario-header {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .calendario-header input {
+      flex: 1;
+      min-width: 250px;
+      padding: 12px 15px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      color: var(--text-primary);
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .citas-por-dia {
+      margin-top: 20px;
+    }
+
+    .cita-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-left: 4px solid var(--gold);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .cita-card.reprogramada {
+      border-left-color: var(--reprogramada);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .cita-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .cita-nombre {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--gold);
+    }
+
+    .badge-reprogramada {
+      background: var(--reprogramada);
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .cita-detalles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .cita-detalle-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .cita-detalle-item i {
+      width: 20px;
+      color: var(--gold);
+    }
+
     .resumen-general {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -280,7 +368,7 @@
 
     .qnq-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
       margin-bottom: 20px;
     }
@@ -360,85 +448,6 @@
       display: none;
     }
 
-    .supervisora-qnq {
-      background: rgba(255, 255, 255, 0.03);
-      border-left: 4px solid;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 10px;
-    }
-
-    .supervisora-qnq-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .supervisora-qnq-nombre {
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: var(--text-primary);
-    }
-
-    .supervisora-qnq-contador {
-      background: var(--primary);
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    .bases-container {
-      margin-top: 10px;
-    }
-
-    .bases-titulo {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      margin-bottom: 5px;
-    }
-
-    .bases-lista {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .base-item {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 5px 10px;
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.9rem;
-    }
-
-    .base-nombre {
-      color: var(--text-secondary);
-    }
-
-    .base-cantidad {
-      font-weight: 600;
-    }
-
-    .citas-agregadas-hoy {
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      border-radius: 20px;
-      padding: 25px;
-      margin-bottom: 30px;
-      border: 1px solid rgba(212, 175, 55, 0.3);
-    }
-
-    .citas-agregadas-hoy h2 {
-      color: var(--gold);
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
     .reporte-block {
       background: linear-gradient(135deg, var(--primary), var(--primary-light));
       border-radius: 20px;
@@ -475,6 +484,13 @@
       border-radius: 14px;
       padding: 16px;
       text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .reporte-dia-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--gold);
     }
 
     .reporte-dia-card.hoy {
@@ -500,56 +516,6 @@
       color: var(--text-secondary);
       font-size: 0.75rem;
       margin-top: 6px;
-    }
-
-    .estado-tiempo-real {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 8px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(16, 185, 129, 0.6);
-      background: rgba(16, 185, 129, 0.12);
-      color: #6ee7b7;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .tiempo-real-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #10B981;
-      animation: pulsoTiempoReal 1.6s infinite;
-    }
-
-    @keyframes pulsoTiempoReal {
-      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-    }
-
-    .live-strip {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.12));
-      border: 1px solid rgba(59, 130, 246, 0.35);
-      border-radius: 14px;
-      padding: 12px 16px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      font-weight: 600;
-    }
-
-    .live-strip .hora-live {
-      color: #6ee7b7;
-      font-weight: 700;
-      letter-spacing: 1px;
     }
 
     .citas-agregadas-grid {
@@ -641,153 +607,85 @@
       transition: width 0.5s ease;
     }
 
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.9);
-      overflow-y: auto;
+    .estado-tiempo-real {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(16, 185, 129, 0.6);
+      background: rgba(16, 185, 129, 0.12);
+      color: #6ee7b7;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
-    .modal-contenido {
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      margin: 5% auto;
-      padding: 30px;
-      border: 2px solid var(--gold);
-      border-radius: 20px;
-      width: 95%;
-      max-width: 1400px;
-      position: relative;
+    .tiempo-real-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #10B981;
+      animation: pulsoTiempoReal 1.6s infinite;
     }
 
-    .modal-header {
+    @keyframes pulsoTiempoReal {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .live-strip {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.12));
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid var(--gold);
+      flex-wrap: wrap;
+      gap: 12px;
+      font-weight: 600;
     }
 
-    .modal-header h3 {
-      color: var(--gold);
-      font-size: 1.8rem;
+    .live-strip .hora-live {
+      color: #6ee7b7;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .notificacion {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--success);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      z-index: 2000;
+      animation: slideIn 0.3s ease;
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .cerrar-modal {
-      color: var(--text-secondary);
-      font-size: 3rem;
-      cursor: pointer;
-      transition: color 0.3s ease;
-      line-height: 1;
+    .notificacion.error {
+      background: var(--danger);
     }
 
-    .cerrar-modal:hover {
-      color: var(--danger);
-    }
-
-    .resumen-citas-mes {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .resumen-mes-item {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 20px;
-      border-radius: 15px;
-      text-align: center;
-      border: 1px solid var(--gold);
-    }
-
-    .resumen-mes-item .titulo {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      margin-bottom: 10px;
-    }
-
-    .resumen-mes-item .valor {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--gold);
-      margin-bottom: 10px;
-    }
-
-    .resumen-mes-item .detalle {
-      color: var(--text-secondary);
-      font-size: 0.8rem;
-    }
-
-    .pestanas-mes {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-      overflow-x: auto;
-    }
-
-    .pestana-dia {
-      padding: 12px 20px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      white-space: nowrap;
-    }
-
-    .pestana-dia:hover {
-      background: rgba(212, 175, 55, 0.2);
-    }
-
-    .pestana-dia.activa {
-      background: var(--gold);
-      color: var(--primary);
-    }
-
-    .contenido-pestana {
-      display: none;
-    }
-
-    .contenido-pestana.activa {
-      display: block;
-    }
-
-    .contenido-pestana h4 {
-      color: var(--gold);
-      margin-bottom: 20px;
-      font-size: 1.3rem;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: rgba(30, 41, 59, 0.7);
-    }
-
-    th {
-      background: var(--primary);
-      color: var(--gold);
-      font-weight: 600;
-      padding: 12px;
-      text-align: center;
-      border: 1px solid var(--primary-light);
-    }
-
-    td {
-      padding: 10px;
-      border: 1px solid var(--primary-light);
-      color: var(--text-primary);
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
     }
 
     .sin-datos {
@@ -815,50 +713,34 @@
       font-size: 1rem;
     }
 
-    .notificacion {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: var(--success);
-      color: white;
-      padding: 15px 25px;
-      border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      z-index: 2000;
-      animation: slideIn 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .notificacion.error {
-      background: var(--danger);
-    }
-
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
 
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+    .eficiencia-excelente {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6EE7B7;
     }
 
-    .actualizando i {
-      animation: spin 1s linear infinite;
+    .eficiencia-alta {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6EE7B7;
+    }
+
+    .eficiencia-media {
+      background: rgba(245, 158, 11, 0.2);
+      color: #FCD34D;
+    }
+
+    .eficiencia-baja {
+      background: rgba(239, 68, 68, 0.2);
+      color: #FCA5A5;
     }
 
     @media (max-width: 768px) {
       header {
         flex-direction: column;
-        gap: 15px;
       }
       
       .logo-container {
@@ -875,29 +757,21 @@
         flex-direction: column;
       }
       
-      .modal-contenido {
-        margin: 2% auto;
-        padding: 15px;
-        width: 98%;
+      .calendario-header {
+        flex-direction: column;
       }
       
-      .pestanas-mes {
-        flex-wrap: nowrap;
+      .calendario-header input {
+        width: 100%;
+      }
+      
+      .calendario-header button {
+        width: 100%;
       }
     }
   </style>
 </head>
 <body>
-  <div id="modalCitasMes" class="modal">
-    <div class="modal-contenido">
-      <div class="modal-header">
-        <h3><i class="fas fa-calendar-alt"></i> PREMANIFIESTO DEL MES</h3>
-        <span class="cerrar-modal">&times;</span>
-      </div>
-      <div id="contenidoCitasMes"></div>
-    </div>
-  </div>
-
   <div class="container">
     <header>
       <div class="logo-container">
@@ -906,7 +780,7 @@
         </div>
         <div class="logo-text">
           <h1>BLUE ELEGANCE</h1>
-          <p>REPORTE DE SUPERVISIÓN SEMANAL</p>
+          <p>PANEL DE CONTROL - GERENTE</p>
           <div class="estado-tiempo-real">
             <span class="tiempo-real-dot"></span>
             TIEMPO REAL ACTIVO
@@ -917,15 +791,13 @@
         <button class="btn-filtro" id="actualizarBtn">
           <i class="fas fa-sync-alt"></i> ACTUALIZAR REPORTE
         </button>
-        <button class="btn-filtro btn-citas-mes" id="btnCitasMes">
-          <i class="fas fa-calendar-alt"></i> VER PREMANIFIESTO DEL MES
-        </button>
         <button class="btn-filtro btn-volver" onclick="window.location.href='index.html'">
           <i class="fas fa-arrow-left"></i> VOLVER AL SISTEMA
         </button>
       </div>
     </header>
 
+    <!-- Selector para descargar premanifiesto -->
     <div class="mes-selector">
       <h3><i class="fas fa-file-download"></i> DESCARGAR PREMANIFIESTO POR MES</h3>
       <div class="mes-selector-grid">
@@ -958,15 +830,34 @@
       </div>
     </div>
 
+    <!-- Calendario para ver citas por día -->
+    <div class="calendario-container">
+      <h2><i class="fas fa-calendar-alt"></i> VER CITAS POR DÍA</h2>
+      <div class="calendario-header">
+        <input type="text" id="calendarioInput" placeholder="Selecciona una fecha">
+        <button class="btn-filtro" id="btnBuscarFecha" style="background: var(--accent);">
+          <i class="fas fa-search"></i> BUSCAR
+        </button>
+      </div>
+      <div id="citasPorDiaContainer" class="citas-por-dia">
+        <div class="sin-datos">Selecciona una fecha para ver las citas</div>
+      </div>
+    </div>
+
     <div class="live-strip">
-      <div><strong>Supervisión semanal en tiempo real</strong> · citas y eficiencia por base de datos</div>
+      <div><strong>Supervisión en tiempo real</strong> · citas y eficiencia por base de datos</div>
       <div class="hora-live" id="relojTiempoReal">--:--:--</div>
     </div>
 
+    <!-- Resumen general -->
     <section class="resumen-general" id="resumenGeneral">
-      <div class="cargando"><i class="fas fa-spinner"></i><p>CARGANDO REPORTE...</p></div>
+      <div class="cargando">
+        <i class="fas fa-spinner"></i>
+        <p>CARGANDO REPORTE...</p>
+      </div>
     </section>
 
+    <!-- CITAS DE LA SEMANA (POR DÍA) -->
     <section class="reporte-block">
       <h2><i class="fas fa-calendar-week"></i> CITAS DE LA SEMANA (POR DÍA)</h2>
       <p class="reporte-rango" id="rangoSemanaTexto">Cargando rango de la semana...</p>
@@ -975,6 +866,7 @@
       </div>
     </section>
 
+    <!-- EFICIENCIA Y CITAS POR BASE -->
     <section class="reporte-block">
       <h2><i class="fas fa-database"></i> EFICIENCIA Y CITAS POR BASE</h2>
       <p class="reporte-rango">Ordenado por base con más citas en total</p>
@@ -983,27 +875,35 @@
       </div>
     </section>
 
+    <!-- Q & NQ semanal -->
     <section class="qnq-section" id="qnqSection">
       <h2><i class="fas fa-chart-pie"></i> CALIFICACIÓN SEMANAL (Q & NQ)</h2>
       <div class="qnq-grid" id="qnqGrid">
-        <div class="cargando"><i class="fas fa-spinner"></i><p>CARGANDO Q & NQ...</p></div>
+        <div class="cargando">
+          <i class="fas fa-spinner"></i>
+          <p>CARGANDO Q & NQ...</p>
+        </div>
       </div>
       <div class="qnq-detalles-container" id="qnqDetalles"></div>
     </section>
 
+    <!-- Gráfico por base -->
     <div class="grafico-container">
       <h2><i class="fas fa-chart-bar"></i> DISTRIBUCIÓN POR BASE</h2>
       <div id="graficoBarras">
-        <div class="cargando"><i class="fas fa-spinner"></i><p>CARGANDO GRÁFICO...</p></div>
+        <div class="cargando">
+          <i class="fas fa-spinner"></i>
+          <p>CARGANDO GRÁFICO...</p>
+        </div>
       </div>
     </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
   <script>
+    // Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyASUJrQNMW80DDMV8gFzjTYPUd8x3B5YDk",
       authDomain: "invitacionpremanfiesto.firebaseapp.com",
@@ -1011,18 +911,20 @@
       projectId: "invitacionpremanfiesto",
       storageBucket: "invitacionpremanfiesto.firebasestorage.app",
       messagingSenderId: "362764197269",
-      appId: "1:362764197269:web:058b028dcc53d299df6a9c",
-      measurementId: "G-JYTW87S1MP"
+      appId: "1:362764197269:web:058b028dcc53d299df6a9c"
     };
 
+    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
 
-    let listaSupervisoras = [];
+    // Variables globales
     let registrosPremanifiesto = [];
     let qDetalles = [];
     let nqDetalles = [];
+    let fechaSeleccionada = null;
 
     document.addEventListener("DOMContentLoaded", function() {
+      // Reloj en tiempo real
       function actualizarReloj() {
         const reloj = document.getElementById('relojTiempoReal');
         if (reloj) reloj.textContent = new Date().toLocaleTimeString('es-MX');
@@ -1030,6 +932,7 @@
       actualizarReloj();
       setInterval(actualizarReloj, 1000);
 
+      // Convertir datos de Firebase
       function convertirDatosFirebase(data) {
         if (!data) return [];
         if (Array.isArray(data)) return data.filter(i => i !== null);
@@ -1037,27 +940,38 @@
         return [];
       }
 
+      // Obtener fecha válida del registro (usa SOLO diaEvento)
       function obtenerFechaValida(reg) {
-        if (!reg) return null;
-        let fecha = reg.diaEvento || reg.fechaRegistro;
-        if (!fecha) return null;
-        const d = new Date(fecha);
+        if (!reg || !reg.diaEvento) return null;
+        const d = new Date(reg.diaEvento);
         return isNaN(d.getTime()) ? null : d;
       }
 
+      // Formatear fecha local
+      function formatearFechaLocal(fecha) {
+        return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+      }
+
+      // Formatear fecha para mostrar
+      function formatearFechaParaMostrar(fecha) {
+        return fecha.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+      }
+
+      // Obtener rango de la semana actual
       function obtenerRangoSemana() {
         const hoy = new Date();
         const inicio = new Date(hoy);
         const dia = hoy.getDay();
         const diasDesdeLunes = dia === 0 ? 6 : dia - 1;
         inicio.setDate(hoy.getDate() - diasDesdeLunes);
-        inicio.setHours(0,0,0,0);
+        inicio.setHours(0, 0, 0, 0);
         const fin = new Date(inicio);
         fin.setDate(inicio.getDate() + 6);
-        fin.setHours(23,59,59,999);
+        fin.setHours(23, 59, 59, 999);
         return { inicioSemana: inicio, finSemana: fin };
       }
 
+      // Obtener registros de la semana actual
       function obtenerRegistrosSemanales() {
         const { inicioSemana, finSemana } = obtenerRangoSemana();
         return registrosPremanifiesto.filter(reg => {
@@ -1066,21 +980,102 @@
         });
       }
 
-      function formatearFechaLocal(fecha) {
-        return `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}-${String(fecha.getDate()).padStart(2,'0')}`;
+      // Detectar citas duplicadas por nombre y teléfono
+      function detectarCitasDuplicadas() {
+        const mapa = new Map();
+        const duplicados = new Set();
+        registrosPremanifiesto.forEach(reg => {
+          const clave = `${reg.nombre || ''}|${reg.telefono || ''}`.toLowerCase().trim();
+          if (clave && clave !== '|') {
+            if (mapa.has(clave)) {
+              duplicados.add(clave);
+            } else {
+              mapa.set(clave, reg);
+            }
+          }
+        });
+        return duplicados;
       }
 
+      let citasDuplicadasSet = new Set();
+      
+      function actualizarDuplicados() {
+        citasDuplicadasSet = detectarCitasDuplicadas();
+      }
+      
+      function esCitaDuplicada(reg) {
+        const clave = `${reg.nombre || ''}|${reg.telefono || ''}`.toLowerCase().trim();
+        return citasDuplicadasSet.has(clave);
+      }
+
+      // Contar citas por fecha (usa SOLO diaEvento)
       function contarCitasPorFecha(fechaObj) {
         const fechaStr = formatearFechaLocal(fechaObj);
         return registrosPremanifiesto.filter(reg => {
-          const fechaEvento = reg.diaEvento ? new Date(reg.diaEvento) : null;
-          const fechaReg = reg.fechaRegistro ? new Date(reg.fechaRegistro) : null;
-          const fechaEventoStr = fechaEvento ? formatearFechaLocal(fechaEvento) : null;
-          const fechaRegStr = fechaReg ? formatearFechaLocal(fechaReg) : null;
-          return fechaEventoStr === fechaStr || fechaRegStr === fechaStr;
+          if (!reg.diaEvento) return false;
+          const fechaEvento = new Date(reg.diaEvento);
+          if (isNaN(fechaEvento.getTime())) return false;
+          return formatearFechaLocal(fechaEvento) === fechaStr;
         }).length;
       }
 
+      // Obtener citas de una fecha específica
+      function obtenerCitasPorFecha(fechaStr) {
+        return registrosPremanifiesto.filter(reg => {
+          if (!reg.diaEvento) return false;
+          const fechaEvento = new Date(reg.diaEvento);
+          if (isNaN(fechaEvento.getTime())) return false;
+          return formatearFechaLocal(fechaEvento) === fechaStr;
+        });
+      }
+
+      // Mostrar citas en el calendario
+      function mostrarCitasPorFecha(fecha) {
+        const container = document.getElementById('citasPorDiaContainer');
+        if (!fecha) {
+          container.innerHTML = '<div class="sin-datos">Selecciona una fecha para ver las citas</div>';
+          return;
+        }
+        
+        const fechaStr = formatearFechaLocal(fecha);
+        const citas = obtenerCitasPorFecha(fechaStr);
+        
+        if (citas.length === 0) {
+          container.innerHTML = `<div class="sin-datos">No hay citas registradas para el ${formatearFechaParaMostrar(fecha)}</div>`;
+          return;
+        }
+        
+        let html = `<h3 style="color: var(--gold); margin-bottom: 15px;">
+                      <i class="fas fa-calendar-day"></i> ${formatearFechaParaMostrar(fecha)} - ${citas.length} CITA${citas.length !== 1 ? 'S' : ''}
+                    </h3>`;
+        
+        citas.forEach(cita => {
+          const esDuplicada = esCitaDuplicada(cita);
+          html += `
+            <div class="cita-card ${esDuplicada ? 'reprogramada' : ''}">
+              <div class="cita-card-header">
+                <div class="cita-nombre">
+                  <i class="fas fa-user"></i> ${cita.nombre || 'SIN NOMBRE'}
+                </div>
+                ${esDuplicada ? '<span class="badge-reprogramada"><i class="fas fa-exchange-alt"></i> REPROGRAMADA</span>' : ''}
+              </div>
+              <div class="cita-detalles">
+                <div class="cita-detalle-item"><i class="fas fa-phone"></i> ${cita.telefono || 'SIN TELÉFONO'}</div>
+                <div class="cita-detalle-item"><i class="fas fa-credit-card"></i> ${cita.tarjeta || 'SIN TARJETA'}</div>
+                <div class="cita-detalle-item"><i class="fas fa-heart"></i> ${cita.estadoCivil || 'SIN ESTADO CIVIL'}</div>
+                <div class="cita-detalle-item"><i class="fas fa-building"></i> ${cita.hotel || cita.salon || 'SIN SALÓN'}</div>
+                <div class="cita-detalle-item"><i class="fas fa-users"></i> PAX: ${cita.numPersonas || '0'}</div>
+                <div class="cita-detalle-item"><i class="fas fa-clock"></i> ${cita.hora || 'HORA NO REGISTRADA'}</div>
+                <div class="cita-detalle-item"><i class="fas fa-chalkboard-user"></i> SUPERVISORA: ${cita.supervisora || 'SIN SUPERVISORA'}</div>
+              </div>
+            </div>
+          `;
+        });
+        
+        container.innerHTML = html;
+      }
+
+      // Calcular eficiencia por base
       function calcularEficienciaBase(citas) {
         const meta = 8;
         if (citas === 0) return 0;
@@ -1097,7 +1092,46 @@
         return 'eficiencia-excelente';
       }
 
-      function actualizarReporteDiasSemana() {
+      // Actualizar resumen general
+      function actualizarResumenGeneral() {
+        const container = document.getElementById('resumenGeneral');
+        const registrosSemana = obtenerRegistrosSemanales();
+        const total = registrosSemana.length;
+        const { inicioSemana, finSemana } = obtenerRangoSemana();
+        const reprogramadas = registrosPremanifiesto.filter(r => esCitaDuplicada(r)).length;
+        const basesActivas = new Set(registrosPremanifiesto.map(r => r.baseDatos || r.base || 'SIN BASE')).size;
+        const diasConCitas = new Set(registrosPremanifiesto.filter(r => r.diaEvento).map(r => formatearFechaLocal(new Date(r.diaEvento)))).size;
+        
+        container.innerHTML = `
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-calendar-week"></i></div>
+            <div class="valor">${total}</div>
+            <div class="etiqueta">CITAS ESTA SEMANA</div>
+            <div class="eficiencia-indicator eficiencia-alta">${inicioSemana.toLocaleDateString('es-MX')} - ${finSemana.toLocaleDateString('es-MX')}</div>
+          </div>
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-exchange-alt"></i></div>
+            <div class="valor">${reprogramadas}</div>
+            <div class="etiqueta">CITAS REPROGRAMADAS</div>
+            <div class="eficiencia-indicator eficiencia-media">(Duplicadas por nombre/teléfono)</div>
+          </div>
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-database"></i></div>
+            <div class="valor">${basesActivas}</div>
+            <div class="etiqueta">BASES ACTIVAS</div>
+            <div class="eficiencia-indicator eficiencia-media">EN TOTAL</div>
+          </div>
+          <div class="resumen-item">
+            <div class="icono"><i class="fas fa-calendar-alt"></i></div>
+            <div class="valor">${diasConCitas}</div>
+            <div class="etiqueta">DÍAS CON CITAS</div>
+            <div class="eficiencia-indicator eficiencia-media">EN TOTAL</div>
+          </div>
+        `;
+      }
+
+      // Actualizar grid de días de la semana
+      function actualizarReporteDias() {
         const grid = document.getElementById('reporteDiasGrid');
         const rangoTexto = document.getElementById('rangoSemanaTexto');
         const { inicioSemana, finSemana } = obtenerRangoSemana();
@@ -1108,26 +1142,51 @@
           rangoTexto.textContent = `Semana del ${inicioSemana.toLocaleDateString('es-MX')} al ${finSemana.toLocaleDateString('es-MX')}`;
         }
         
-        let total = 0, html = '';
+        let total = 0;
+        let html = '';
+        
         for (let i = 0; i < 7; i++) {
           const fecha = new Date(inicioSemana);
           fecha.setDate(inicioSemana.getDate() + i);
           const cant = contarCitasPorFecha(fecha);
           total += cant;
           const esHoy = formatearFechaLocal(fecha) === hoyStr;
-          html += `<div class="reporte-dia-card ${esHoy ? 'hoy' : ''}">
-                      <div class="dia-nombre">${nombres[i]}${esHoy ? ' · HOY' : ''}</div>
-                      <div class="dia-cantidad">${cant}</div>
-                      <div class="dia-fecha">${fecha.toLocaleDateString('es-MX', {day:'numeric', month:'short'})}</div>
-                    </div>`;
+          const fechaStr = formatearFechaLocal(fecha);
+          
+          html += `
+            <div class="reporte-dia-card ${esHoy ? 'hoy' : ''}" data-fecha="${fechaStr}">
+              <div class="dia-nombre">${nombres[i]}${esHoy ? ' · HOY' : ''}</div>
+              <div class="dia-cantidad">${cant}</div>
+              <div class="dia-fecha">${fecha.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</div>
+            </div>
+          `;
         }
-        grid.innerHTML = `<div class="reporte-dia-card hoy" style="grid-column:1/-1;max-width:320px;margin:0 auto 8px;">
-                            <div class="dia-nombre">TOTAL SEMANAL</div>
-                            <div class="dia-cantidad">${total}</div>
-                            <div class="dia-fecha">citas</div>
-                          </div>` + html;
+        
+        html = `
+          <div class="reporte-dia-card hoy" style="grid-column: 1 / -1; max-width: 320px; margin: 0 auto 8px;">
+            <div class="dia-nombre">TOTAL SEMANAL</div>
+            <div class="dia-cantidad">${total}</div>
+            <div class="dia-fecha">citas</div>
+          </div>
+        ` + html;
+        
+        grid.innerHTML = html;
+        
+        // Agregar evento de clic a cada día
+        document.querySelectorAll('.reporte-dia-card[data-fecha]').forEach(card => {
+          card.addEventListener('click', () => {
+            const fechaStr = card.getAttribute('data-fecha');
+            const fecha = new Date(fechaStr);
+            fechaSeleccionada = fecha;
+            if (window.calendarioInput) {
+              window.calendarioInput.value = fechaStr;
+            }
+            mostrarCitasPorFecha(fecha);
+          });
+        });
       }
 
+      // Actualizar reporte de bases
       function actualizarReporteBases() {
         const grid = document.getElementById('reporteBasesGrid');
         const registrosFiltrados = registrosPremanifiesto.filter(reg => obtenerFechaValida(reg) !== null);
@@ -1138,34 +1197,39 @@
         }
         
         const citasPorBase = {};
-        registrosFiltrados.forEach(r => { 
-          const b = r.baseDatos || r.base || 'SIN BASE'; 
-          citasPorBase[b] = (citasPorBase[b] || 0) + 1; 
+        registrosFiltrados.forEach(r => {
+          const b = r.baseDatos || r.base || 'SIN BASE';
+          citasPorBase[b] = (citasPorBase[b] || 0) + 1;
         });
         
-        const ordenadas = Object.keys(citasPorBase).sort((a,b)=>citasPorBase[b]-citasPorBase[a]);
+        const ordenadas = Object.keys(citasPorBase).sort((a, b) => citasPorBase[b] - citasPorBase[a]);
         const total = registrosFiltrados.length;
         let html = '';
         
-        ordenadas.forEach((base, idx) => {
+        ordenadas.forEach(base => {
           const cant = citasPorBase[base];
-          const pct = Math.round((cant/total)*100);
+          const pct = Math.round((cant / total) * 100);
           const ef = calcularEficienciaBase(cant);
           const claseEf = obtenerClaseEficiencia(ef);
-          const esLider = idx === 0;
-          html += `<div class="cita-agregada-item">
-                      <div class="cita-agregada-supervisora">${esLider ? '🏆 ' : '📊 '}${base}</div>
-                      <div class="cita-agregada-cantidad">${cant} CITAS (${pct}%)</div>
-                      <div class="cita-agregada-eficiencia ${claseEf}">EFICIENCIA: ${ef}%</div>
-                    </div>`;
+          
+          html += `
+            <div class="cita-agregada-item">
+              <div class="cita-agregada-supervisora">📊 ${base}</div>
+              <div class="cita-agregada-cantidad">${cant} CITAS (${pct}%)</div>
+              <div class="cita-agregada-eficiencia ${claseEf}">EFICIENCIA: ${ef}% | META: 8 CITAS = 100%</div>
+            </div>
+          `;
         });
+        
         grid.innerHTML = html;
       }
 
+      // Actualizar Q & NQ
       function actualizarQnqTotales() {
         const registrosSemana = obtenerRegistrosSemanales();
         let totalQ = 0, totalNQ = 0;
-        qDetalles = []; nqDetalles = [];
+        qDetalles = [];
+        nqDetalles = [];
         
         registrosSemana.forEach(reg => {
           const calif = (reg.calificacionOrigen || '').toUpperCase();
@@ -1174,60 +1238,104 @@
             supervisora: reg.supervisora || 'SIN SUPERVISORA',
             base: reg.baseDatos || reg.base || 'SIN BASE',
             calificacion: reg.calificacionOrigen || 'SIN CALIFICACIÓN',
-            cliente: reg.nombre || 'SIN NOMBRE'
+            cliente: reg.nombre || 'SIN NOMBRE',
+            fecha: reg.diaEvento || 'SIN FECHA'
           };
-          if (esQ) { totalQ++; qDetalles.push(detalle); } 
-          else { totalNQ++; nqDetalles.push(detalle); }
+          
+          if (esQ) {
+            totalQ++;
+            qDetalles.push(detalle);
+          } else {
+            totalNQ++;
+            nqDetalles.push(detalle);
+          }
         });
         
         const grid = document.getElementById('qnqGrid');
-        grid.innerHTML = `<div class="qnq-card q" data-tipo="Q">
-                            <div class="qnq-icono"><i class="fas fa-check-circle"></i></div>
-                            <div class="qnq-titulo">CALIFICADOS (Q)</div>
-                            <div class="qnq-cantidad">${totalQ}</div>
-                            <div class="qnq-detalle">Citas calificadas de la semana</div>
-                          </div>
-                          <div class="qnq-card nq" data-tipo="NQ">
-                            <div class="qnq-icono"><i class="fas fa-times-circle"></i></div>
-                            <div class="qnq-titulo">NO CALIFICADOS (NQ)</div>
-                            <div class="qnq-cantidad">${totalNQ}</div>
-                            <div class="qnq-detalle">Citas no calificadas de la semana</div>
-                          </div>`;
+        grid.innerHTML = `
+          <div class="qnq-card q" data-tipo="Q">
+            <div class="qnq-icono"><i class="fas fa-check-circle"></i></div>
+            <div class="qnq-titulo">CALIFICADOS (Q)</div>
+            <div class="qnq-cantidad">${totalQ}</div>
+            <div class="qnq-detalle">Citas calificadas de la semana</div>
+          </div>
+          <div class="qnq-card nq" data-tipo="NQ">
+            <div class="qnq-icono"><i class="fas fa-times-circle"></i></div>
+            <div class="qnq-titulo">NO CALIFICADOS (NQ)</div>
+            <div class="qnq-cantidad">${totalNQ}</div>
+            <div class="qnq-detalle">Citas no calificadas de la semana</div>
+          </div>
+        `;
         
         document.querySelectorAll('.qnq-card[data-tipo]').forEach(card => {
-          card.addEventListener('click', () => mostrarDetallesQnq(card.getAttribute('data-tipo')));
+          card.addEventListener('click', () => {
+            const tipo = card.getAttribute('data-tipo');
+            mostrarDetallesQnq(tipo);
+          });
         });
       }
 
+      // Mostrar detalles de Q o NQ
       function mostrarDetallesQnq(tipo) {
         const container = document.getElementById('qnqDetalles');
         const esQ = tipo === 'Q';
         const datos = esQ ? qDetalles : nqDetalles;
         const color = esQ ? 'var(--success)' : 'var(--danger)';
+        const icono = esQ ? 'fa-check-circle' : 'fa-times-circle';
         const titulo = esQ ? 'CALIFICADOS (Q)' : 'NO CALIFICADOS (NQ)';
         
         if (datos.length === 0) {
-          container.innerHTML = `<div class="sin-datos">NO HAY CITAS ${titulo} ESTA SEMANA</div>`;
+          container.innerHTML = `
+            <div class="sin-datos">
+              <i class="fas fa-${icono}" style="font-size: 3rem; color: ${color}; margin-bottom: 15px;"></i>
+              <h3 style="color: ${color};">NO HAY CITAS ${titulo} ESTA SEMANA</h3>
+              <p>No se encontraron registros ${titulo.toLowerCase()} en la semana actual</p>
+            </div>
+          `;
         } else {
           const porBase = {};
-          datos.forEach(d => { porBase[d.base] = (porBase[d.base] || 0) + 1; });
-          let html = `<div style="border-bottom:1px solid ${color};"><h3 style="color:${color};">${titulo} - ${datos.length} CITAS</h3></div>`;
-          html += `<div style="display:grid; gap:10px; margin-top:15px;">`;
-          Object.keys(porBase).sort((a,b)=>porBase[b]-porBase[a]).forEach(base => {
-            html += `<div class="supervisora-qnq" style="border-left-color:${color};">
-                        <div class="supervisora-qnq-header">
-                          <div class="supervisora-qnq-nombre">${base}</div>
-                          <div class="supervisora-qnq-contador" style="background:${color};">${porBase[base]} CITAS</div>
-                        </div>
-                      </div>`;
+          datos.forEach(d => {
+            const base = d.base;
+            porBase[base] = (porBase[base] || 0) + 1;
           });
-          html += `<div style="margin-top:20px; text-align:center;">
-                      <button onclick="cerrarDetallesQnq()" style="background:${color}; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; color:white;">
-                        <i class="fas fa-times"></i> CERRAR
-                      </button>
-                    </div>`;
+          
+          let html = `
+            <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid ${color};">
+              <h3 style="color: ${color}; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas ${icono}"></i> ${titulo} - ${datos.length} CITAS
+              </h3>
+              <p style="color: var(--text-secondary);">Desglose por base de datos</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+          `;
+          
+          Object.keys(porBase).sort((a, b) => porBase[b] - porBase[a]).forEach(base => {
+            const cantidad = porBase[base];
+            const porcentaje = datos.length > 0 ? Math.round((cantidad / datos.length) * 100) : 0;
+            
+            html += `
+              <div style="background: rgba(255, 255, 255, 0.03); border-left: 4px solid ${color}; padding: 15px; border-radius: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <div style="font-weight: 600; font-size: 1.1rem;">🗂️ ${base}</div>
+                  <div style="background: ${color}; padding: 5px 10px; border-radius: 5px; font-weight: 600;">${cantidad} CITAS</div>
+                </div>
+                <div>${porcentaje}% del total ${titulo.toLowerCase()}</div>
+              </div>
+            `;
+          });
+          
+          html += `
+            </div>
+            <div style="margin-top: 20px; text-align: center;">
+              <button onclick="cerrarDetallesQnq()" style="background: ${color}; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                <i class="fas fa-times"></i> CERRAR DETALLES
+              </button>
+            </div>
+          `;
+          
           container.innerHTML = html;
         }
+        
         container.style.display = 'block';
       }
 
@@ -1235,92 +1343,57 @@
         document.getElementById('qnqDetalles').style.display = 'none';
       };
 
-      function actualizarResumenGeneral() {
-        const container = document.getElementById('resumenGeneral');
-        const registrosSemana = obtenerRegistrosSemanales();
-        const total = registrosSemana.length;
-        const { inicioSemana, finSemana } = obtenerRangoSemana();
-        
-        const citasPorBase = {};
-        registrosSemana.forEach(r => { 
-          const b = r.baseDatos || r.base || 'SIN BASE'; 
-          citasPorBase[b] = (citasPorBase[b] || 0) + 1; 
-        });
-        
-        const ordenadas = Object.keys(citasPorBase).sort((a,b)=>citasPorBase[b]-citasPorBase[a]);
-        const lider = ordenadas[0] || 'SIN BASE';
-        const citasLider = citasPorBase[lider] || 0;
-        const efLider = calcularEficienciaBase(citasLider);
-        const pctLider = total > 0 ? Math.round((citasLider/total)*100) : 0;
-        
-        container.innerHTML = `<div class="resumen-item">
-                                <div class="icono"><i class="fas fa-calendar-week"></i></div>
-                                <div class="valor">${total}</div>
-                                <div class="etiqueta">CITAS DE LA SEMANA</div>
-                                <div class="eficiencia-indicator eficiencia-alta">${inicioSemana.toLocaleDateString('es-MX')} - ${finSemana.toLocaleDateString('es-MX')}</div>
-                              </div>
-                              <div class="resumen-item">
-                                <div class="icono"><i class="fas fa-database"></i></div>
-                                <div class="valor" style="font-size:1.4rem;">${lider}</div>
-                                <div class="etiqueta">BASE CON MÁS CITAS</div>
-                                <div class="eficiencia-indicator eficiencia-excelente">${citasLider} CITAS (${pctLider}%)</div>
-                              </div>
-                              <div class="resumen-item">
-                                <div class="icono"><i class="fas fa-chart-line"></i></div>
-                                <div class="valor">${efLider}%</div>
-                                <div class="etiqueta">EFICIENCIA BASE LÍDER</div>
-                                <div class="eficiencia-indicator ${obtenerClaseEficiencia(efLider)}">META: 8 CITAS</div>
-                              </div>
-                              <div class="resumen-item">
-                                <div class="icono"><i class="fas fa-layer-group"></i></div>
-                                <div class="valor">${ordenadas.length}</div>
-                                <div class="etiqueta">BASES ACTIVAS</div>
-                                <div class="eficiencia-indicator eficiencia-media">ESTA SEMANA</div>
-                              </div>`;
-      }
-
+      // Actualizar gráfico de barras
       function actualizarGraficoBarras() {
         const container = document.getElementById('graficoBarras');
         const registrosSemana = obtenerRegistrosSemanales();
-        if (registrosSemana.length === 0) { 
-          container.innerHTML = '<div class="sin-datos">NO HAY CITAS ESTA SEMANA</div>'; 
-          return; 
+        
+        if (registrosSemana.length === 0) {
+          container.innerHTML = '<div class="sin-datos">NO HAY CITAS PARA MOSTRAR ESTA SEMANA</div>';
+          return;
         }
         
         const citasPorBase = {};
-        registrosSemana.forEach(r => { 
-          const b = r.baseDatos || r.base || 'SIN BASE'; 
-          citasPorBase[b] = (citasPorBase[b] || 0) + 1; 
+        registrosSemana.forEach(r => {
+          const b = r.baseDatos || r.base || 'SIN BASE';
+          citasPorBase[b] = (citasPorBase[b] || 0) + 1;
         });
         
-        const ordenadas = Object.keys(citasPorBase).sort((a,b)=>citasPorBase[b]-citasPorBase[a]);
+        const ordenadas = Object.keys(citasPorBase).sort((a, b) => citasPorBase[b] - citasPorBase[a]);
         const total = registrosSemana.length;
         let html = '';
         
         ordenadas.forEach(base => {
           const cant = citasPorBase[base];
-          const pct = Math.round((cant/total)*100);
+          const pct = Math.round((cant / total) * 100);
           const esLider = base === ordenadas[0];
-          html += `<div class="barra">
-                      <div class="barra-label">${esLider ? '🏆 ' : ''}${base}</div>
-                      <div class="barra-progreso">
-                        <div class="barra-relleno" style="width:${pct}%; ${esLider ? 'background:linear-gradient(90deg, var(--gold), #f4d03f);' : ''}">
-                          ${cant} citas (${pct}%)
-                        </div>
-                      </div>
-                    </div>`;
+          
+          html += `
+            <div class="barra">
+              <div class="barra-label">${esLider ? '🏆 ' : ''}${base}</div>
+              <div class="barra-progreso">
+                <div class="barra-relleno" style="width: ${pct}%; ${esLider ? 'background: linear-gradient(90deg, var(--gold), #f4d03f);' : ''}">
+                  ${cant} citas (${pct}%)
+                </div>
+              </div>
+            </div>
+          `;
         });
+        
         container.innerHTML = html;
       }
 
+      // Actualizar todo el panel
       function actualizarTodoElPanel() {
+        actualizarDuplicados();
         actualizarResumenGeneral();
-        actualizarReporteDiasSemana();
+        actualizarReporteDias();
         actualizarReporteBases();
         actualizarQnqTotales();
         actualizarGraficoBarras();
       }
 
+      // Llenar selector de años
       function llenarSelectorAnios() {
         const select = document.getElementById('añoDescarga');
         const actual = new Date().getFullYear();
@@ -1333,223 +1406,93 @@
         }
       }
 
+      // Descargar premanifiesto por mes
       function descargarPremanifiestoPorMes() {
         const mes = parseInt(document.getElementById('mesDescarga').value);
         const año = parseInt(document.getElementById('añoDescarga').value);
-        const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+        const meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
         const nombreMes = meses[mes];
         
         const registrosMes = registrosPremanifiesto.filter(r => {
           if (!r.diaEvento) return false;
           const f = new Date(r.diaEvento);
-          return !isNaN(f.getTime()) && f.getMonth() === mes && f.getFullYear() === año;
+          return !isNaN(f.getTime()) && f.getMonth() === mes && f.getFullYear() === año && f.getDay() !== 1;
         });
         
         if (registrosMes.length === 0) {
-          mostrarNotificacion(`NO HAY REGISTROS PARA ${nombreMes} ${año}`, 'error');
+          mostrarNotificacion(`NO HAY REGISTROS PARA ${nombreMes} ${año} (EXCLUYENDO LUNES)`, 'error');
           return;
         }
         
-        const porDia = {};
+        let textoCSV = "NOMBRE,TELÉFONO,TARJETA,ESTADO CIVIL,SALÓN,FECHA,PAX,HORA,SUPERVISORA,BASE\n";
+        
         registrosMes.forEach(r => {
-          const f = r.diaEvento;
-          const fd = new Date(f);
-          if (fd.getDay() === 1) return;
-          if (!porDia[f]) porDia[f] = [];
-          porDia[f].push(r);
+          textoCSV += `"${r.nombre || ''}","${r.telefono || ''}","${r.tarjeta || ''}","${r.estadoCivil || ''}","${r.hotel || r.salon || ''}","${r.diaEvento || ''}","${r.numPersonas || '0'}","${r.hora || ''}","${r.supervisora || ''}","${r.baseDatos || r.base || ''}"\n`;
         });
         
-        const fechas = Object.keys(porDia).sort();
-        if (fechas.length === 0) {
-          mostrarNotificacion(`NO HAY REGISTROS (EXCLUYENDO LUNES)`, 'error');
-          return;
-        }
-        
-        const workbook = new ExcelJS.Workbook();
-        const resumenWS = workbook.addWorksheet("RESUMEN MENSUAL");
-        resumenWS.addRow([`PREMANIFIESTO MENSUAL - ${nombreMes} ${año}`]).mergeCells('A1:M1');
-        resumenWS.getRow(1).font = { size: 18, bold: true, color: { argb: 'FFD4AF37' } };
-        resumenWS.addRow([`GENERADO EL: ${new Date().toLocaleDateString('es-MX')}`]).mergeCells('A2:M2');
-        resumenWS.addRow([]);
-        resumenWS.addRow(['BASE DE DATOS', 'TOTAL CITAS', 'CALIFICADOS (Q)', 'NO CALIFICADOS (NQ)', 'EFICIENCIA', 'PARTICIPACIÓN']);
-        
-        const porBase = {};
-        registrosMes.forEach(r => {
-          const b = r.baseDatos || r.base || 'SIN BASE';
-          const calif = (r.calificacionOrigen || '').toUpperCase();
-          const esQ = calif.includes('Q') || calif === 'CALIFICADO' || calif === 'CALIFICADA';
-          if (!porBase[b]) porBase[b] = { total: 0, q: 0, nq: 0 };
-          porBase[b].total++;
-          if (esQ) porBase[b].q++; else porBase[b].nq++;
-        });
-        
-        Object.keys(porBase).sort((a,b)=>porBase[b].total-porBase[a].total).forEach(b => {
-          const s = porBase[b];
-          const ef = Math.round((s.total/8)*100);
-          const pct = Math.round((s.total/registrosMes.length)*100);
-          resumenWS.addRow([b, s.total, s.q, s.nq, `${ef}%`, `${pct}%`]);
-        });
-        
-        fechas.forEach(fecha => {
-          const fd = new Date(fecha);
-          const diaNum = fd.getDate();
-          const mesAbr = fd.toLocaleDateString('es-MX',{month:'short'}).toUpperCase().replace('.','');
-          const nombreHoja = `PREMANIFIESTO ${String(diaNum).padStart(2,'0')} ${mesAbr}`.substring(0,31);
-          const ws = workbook.addWorksheet(nombreHoja);
-          
-          ws.addRow([`PREMANIFIESTO DEL ${fd.toLocaleDateString('es-MX',{weekday:'long'}).toUpperCase()}, ${diaNum} DE ${nombreMes} DE ${año}`]).mergeCells('A1:M1');
-          ws.getRow(1).font = { size: 16, bold: true, color: { argb: 'FFD4AF37' } };
-          ws.addRow([]);
-          ws.addRow(['NUM DE CITA','FECHA','PAX','NOMBRES FAMILIA','EDAD','ESTADO CIVIL','TARJETAS','ID','INGRESOS','VENDEDOR','OPERADOR','SUPERVISOR','TELEFONO']);
-          ws.getRow(3).eachCell(c => { 
-            c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF0F172A' } }; 
-            c.font = { bold:true, color:{ argb:'FFFFFFFF' } }; 
-          });
-          
-          porDia[fecha].forEach((r,idx) => {
-            ws.addRow([r.citaPorDia || idx+1, fecha, r.numPersonas || '', r.nombre || '', r.edad || '', r.estadoCivil || '', r.tarjeta || '', '---', r.ingresos || '', r.vendedor || '', r.operador || '', r.supervisora || '', r.telefono || '']);
-          });
-          
-          ws.columns = [{width:12},{width:12},{width:8},{width:35},{width:10},{width:15},{width:15},{width:10},{width:12},{width:15},{width:15},{width:15},{width:18}];
-        });
-        
-        workbook.xlsx.writeBuffer().then(buffer => {
-          saveAs(new Blob([buffer]), `PREMANIFIESTO_${nombreMes}_${año}.xlsx`);
-          mostrarNotificacion(`✅ PREMANIFIESTO DE ${nombreMes} ${año} DESCARGADO`);
-        }).catch(() => mostrarNotificacion('ERROR AL GENERAR', 'error'));
+        const blob = new Blob(["\uFEFF" + textoCSV], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, `PREMANIFIESTO_${nombreMes}_${año}.csv`);
+        mostrarNotificacion(`✅ PREMANIFIESTO DE ${nombreMes} ${año} DESCARGADO (${registrosMes.length} CITAS)`);
       }
 
-      function mostrarCitasDelMes() {
-        const modal = document.getElementById('modalCitasMes');
-        const contenido = document.getElementById('contenidoCitasMes');
-        const hoy = new Date();
-        const año = hoy.getFullYear();
-        const mes = hoy.getMonth();
-        const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-        const nombreMes = meses[mes];
-        
-        const porDia = {};
-        let totalCitas = 0;
-        
-        registrosPremanifiesto.forEach(r => {
-          if (!r.diaEvento) return;
-          const f = new Date(r.diaEvento);
-          if (isNaN(f.getTime())) return;
-          if (f.getMonth() === mes && f.getFullYear() === año && f.getDay() !== 1) {
-            if (!porDia[r.diaEvento]) porDia[r.diaEvento] = [];
-            porDia[r.diaEvento].push(r);
-            totalCitas++;
-          }
-        });
-        
-        const fechas = Object.keys(porDia).sort();
-        if (fechas.length === 0) {
-          contenido.innerHTML = `<div class="sin-datos">NO HAY CITAS EN ${nombreMes} ${año}</div>`;
-          modal.style.display = 'block';
-          return;
-        }
-        
-        let html = `<div class="resumen-citas-mes">
-                      <div class="resumen-mes-item"><div class="titulo">TOTAL CITAS</div><div class="valor">${totalCitas}</div><div class="detalle">${nombreMes} ${año}</div></div>
-                      <div class="resumen-mes-item"><div class="titulo">DÍAS CON CITAS</div><div class="valor">${fechas.length}</div><div class="detalle">Excluyendo lunes</div></div>
-                      <div class="resumen-mes-item"><div class="titulo">PROMEDIO/DÍA</div><div class="valor">${Math.round(totalCitas/fechas.length)}</div><div class="detalle">citas por día</div></div>
-                    </div>
-                    <div class="pestanas-mes" id="pestanasMes">`;
-        
-        fechas.forEach((f, i) => {
-          const fd = new Date(f);
-          const d = fd.getDate();
-          const ma = fd.toLocaleDateString('es-MX',{month:'short'}).toUpperCase().replace('.','');
-          html += `<div class="pestana-dia ${i===0?'activa':''}" data-fecha="${f}">PREMANIFIESTO DEL ${String(d).padStart(2,'0')} DE ${ma}</div>`;
-        });
-        html += `</div>`;
-        
-        fechas.forEach((f, i) => {
-          const fd = new Date(f);
-          html += `<div class="contenido-pestana ${i===0?'activa':''}" id="contenido-${f}">
-                      <h4>${fd.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase()}</h4>
-                      <div style="overflow-x:auto;">
-                        <table>
-                          <thead>
-                            <tr><th>NUM</th><th>FECHA</th><th>PAX</th><th>NOMBRES</th><th>EDAD</th><th>ESTADO CIVIL</th><th>TARJETAS</th><th>ID</th><th>INGRESOS</th><th>VENDEDOR</th><th>OPERADOR</th><th>SUPERVISOR</th><th>TELEFONO</th></tr>
-                          </thead>
-                          <tbody>`;
-          porDia[f].forEach((r,idx) => {
-            html += `<tr>
-                       <td style="text-align:center">${r.citaPorDia || idx+1}</td>
-                       <td style="text-align:center">${f}</td>
-                       <td style="text-align:center">${r.numPersonas || ''}</td>
-                       <td>${r.nombre || ''}</td>
-                       <td style="text-align:center">${r.edad || ''}</td>
-                       <td style="text-align:center">${r.estadoCivil || ''}</td>
-                       <td style="text-align:center">${r.tarjeta || ''}</td>
-                       <td style="text-align:center">---</td>
-                       <td style="text-align:center">${r.ingresos || ''}</td>
-                       <td style="text-align:center">${r.vendedor || ''}</td>
-                       <td style="text-align:center">${r.operador || ''}</td>
-                       <td style="text-align:center">${r.supervisora || ''}</td>
-                       <td style="text-align:center">${r.telefono || ''}</td>
-                     </tr>`;
-          });
-          html += `</tbody>
-                        </table>
-                      </div>
-                    </div>`;
-        });
-        
-        contenido.innerHTML = html;
-        modal.style.display = 'block';
-        
-        document.querySelectorAll('.pestana-dia').forEach(p => {
-          p.addEventListener('click', function() {
-            const fecha = this.getAttribute('data-fecha');
-            document.querySelectorAll('.pestana-dia').forEach(pd => pd.classList.remove('activa'));
-            this.classList.add('activa');
-            document.querySelectorAll('.contenido-pestana').forEach(c => c.classList.remove('activa'));
-            document.getElementById(`contenido-${fecha}`).classList.add('activa');
-          });
-        });
+      // Mostrar notificación
+      function mostrarNotificacion(mensaje, tipo = 'success') {
+        const notificacion = document.createElement('div');
+        notificacion.innerHTML = `<i class="fas fa-${tipo === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${mensaje}`;
+        notificacion.className = `notificacion ${tipo === 'error' ? 'error' : ''}`;
+        document.body.appendChild(notificacion);
+        setTimeout(() => notificacion.remove(), 4000);
       }
 
-      function mostrarNotificacion(msg, tipo = 'success') {
-        const n = document.createElement('div');
-        n.innerHTML = `<i class="fas fa-${tipo === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${msg}`;
-        n.className = `notificacion ${tipo === 'error' ? 'error' : ''}`;
-        document.body.appendChild(n);
-        setTimeout(() => n.remove(), 4000);
-      }
-
+      // Configurar Firebase
       function configurarFirebase() {
         const db = firebase.database();
-        db.ref('registrosPremanifiesto').on('value', snap => {
-          registrosPremanifiesto = convertirDatosFirebase(snap.val());
+        db.ref('registrosPremanifiesto').on('value', (snapshot) => {
+          registrosPremanifiesto = convertirDatosFirebase(snapshot.val());
           actualizarTodoElPanel();
+          if (fechaSeleccionada) {
+            mostrarCitasPorFecha(fechaSeleccionada);
+          }
           if (registrosPremanifiesto.length) {
             mostrarNotificacion(`✅ DATOS ACTUALIZADOS - ${registrosPremanifiesto.length} CITAS TOTALES`);
           }
         });
-        db.ref('supervisoras').on('value', snap => {
-          const data = snap.val();
-          if (data) listaSupervisoras = Array.isArray(data) ? data.filter(s=>s) : Object.values(data).filter(s=>s);
-          else listaSupervisoras = [];
-        });
       }
 
+      // Inicializar
       function inicializar() {
         llenarSelectorAnios();
         configurarFirebase();
-        document.getElementById('actualizarBtn').addEventListener('click', () => { 
-          actualizarTodoElPanel(); 
-          mostrarNotificacion('REPORTE ACTUALIZADO'); 
+        
+        document.getElementById('actualizarBtn').addEventListener('click', () => {
+          actualizarTodoElPanel();
+          if (fechaSeleccionada) mostrarCitasPorFecha(fechaSeleccionada);
+          mostrarNotificacion('REPORTE ACTUALIZADO');
         });
+        
         document.getElementById('btnDescargarMesSeleccionado').addEventListener('click', descargarPremanifiestoPorMes);
-        document.getElementById('btnCitasMes').addEventListener('click', mostrarCitasDelMes);
-        document.querySelector('.cerrar-modal').addEventListener('click', () => document.getElementById('modalCitasMes').style.display = 'none');
-        window.addEventListener('click', e => { 
-          if (e.target === document.getElementById('modalCitasMes')) 
-            document.getElementById('modalCitasMes').style.display = 'none'; 
+        
+        document.getElementById('btnBuscarFecha').addEventListener('click', () => {
+          if (window.calendarioInput && window.calendarioInput.value) {
+            fechaSeleccionada = new Date(window.calendarioInput.value);
+            mostrarCitasPorFecha(fechaSeleccionada);
+          }
+        });
+        
+        // Inicializar calendario
+        window.calendarioInput = document.getElementById('calendarioInput');
+        flatpickr(window.calendarioInput, {
+          dateFormat: "Y-m-d",
+          locale: "es",
+          onChange: function(selectedDates) {
+            if (selectedDates.length > 0) {
+              fechaSeleccionada = selectedDates[0];
+              mostrarCitasPorFecha(fechaSeleccionada);
+            }
+          }
         });
       }
+      
       inicializar();
     });
   </script>
