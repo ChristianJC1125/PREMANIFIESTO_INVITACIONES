@@ -1,4 +1,4 @@
-<DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -12,6 +12,8 @@
   <!-- Flatpickr para calendario -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- SheetJS para leer Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --primary: #0F172A;
@@ -26,6 +28,9 @@
       --text-secondary: #CBD5E1;
       --background: #0B1120;
       --reprogramada: #F59E0B;
+      --q-color: #10B981;
+      --nq-color: #EF4444;
+      --ct-color: #F59E0B;
     }
 
     * {
@@ -130,6 +135,24 @@
     .btn-volver {
       background: var(--secondary);
       border-color: var(--secondary);
+    }
+
+    .btn-cargar-excel {
+      background: #0D9488;
+      border-color: #0D9488;
+    }
+
+    .btn-cargar-excel:hover {
+      background: #0F766E;
+    }
+
+    .btn-ventas {
+      background: #7C3AED;
+      border-color: #7C3AED;
+    }
+
+    .btn-ventas:hover {
+      background: #6D28D9;
     }
 
     .mes-selector {
@@ -738,6 +761,233 @@
       color: #FCA5A5;
     }
 
+    /* Estilos para ventas */
+    .modal-ventas {
+      display: none;
+      position: fixed;
+      z-index: 3000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-ventas-contenido {
+      background: #0B1120;
+      margin: 3% auto;
+      padding: 25px;
+      border-radius: 25px;
+      width: 95%;
+      max-width: 1300px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.5);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      color: var(--gold);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cerrar-modal {
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+    }
+
+    .cerrar-modal:hover {
+      color: var(--danger);
+    }
+
+    .ventas-resumen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .ventas-resumen-card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      border-left: 4px solid var(--gold);
+    }
+
+    .ventas-resumen-card .icono { font-size: 2rem; margin-bottom: 8px; }
+    .ventas-resumen-card .valor { font-size: 2rem; font-weight: 700; color: var(--gold); }
+    .ventas-resumen-card .etiqueta { color: var(--text-secondary); font-size: 0.85rem; }
+    .ventas-resumen-card.q-card { border-left-color: var(--q-color); }
+    .ventas-resumen-card.q-card .valor { color: var(--q-color); }
+    .ventas-resumen-card.nq-card { border-left-color: var(--nq-color); }
+    .ventas-resumen-card.nq-card .valor { color: var(--nq-color); }
+    .ventas-resumen-card.ct-card { border-left-color: var(--ct-color); }
+    .ventas-resumen-card.ct-card .valor { color: var(--ct-color); }
+    .ventas-resumen-card.total-card { border-left-color: var(--gold); }
+
+    .grafica-ventas-barras {
+      margin-top: 20px;
+    }
+
+    .barra-venta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .barra-venta-label {
+      min-width: 180px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .barra-venta-container {
+      flex: 1;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .barra-venta-fill {
+      height: 100%;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: white;
+      transition: width 0.8s ease;
+      min-width: 35px;
+    }
+
+    .barra-venta-fill.venta { background: linear-gradient(90deg, #0d9488, #14b8a6); }
+    .barra-venta-fill.q { background: linear-gradient(90deg, #059669, #34d399); }
+    .barra-venta-fill.nq { background: linear-gradient(90deg, #dc2626, #f87171); }
+    .barra-venta-fill.ct { background: linear-gradient(90deg, #d97706, #fbbf24); }
+
+    .barra-venta-valor {
+      min-width: 80px;
+      text-align: right;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .tabla-ventas {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 0.85rem;
+    }
+
+    .tabla-ventas th {
+      background: var(--primary);
+      color: var(--gold);
+      padding: 10px;
+      text-align: center;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+
+    .tabla-ventas td {
+      padding: 8px 10px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .tabla-ventas tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tabla-ventas .total-row {
+      background: rgba(212, 175, 55, 0.15) !important;
+      font-weight: bold;
+    }
+
+    .tabla-ventas .total-row td {
+      border-color: rgba(212, 175, 55, 0.3);
+    }
+
+    .pestanas-ventas {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .pestana-ventas {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+
+    .pestana-ventas:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .pestana-ventas.active {
+      border-color: var(--gold);
+      background: var(--gold);
+      color: var(--primary);
+    }
+
+    .leyenda-ventas {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .leyenda-ventas-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .leyenda-ventas-item .color-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .color-box.q-color { background: var(--q-color); }
+    .color-box.nq-color { background: var(--nq-color); }
+    .color-box.ct-color { background: var(--ct-color); }
+
     @media (max-width: 768px) {
       header {
         flex-direction: column;
@@ -768,6 +1018,22 @@
       .calendario-header button {
         width: 100%;
       }
+
+      .barra-venta-label {
+        min-width: 100px;
+        font-size: 0.75rem;
+      }
+
+      .barra-venta-valor {
+        min-width: 60px;
+        font-size: 0.75rem;
+      }
+
+      .modal-ventas-contenido {
+        margin: 1% auto;
+        padding: 15px;
+        width: 98%;
+      }
     }
   </style>
 </head>
@@ -791,11 +1057,20 @@
         <button class="btn-filtro" id="actualizarBtn">
           <i class="fas fa-sync-alt"></i> ACTUALIZAR REPORTE
         </button>
+        <button class="btn-filtro btn-cargar-excel" id="btnCargarExcel">
+          <i class="fas fa-file-upload"></i> CARGAR EXCEL
+        </button>
+        <button class="btn-filtro btn-ventas" id="btnVentas">
+          <i class="fas fa-chart-pie"></i> VENTAS POR BASE
+        </button>
         <button class="btn-filtro btn-volver" onclick="window.location.href='index.html'">
           <i class="fas fa-arrow-left"></i> VOLVER AL SISTEMA
         </button>
       </div>
     </header>
+
+    <!-- Input oculto para cargar Excel -->
+    <input type="file" id="inputExcel" accept=".xlsx,.xls" style="display:none;">
 
     <!-- Selector para descargar premanifiesto -->
     <div class="mes-selector">
@@ -899,6 +1174,19 @@
     </div>
   </div>
 
+  <!-- Modal de Ventas por Base -->
+  <div id="modalVentas" class="modal-ventas">
+    <div class="modal-ventas-contenido">
+      <div class="modal-header">
+        <h2><i class="fas fa-chart-pie"></i> ESTADÍSTICAS DE VENTAS POR BASE</h2>
+        <span class="cerrar-modal" id="cerrarVentas">&times;</span>
+      </div>
+      <div id="contenidoVentas">
+        <p style="text-align:center; color:var(--text-secondary);">Carga un archivo Excel con el botón "📥 CARGAR EXCEL"</p>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
@@ -922,6 +1210,8 @@
     let qDetalles = [];
     let nqDetalles = [];
     let fechaSeleccionada = null;
+    let datosVentasExcel = [];
+    let datosVentasPorPestana = {};
 
     document.addEventListener("DOMContentLoaded", function() {
       // Reloj en tiempo real
@@ -1444,6 +1734,421 @@
         setTimeout(() => notificacion.remove(), 4000);
       }
 
+      // =============== CARGAR EXCEL CON MANIFIESTO (TODAS LAS PESTAÑAS) ===============
+      function cargarExcelManifiesto() {
+        document.getElementById('inputExcel').click();
+      }
+
+      function procesarExcelManifiesto(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          try {
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            datosVentasPorPestana = {};
+            let totalRegistros = 0;
+            
+            // Procesar cada pestaña
+            workbook.SheetNames.forEach(nombrePestana => {
+              const hoja = workbook.Sheets[nombrePestana];
+              const datos = XLSX.utils.sheet_to_json(hoja, { defval: '' });
+              
+              if (datos.length === 0) return;
+              
+              const registrosPestana = [];
+              const headers = Object.keys(datos[0] || {});
+              
+              // Buscar columnas relevantes
+              let colNumParejas = null, colFecha = null, colNombres = null;
+              let colEstadoCivil = null, colBaseDatos = null, colStatusVendor = null;
+              let colVolumenVenta = null, colTelefono = null;
+              
+              headers.forEach((h, index) => {
+                const header = h.trim().toUpperCase();
+                if (header.includes('N°') && header.includes('PAREJAS')) colNumParejas = index;
+                else if (header.includes('FECHA')) colFecha = index;
+                else if (header.includes('NOMBRES') || header.includes('FAMILIA') || header.includes('EDAD')) colNombres = index;
+                else if (header.includes('ESTADO CIVIL') || (header.includes('ESTADO') && header.includes('CIVIL'))) colEstadoCivil = index;
+                else if (header.includes('BASE DE DATOS') || (header.includes('BASE') && header.includes('DATOS'))) colBaseDatos = index;
+                else if (header.includes('STATUS') && header.includes('VENDOR')) colStatusVendor = index;
+                else if (header.includes('VOLUMEN') && header.includes('VENTA')) colVolumenVenta = index;
+                else if (header.includes('TELEFONO') || header.includes('TELÉFONO') || header.includes('TEL')) colTelefono = index;
+              });
+
+              // Si no encuentra columnas por nombre, usar posición
+              if (colNumParejas === null && headers.length >= 0) colNumParejas = 0;
+              if (colFecha === null && headers.length >= 1) colFecha = 1;
+              if (colNombres === null && headers.length >= 2) colNombres = 2;
+              if (colEstadoCivil === null && headers.length >= 3) colEstadoCivil = 3;
+              if (colBaseDatos === null && headers.length >= 4) colBaseDatos = 4;
+              if (colStatusVendor === null && headers.length >= 5) colStatusVendor = 5;
+              if (colVolumenVenta === null && headers.length >= 6) colVolumenVenta = 6;
+              if (colTelefono === null && headers.length >= 7) colTelefono = 7;
+
+              datos.forEach(row => {
+                const values = Object.values(row);
+                
+                const numParejas = String(values[colNumParejas] || '').trim();
+                const fecha = String(values[colFecha] || '').trim();
+                const nombres = String(values[colNombres] || '').trim();
+                const estadoCivil = String(values[colEstadoCivil] || '').trim();
+                const baseDatos = String(values[colBaseDatos] || '').trim() || 'Sin base';
+                const statusVendor = String(values[colStatusVendor] || '').trim();
+                let volumenVenta = parseFloat(String(values[colVolumenVenta] || '0').replace(/,/g, '')) || 0;
+                const telefono = String(values[colTelefono] || '').trim();
+
+                // Extraer edad del campo NOMBRES
+                let edad = '';
+                let nombreLimpio = nombres;
+                const edadMatch = String(nombres).match(/\d+/);
+                if (edadMatch) {
+                  edad = edadMatch[0];
+                  nombreLimpio = String(nombres).replace(/\d+/, '').trim();
+                }
+
+                // Determinar estado (Q, NQ, CT) - BUSCAR EN TODOS LOS CAMPOS
+                let estado = 'CT';
+                const textoCompleto = (estadoCivil + ' ' + statusVendor + ' ' + nombres).toUpperCase();
+                
+                // Primero buscar NQ (NO CALIFICADO)
+                if (textoCompleto.includes('NQ') || 
+                    textoCompleto.includes('NO CALIF') || 
+                    textoCompleto.includes('NO Q') ||
+                    textoCompleto.includes('N/Q')) {
+                  estado = 'NQ';
+                }
+                // Luego buscar Q (CALIFICADO)
+                else if (textoCompleto.includes('Q') || 
+                         textoCompleto.includes('CALIF') ||
+                         textoCompleto.includes('Q -') ||
+                         textoCompleto.includes('- Q')) {
+                  estado = 'Q';
+                }
+                // Si no, es CT (CITADO)
+                else {
+                  estado = 'CT';
+                }
+
+                registrosPestana.push({
+                  numParejas: numParejas,
+                  fecha: fecha,
+                  nombres: nombreLimpio || nombres,
+                  edad: edad,
+                  estadoCivil: estadoCivil,
+                  baseDatos: baseDatos,
+                  statusVendor: statusVendor,
+                  volumenVenta: volumenVenta,
+                  telefono: telefono,
+                  estado: estado,
+                  pestana: nombrePestana
+                });
+              });
+              
+              datosVentasPorPestana[nombrePestana] = registrosPestana;
+              totalRegistros += registrosPestana.length;
+            });
+
+            // Combinar todos los registros para el total general
+            datosVentasExcel = [];
+            Object.values(datosVentasPorPestana).forEach(regs => {
+              datosVentasExcel = datosVentasExcel.concat(regs);
+            });
+
+            mostrarNotificacion(`📥 Excel cargado: ${totalRegistros} registros en ${Object.keys(datosVentasPorPestana).length} pestañas`);
+            
+            // Mostrar estadísticas automáticamente
+            mostrarEstadisticasVentas();
+            
+          } catch (error) {
+            console.error('Error al leer Excel:', error);
+            alert('Error al leer el archivo Excel. Asegúrate de que el formato sea correcto.');
+          }
+        };
+        
+        reader.readAsArrayBuffer(file);
+        e.target.value = '';
+      }
+
+      // =============== ESTADÍSTICAS DE VENTAS POR BASE DE DATOS ===============
+      function mostrarEstadisticasVentas() {
+        const container = document.getElementById('contenidoVentas');
+        
+        // Verificar si hay datos
+        const totalRegistros = datosVentasExcel.length;
+        if (totalRegistros === 0) {
+          container.innerHTML = `
+            <p style="text-align:center; color:var(--text-secondary); padding: 40px;">
+              📭 No hay datos cargados. Usa el botón "📥 CARGAR EXCEL" para subir un manifiesto.
+            </p>
+          `;
+          document.getElementById('modalVentas').style.display = 'block';
+          return;
+        }
+
+        // Obtener lista de pestañas disponibles
+        const pestanas = Object.keys(datosVentasPorPestana);
+        
+        // Generar pestañas de navegación
+        let pestanasHtml = `
+          <div class="pestanas-ventas">
+            <button class="pestana-ventas active" data-pestana="Todas">📊 Todas (${totalRegistros})</button>
+        `;
+        
+        // Ordenar pestañas: primero las que son meses, luego semana en curso
+        const mesesOrden = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        const pestanasOrdenadas = pestanas.sort((a, b) => {
+          const aLower = a.toLowerCase();
+          const bLower = b.toLowerCase();
+          const aIndex = mesesOrden.findIndex(m => aLower.includes(m));
+          const bIndex = mesesOrden.findIndex(m => bLower.includes(m));
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+          if (aLower.includes('semana') || aLower.includes('curso')) return 1;
+          if (bLower.includes('semana') || bLower.includes('curso')) return -1;
+          return a.localeCompare(b);
+        });
+        
+        pestanasOrdenadas.forEach(p => {
+          const count = datosVentasPorPestana[p].length;
+          const icono = p.toLowerCase().includes('semana') || p.toLowerCase().includes('curso') ? '📅' : '📊';
+          pestanasHtml += `
+            <button class="pestana-ventas" data-pestana="${p}">${icono} ${p} (${count})</button>
+          `;
+        });
+        
+        pestanasHtml += `</div>`;
+        
+        // Función para renderizar estadísticas de una pestaña específica
+        function renderizarEstadisticas(pestana) {
+          const datos = pestana === 'Todas' ? datosVentasExcel : datosVentasPorPestana[pestana] || [];
+          if (datos.length === 0) {
+            return `<p style="text-align:center; color:var(--text-secondary);">No hay datos en esta pestaña</p>`;
+          }
+          
+          // Agrupar por base de datos
+          const grupos = {};
+          let totalQ = 0, totalNQ = 0, totalCT = 0;
+          let totalVentasGlobal = 0;
+          
+          datos.forEach(item => {
+            const base = item.baseDatos || 'Sin base';
+            if (!grupos[base]) {
+              grupos[base] = {
+                totalVentas: 0,
+                Q: 0,
+                NQ: 0,
+                CT: 0,
+                totalRegistros: 0
+              };
+            }
+            grupos[base].totalVentas += item.volumenVenta || 0;
+            grupos[base].totalRegistros++;
+            totalVentasGlobal += item.volumenVenta || 0;
+            
+            if (item.estado === 'Q') {
+              grupos[base].Q++;
+              totalQ++;
+            } else if (item.estado === 'NQ') {
+              grupos[base].NQ++;
+              totalNQ++;
+            } else {
+              grupos[base].CT++;
+              totalCT++;
+            }
+          });
+          
+          const maxVentas = Math.max(...Object.values(grupos).map(g => g.totalVentas), 1);
+          const totalRegistrosBase = datos.length;
+          
+          // Resumen general
+          let html = `
+            <div class="ventas-resumen-grid">
+              <div class="ventas-resumen-card q-card">
+                <div class="icono">✅</div>
+                <div class="valor">${totalQ}</div>
+                <div class="etiqueta">Calificados (Q) - ${totalRegistrosBase > 0 ? ((totalQ/totalRegistrosBase)*100).toFixed(1) : 0}%</div>
+              </div>
+              <div class="ventas-resumen-card nq-card">
+                <div class="icono">❌</div>
+                <div class="valor">${totalNQ}</div>
+                <div class="etiqueta">No Calificados (NQ) - ${totalRegistrosBase > 0 ? ((totalNQ/totalRegistrosBase)*100).toFixed(1) : 0}%</div>
+              </div>
+              <div class="ventas-resumen-card ct-card">
+                <div class="icono">🔄</div>
+                <div class="valor">${totalCT}</div>
+                <div class="etiqueta">Citados (CT) - ${totalRegistrosBase > 0 ? ((totalCT/totalRegistrosBase)*100).toFixed(1) : 0}%</div>
+              </div>
+              <div class="ventas-resumen-card total-card">
+                <div class="icono">💰</div>
+                <div class="valor">$${totalVentasGlobal.toLocaleString()}</div>
+                <div class="etiqueta">Volumen Total de Ventas</div>
+              </div>
+            </div>
+          `;
+          
+          // Tabla por base
+          html += `
+            <h4 style="color:var(--gold); margin-top:20px;">📋 Detalle por Base de Datos</h4>
+            <div style="overflow-x: auto;">
+              <table class="tabla-ventas">
+                <thead>
+                  <tr>
+                    <th>Base de Datos</th>
+                    <th>Registros</th>
+                    <th>💵 Volumen Venta</th>
+                    <th>✅ Q</th>
+                    <th>❌ NQ</th>
+                    <th>🔄 CT</th>
+                    <th>% Q</th>
+                    <th>% NQ</th>
+                    <th>% CT</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+          
+          const sortedBases = Object.entries(grupos).sort((a, b) => b[1].totalVentas - a[1].totalVentas);
+          
+          sortedBases.forEach(([base, stats]) => {
+            const pctQ = stats.totalRegistros > 0 ? ((stats.Q / stats.totalRegistros) * 100).toFixed(1) : 0;
+            const pctNQ = stats.totalRegistros > 0 ? ((stats.NQ / stats.totalRegistros) * 100).toFixed(1) : 0;
+            const pctCT = stats.totalRegistros > 0 ? ((stats.CT / stats.totalRegistros) * 100).toFixed(1) : 0;
+            
+            html += `
+              <tr>
+                <td style="text-align:left; font-weight:bold; color:var(--gold);">${base}</td>
+                <td>${stats.totalRegistros}</td>
+                <td style="color:#14b8a6; font-weight:bold;">$${stats.totalVentas.toLocaleString()}</td>
+                <td style="color:#34d399;">${stats.Q}</td>
+                <td style="color:#f87171;">${stats.NQ}</td>
+                <td style="color:#fbbf24;">${stats.CT}</td>
+                <td style="color:#34d399; font-weight:bold;">${pctQ}%</td>
+                <td style="color:#f87171;">${pctNQ}%</td>
+                <td style="color:#fbbf24;">${pctCT}%</td>
+              </tr>
+            `;
+          });
+          
+          // Totales
+          const pctQTotal = totalRegistrosBase > 0 ? ((totalQ / totalRegistrosBase) * 100).toFixed(1) : 0;
+          const pctNQTotal = totalRegistrosBase > 0 ? ((totalNQ / totalRegistrosBase) * 100).toFixed(1) : 0;
+          const pctCTTotal = totalRegistrosBase > 0 ? ((totalCT / totalRegistrosBase) * 100).toFixed(1) : 0;
+          
+          html += `
+                  <tr class="total-row">
+                    <td><strong>TOTALES</strong></td>
+                    <td><strong>${totalRegistrosBase}</strong></td>
+                    <td style="color:#14b8a6;"><strong>$${totalVentasGlobal.toLocaleString()}</strong></td>
+                    <td style="color:#34d399;"><strong>${totalQ}</strong></td>
+                    <td style="color:#f87171;"><strong>${totalNQ}</strong></td>
+                    <td style="color:#fbbf24;"><strong>${totalCT}</strong></td>
+                    <td style="color:#34d399;"><strong>${pctQTotal}%</strong></td>
+                    <td style="color:#f87171;"><strong>${pctNQTotal}%</strong></td>
+                    <td style="color:#fbbf24;"><strong>${pctCTTotal}%</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          `;
+          
+          // Gráfica de barras - Volumen de ventas
+          html += `
+            <h4 style="color:var(--gold); margin-top:25px;">📊 Volumen de Ventas por Base</h4>
+            <div class="grafica-ventas-barras">
+          `;
+          
+          sortedBases.forEach(([base, stats]) => {
+            const pct = maxVentas > 0 ? (stats.totalVentas / maxVentas) * 100 : 0;
+            html += `
+              <div class="barra-venta">
+                <span class="barra-venta-label">${base}</span>
+                <div class="barra-venta-container">
+                  <div class="barra-venta-fill venta" style="width: ${Math.max(pct, 5)}%;">
+                    $${stats.totalVentas.toLocaleString()}
+                  </div>
+                </div>
+                <span class="barra-venta-valor">$${stats.totalVentas.toLocaleString()}</span>
+              </div>
+            `;
+          });
+          
+          html += `</div>`;
+          
+          // Gráfica de barras apiladas - Q, NQ, CT
+          html += `
+            <h4 style="color:var(--gold); margin-top:25px;">📊 Porcentaje de Q / NQ / CT por Base</h4>
+            <div class="grafica-ventas-barras">
+          `;
+          
+          sortedBases.forEach(([base, stats]) => {
+            const pctQ = stats.totalRegistros > 0 ? (stats.Q / stats.totalRegistros) * 100 : 0;
+            const pctNQ = stats.totalRegistros > 0 ? (stats.NQ / stats.totalRegistros) * 100 : 0;
+            const pctCT = stats.totalRegistros > 0 ? (stats.CT / stats.totalRegistros) * 100 : 0;
+            
+            html += `
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                <span style="min-width:150px; font-size:0.8rem; font-weight:600; color:var(--text-secondary);">${base}</span>
+                <div style="flex:1; height:28px; display:flex; border-radius:14px; overflow:hidden; background:rgba(255,255,255,0.1);">
+                  <div style="width:${pctQ}%; background:linear-gradient(90deg, #059669, #34d399); display:flex; align-items:center; justify-content:center; color:white; font-size:0.65rem; font-weight:bold; min-width:${pctQ > 0 ? '30px' : '0'};">
+                    ${pctQ > 0 ? `${pctQ.toFixed(0)}% Q` : ''}
+                  </div>
+                  <div style="width:${pctNQ}%; background:linear-gradient(90deg, #dc2626, #f87171); display:flex; align-items:center; justify-content:center; color:white; font-size:0.65rem; font-weight:bold; min-width:${pctNQ > 0 ? '30px' : '0'};">
+                    ${pctNQ > 0 ? `${pctNQ.toFixed(0)}% NQ` : ''}
+                  </div>
+                  <div style="width:${pctCT}%; background:linear-gradient(90deg, #d97706, #fbbf24); display:flex; align-items:center; justify-content:center; color:white; font-size:0.65rem; font-weight:bold; min-width:${pctCT > 0 ? '30px' : '0'};">
+                    ${pctCT > 0 ? `${pctCT.toFixed(0)}% CT` : ''}
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          
+          html += `</div>`;
+          
+          // Leyenda
+          html += `
+            <div class="leyenda-ventas">
+              <div class="leyenda-ventas-item">
+                <span class="color-box q-color"></span> <strong>Q</strong> = Calificados (Llegaron)
+              </div>
+              <div class="leyenda-ventas-item">
+                <span class="color-box nq-color"></span> <strong>NQ</strong> = No Calificados (No llegaron)
+              </div>
+              <div class="leyenda-ventas-item">
+                <span class="color-box ct-color"></span> <strong>CT</strong> = Citados (Pendientes)
+              </div>
+            </div>
+          `;
+          
+          return html;
+        }
+        
+        // Renderizar todas las pestañas
+        let contenidoCompleto = pestanasHtml;
+        contenidoCompleto += `<div id="contenidoPestana" class="contenido-pestana">${renderizarEstadisticas('Todas')}</div>`;
+        
+        container.innerHTML = contenidoCompleto;
+        
+        // Eventos para las pestañas
+        document.querySelectorAll('.pestana-ventas').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('.pestana-ventas').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const pestana = this.dataset.pestana;
+            const contenido = document.getElementById('contenidoPestana');
+            contenido.innerHTML = renderizarEstadisticas(pestana);
+          });
+        });
+        
+        document.getElementById('modalVentas').style.display = 'block';
+      }
+
       // Configurar Firebase
       function configurarFirebase() {
         const db = firebase.database();
@@ -1476,6 +2181,35 @@
           if (window.calendarioInput && window.calendarioInput.value) {
             fechaSeleccionada = new Date(window.calendarioInput.value);
             mostrarCitasPorFecha(fechaSeleccionada);
+          }
+        });
+        
+        // Cargar Excel
+        document.getElementById('btnCargarExcel').addEventListener('click', cargarExcelManifiesto);
+        document.getElementById('inputExcel').addEventListener('change', procesarExcelManifiesto);
+        
+        // Mostrar ventas
+        document.getElementById('btnVentas').addEventListener('click', () => {
+          if (datosVentasExcel && datosVentasExcel.length > 0) {
+            mostrarEstadisticasVentas();
+          } else {
+            document.getElementById('contenidoVentas').innerHTML = `
+              <p style="text-align:center; color:var(--text-secondary); padding: 40px;">
+                📭 No hay datos cargados. Usa el botón "📥 CARGAR EXCEL" para subir un manifiesto.
+              </p>
+            `;
+            document.getElementById('modalVentas').style.display = 'block';
+          }
+        });
+        
+        // Cerrar modal de ventas
+        document.getElementById('cerrarVentas').addEventListener('click', () => {
+          document.getElementById('modalVentas').style.display = 'none';
+        });
+        
+        window.addEventListener('click', (e) => {
+          if (e.target === document.getElementById('modalVentas')) {
+            document.getElementById('modalVentas').style.display = 'none';
           }
         });
         
