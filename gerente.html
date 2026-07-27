@@ -14,6 +14,8 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <!-- SheetJS para leer Excel -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <!-- ExcelJS para generar Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
   <!-- FileSaver para descargar -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <style>
@@ -763,6 +765,7 @@
       color: #FCA5A5;
     }
 
+    /* Estilos para ventas */
     .modal-ventas {
       display: none;
       position: fixed;
@@ -989,65 +992,6 @@
     .color-box.nq-color { background: var(--nq-color); }
     .color-box.ct-color { background: var(--ct-color); }
 
-    /* Vista previa del premanifiesto */
-    .vista-previa-container {
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      border-radius: 20px;
-      padding: 25px;
-      margin-top: 20px;
-      border: 1px solid rgba(212, 175, 55, 0.3);
-    }
-
-    .vista-previa-container h3 {
-      color: var(--gold);
-      margin-bottom: 15px;
-    }
-
-    .tabla-premanifiesto-mensual {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-
-    .tabla-premanifiesto-mensual th {
-      background: var(--gold);
-      color: var(--primary);
-      padding: 10px;
-      text-align: center;
-      font-weight: 700;
-      border: 1px solid rgba(212, 175, 55, 0.3);
-    }
-
-    .tabla-premanifiesto-mensual td {
-      padding: 8px 12px;
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: var(--text-secondary);
-    }
-
-    .tabla-premanifiesto-mensual tr:hover td {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .resumen-mes {
-      margin-top: 15px;
-      padding: 15px;
-      background: rgba(212, 175, 55, 0.1);
-      border-radius: 10px;
-      border-left: 4px solid var(--gold);
-    }
-
-    .resumen-mes strong {
-      color: var(--gold);
-      font-size: 1.1rem;
-    }
-
-    .resumen-mes .linea-resumen {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      margin: 2px 0;
-    }
-
     @media (max-width: 768px) {
       header {
         flex-direction: column;
@@ -1093,15 +1037,6 @@
         margin: 1% auto;
         padding: 15px;
         width: 98%;
-      }
-
-      .tabla-premanifiesto-mensual {
-        font-size: 0.7rem;
-      }
-      
-      .tabla-premanifiesto-mensual th,
-      .tabla-premanifiesto-mensual td {
-        padding: 5px 6px;
       }
     }
   </style>
@@ -1171,12 +1106,6 @@
             <i class="fas fa-file-excel"></i> DESCARGAR PREMANIFIESTO
           </button>
         </div>
-      </div>
-      
-      <!-- Vista previa del mes seleccionado -->
-      <div class="vista-previa-container" id="vistaPreviaContainer" style="display:none;">
-        <h3><i class="fas fa-eye"></i> VISTA PREVIA - <span id="vistaPreviaTitulo"></span></h3>
-        <div id="vistaPreviaContenido"></div>
       </div>
     </div>
 
@@ -1287,10 +1216,6 @@
     let fechaSeleccionada = null;
     let datosVentasExcel = [];
     let datosVentasPorPestana = {};
-
-    // Nombres de días y meses
-    const DIAS_SEMANA = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
-    const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
 
     document.addEventListener("DOMContentLoaded", function() {
       // Reloj en tiempo real
@@ -1752,16 +1677,52 @@
         container.innerHTML = html;
       }
 
-      // =============== NUEVA FUNCIÓN: PREMANIFIESTO CON FORMATO DE LA IMAGEN ===============
-      function generarPremanifiestoFormatoImagen(mes, año) {
+      // Actualizar todo el panel
+      function actualizarTodoElPanel() {
+        actualizarDuplicados();
+        actualizarResumenGeneral();
+        actualizarReporteDias();
+        actualizarReporteBases();
+        actualizarQnqTotales();
+        actualizarGraficoBarras();
+      }
+
+      // Llenar selector de años
+      function llenarSelectorAnios() {
+        const select = document.getElementById('añoDescarga');
+        const actual = new Date().getFullYear();
+        for (let a = 2020; a <= actual + 1; a++) {
+          const opt = document.createElement('option');
+          opt.value = a;
+          opt.textContent = a;
+          if (a === actual) opt.selected = true;
+          select.appendChild(opt);
+        }
+      }
+
+      // =============== DESCARGA PREMANIFIESTO CON FORMATO EXACTO DE LA IMAGEN ===============
+      async function descargarPremanifiestoPorMes() {
+        const mes = parseInt(document.getElementById('mesDescarga').value);
+        const año = parseInt(document.getElementById('añoDescarga').value);
+        const meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+        const nombreMes = meses[mes];
+        const diasSemana = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+        
+        // Filtrar registros: SOLO del mes seleccionado, EXCLUYENDO LUNES (getDay() === 1)
         const registrosMes = registrosPremanifiesto.filter(r => {
           if (!r.diaEvento) return false;
           const f = new Date(r.diaEvento);
-          return !isNaN(f.getTime()) && f.getMonth() === mes && f.getFullYear() === año;
+          if (isNaN(f.getTime())) return false;
+          // Filtrar por mes y año
+          if (f.getMonth() !== mes || f.getFullYear() !== año) return false;
+          // EXCLUIR LUNES
+          if (f.getDay() === 1) return false;
+          return true;
         });
-
+        
         if (registrosMes.length === 0) {
-          return { datos: [], resumen: [], totalCitas: 0, totalDias: 0 };
+          mostrarNotificacion(`NO HAY REGISTROS PARA ${nombreMes} ${año} (MARTES A DOMINGO)`, 'error');
+          return;
         }
 
         // Agrupar por día
@@ -1790,7 +1751,7 @@
         diasOrdenados.forEach(fechaStr => {
           const dia = dias[fechaStr];
           const fechaObj = new Date(fechaStr);
-          const diaSemana = DIAS_SEMANA[fechaObj.getDay()];
+          const diaSemana = diasSemana[fechaObj.getDay()];
           const totalCitas = dia.registros.length;
           const numSupervisoras = dia.supervisoras.size;
           const alPerso = totalCitas > 0 ? (dia.totalPersonas / totalCitas) : 0;
@@ -1809,7 +1770,6 @@
         });
 
         // Generar resumen mensual (PREMANIFIESTO XX MES)
-        const resumen = [];
         const citasPorSupervisora = {};
         registrosMes.forEach(r => {
           const sup = r.supervisora || 'SIN SUPERVISORA';
@@ -1817,129 +1777,41 @@
           citasPorSupervisora[sup]++;
         });
 
-        // Ordenar supervisoras por cantidad de citas (descendente)
         const supervisorasOrdenadas = Object.keys(citasPorSupervisora).sort((a, b) => citasPorSupervisora[b] - citasPorSupervisora[a]);
-        
-        supervisorasOrdenadas.forEach((sup, index) => {
+        const resumenLines = supervisorasOrdenadas.map((sup, index) => {
           const num = String(index + 1).padStart(2, '0');
-          const abrevMes = MESES[mes].substring(0, 3).toUpperCase();
-          resumen.push(`PREMANIFIESTO ${num} ${abrevMes}`);
+          const abrevMes = nombreMes.substring(0, 3);
+          return `PREMANIFIESTO ${num} ${abrevMes}`;
         });
 
-        // Calcular totales
-        const totalCitas = registrosMes.length;
-        const totalDias = diasOrdenados.length;
-
-        return { 
-          datos: datosTabla, 
-          resumen: resumen, 
-          totalCitas: totalCitas, 
-          totalDias: totalDias,
-          registrosMes: registrosMes
-        };
-      }
-
-      // =============== FUNCIÓN PARA MOSTRAR VISTA PREVIA ===============
-      function mostrarVistaPrevia(mes, año) {
-        const container = document.getElementById('vistaPreviaContainer');
-        const titulo = document.getElementById('vistaPreviaTitulo');
-        const contenido = document.getElementById('vistaPreviaContenido');
-        
-        const resultado = generarPremanifiestoFormatoImagen(mes, año);
-        
-        if (resultado.datos.length === 0) {
-          container.style.display = 'none';
-          return;
-        }
-
-        container.style.display = 'block';
-        titulo.textContent = `${MESES[mes]} ${año} - ${resultado.totalCitas} CITAS`;
-
-        let html = `
-          <table class="tabla-premanifiesto-mensual">
-            <thead>
-              <tr>
-                <th>DÍA</th>
-                <th>FECHA</th>
-                <th>TOTAL CITA</th>
-                <th>PERVISOR</th>
-                <th>AL PERSO</th>
-                <th>PERSO</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-
-        resultado.datos.forEach(d => {
-          const alPersoFormateado = d.alPerso > 0 ? d.alPerso.toFixed(1) : '';
-          const persoFormateado = d.perso > 0 ? d.perso.toFixed(1) : '';
-          
-          html += `
-            <tr>
-              <td>${d.diaSemana}</td>
-              <td>${d.fecha}</td>
-              <td>${d.totalCitas}</td>
-              <td>${d.numSupervisoras}</td>
-              <td>${d.alPerso > 0 ? `${d.alPerso.toFixed(1)}` : ''}</td>
-              <td>${d.perso > 0 ? `${d.perso.toFixed(1)}` : ''}</td>
-            </tr>
-          `;
-        });
-
-        html += `
-            </tbody>
-          </table>
-          <div class="resumen-mes">
-            <strong>RESUMEN MES</strong>
-        `;
-
-        resultado.resumen.forEach(linea => {
-          html += `<div class="linea-resumen">${linea}</div>`;
-        });
-
-        html += `
-          </div>
-        `;
-
-        contenido.innerHTML = html;
-      }
-
-      // =============== FUNCIÓN PARA DESCARGAR EXCEL CON FORMATO IMAGEN ===============
-      async function descargarPremanifiestoFormatoImagen() {
-        const mes = parseInt(document.getElementById('mesDescarga').value);
-        const año = parseInt(document.getElementById('añoDescarga').value);
-        const nombreMes = MESES[mes];
-        
-        const resultado = generarPremanifiestoFormatoImagen(mes, año);
-        
-        if (resultado.datos.length === 0) {
-          mostrarNotificacion(`NO HAY REGISTROS PARA ${nombreMes} ${año}`, 'error');
-          return;
-        }
-
+        // ============ GENERAR EXCEL ============
         try {
-          // Crear libro de Excel
+          // Verificar que ExcelJS esté disponible
+          if (typeof ExcelJS === 'undefined') {
+            mostrarNotificacion('Error: ExcelJS no está cargado. Revisa tu conexión a internet.', 'error');
+            return;
+          }
+
           const workbook = new ExcelJS.Workbook();
           const worksheet = workbook.addWorksheet('PREMANIFIESTO');
 
-          // Título
-          const titulo = `PREMANIFIESTO ${nombreMes} ${año}`;
+          // ===== TÍTULO =====
           worksheet.mergeCells('A1:F1');
           const tituloCell = worksheet.getCell('A1');
-          tituloCell.value = titulo;
+          tituloCell.value = `PREMANIFIESTO ${nombreMes} ${año}`;
           tituloCell.font = { size: 16, bold: true, color: { argb: 'FF0A2540' } };
           tituloCell.alignment = { horizontal: 'center' };
 
-          // Fecha de generación
+          // ===== FECHA DE GENERACIÓN =====
           worksheet.mergeCells('A2:F2');
-          const fechaCell = worksheet.getCell('A2');
-          fechaCell.value = `GENERADO EL: ${new Date().toLocaleDateString('es-MX')}`;
-          fechaCell.font = { size: 10, italic: true };
-          fechaCell.alignment = { horizontal: 'center' };
+          const fechaGenCell = worksheet.getCell('A2');
+          fechaGenCell.value = `GENERADO EL: ${new Date().toLocaleDateString('es-MX')}`;
+          fechaGenCell.font = { size: 10, italic: true };
+          fechaGenCell.alignment = { horizontal: 'center' };
 
           worksheet.addRow([]);
 
-          // Cabeceras
+          // ===== CABECERAS =====
           const headers = ['DÍA', 'FECHA', 'TOTAL CITA', 'PERVISOR', 'AL PERSO', 'PERSO'];
           const headerRow = worksheet.addRow(headers);
           headerRow.eachCell((cell) => {
@@ -1954,8 +1826,8 @@
             };
           });
 
-          // Datos
-          resultado.datos.forEach(d => {
+          // ===== DATOS =====
+          datosTabla.forEach(d => {
             const alPersoFormateado = d.alPerso > 0 ? d.alPerso.toFixed(1) : '';
             const persoFormateado = d.perso > 0 ? d.perso.toFixed(1) : '';
             
@@ -1979,17 +1851,17 @@
             });
           });
 
-          // Resumen
+          // ===== RESUMEN =====
           worksheet.addRow([]);
           const resumenRow = worksheet.addRow(['RESUMEN MES']);
           resumenRow.getCell(1).font = { bold: true, size: 12 };
           worksheet.mergeCells(`A${worksheet.rowCount}:F${worksheet.rowCount}`);
 
-          resultado.resumen.forEach(linea => {
+          resumenLines.forEach(linea => {
             worksheet.addRow([linea]);
           });
 
-          // Ajustar columnas
+          // ===== AJUSTAR COLUMNAS =====
           worksheet.columns = [
             { width: 15 },
             { width: 15 },
@@ -1999,20 +1871,29 @@
             { width: 12 }
           ];
 
-          // Generar archivo
+          // ===== GENERAR Y DESCARGAR =====
           const buffer = await workbook.xlsx.writeBuffer();
           const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
           saveAs(blob, `PREMANIFIESTO_${nombreMes}_${año}.xlsx`);
           
-          mostrarNotificacion(`✅ PREMANIFIESTO DE ${nombreMes} ${año} DESCARGADO (${resultado.totalCitas} CITAS)`);
+          mostrarNotificacion(`✅ PREMANIFIESTO DE ${nombreMes} ${año} DESCARGADO (${registrosMes.length} CITAS - MARTES A DOMINGO)`);
           
         } catch (error) {
           console.error('Error al generar Excel:', error);
-          mostrarNotificacion('Error al generar el archivo Excel', 'error');
+          mostrarNotificacion('Error al generar el archivo Excel: ' + error.message, 'error');
         }
       }
 
-      // =============== FUNCIONES EXISTENTES PARA CARGAR EXCEL ===============
+      // Mostrar notificación
+      function mostrarNotificacion(mensaje, tipo = 'success') {
+        const notificacion = document.createElement('div');
+        notificacion.innerHTML = `<i class="fas fa-${tipo === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${mensaje}`;
+        notificacion.className = `notificacion ${tipo === 'error' ? 'error' : ''}`;
+        document.body.appendChild(notificacion);
+        setTimeout(() => notificacion.remove(), 4000);
+      }
+
+      // =============== CARGAR EXCEL CON MANIFIESTO (TODAS LAS PESTAÑAS) ===============
       function cargarExcelManifiesto() {
         document.getElementById('inputExcel').click();
       }
@@ -2030,6 +1911,7 @@
             datosVentasPorPestana = {};
             let totalRegistros = 0;
             
+            // Procesar cada pestaña
             workbook.SheetNames.forEach(nombrePestana => {
               const hoja = workbook.Sheets[nombrePestana];
               const datos = XLSX.utils.sheet_to_json(hoja, { defval: '' });
@@ -2039,6 +1921,7 @@
               const registrosPestana = [];
               const headers = Object.keys(datos[0] || {});
               
+              // Buscar columnas relevantes
               let colNumParejas = null, colFecha = null, colNombres = null;
               let colEstadoCivil = null, colBaseDatos = null, colStatusVendor = null;
               let colVolumenVenta = null, colTelefono = null;
@@ -2055,6 +1938,7 @@
                 else if (header.includes('TELEFONO') || header.includes('TELÉFONO') || header.includes('TEL')) colTelefono = index;
               });
 
+              // Si no encuentra columnas por nombre, usar posición
               if (colNumParejas === null && headers.length >= 0) colNumParejas = 0;
               if (colFecha === null && headers.length >= 1) colFecha = 1;
               if (colNombres === null && headers.length >= 2) colNombres = 2;
@@ -2076,6 +1960,7 @@
                 let volumenVenta = parseFloat(String(values[colVolumenVenta] || '0').replace(/,/g, '')) || 0;
                 const telefono = String(values[colTelefono] || '').trim();
 
+                // Extraer edad del campo NOMBRES
                 let edad = '';
                 let nombreLimpio = nombres;
                 const edadMatch = String(nombres).match(/\d+/);
@@ -2084,14 +1969,26 @@
                   nombreLimpio = String(nombres).replace(/\d+/, '').trim();
                 }
 
+                // Determinar estado (Q, NQ, CT) - BUSCAR EN TODOS LOS CAMPOS
                 let estado = 'CT';
                 const textoCompleto = (estadoCivil + ' ' + statusVendor + ' ' + nombres).toUpperCase();
                 
-                if (textoCompleto.includes('NQ') || textoCompleto.includes('NO CALIF') || textoCompleto.includes('NO Q') || textoCompleto.includes('N/Q')) {
+                // Primero buscar NQ (NO CALIFICADO)
+                if (textoCompleto.includes('NQ') || 
+                    textoCompleto.includes('NO CALIF') || 
+                    textoCompleto.includes('NO Q') ||
+                    textoCompleto.includes('N/Q')) {
                   estado = 'NQ';
-                } else if (textoCompleto.includes('Q') || textoCompleto.includes('CALIF') || textoCompleto.includes('Q -') || textoCompleto.includes('- Q')) {
+                }
+                // Luego buscar Q (CALIFICADO)
+                else if (textoCompleto.includes('Q') || 
+                         textoCompleto.includes('CALIF') ||
+                         textoCompleto.includes('Q -') ||
+                         textoCompleto.includes('- Q')) {
                   estado = 'Q';
-                } else {
+                }
+                // Si no, es CT (CITADO)
+                else {
                   estado = 'CT';
                 }
 
@@ -2114,12 +2011,15 @@
               totalRegistros += registrosPestana.length;
             });
 
+            // Combinar todos los registros para el total general
             datosVentasExcel = [];
             Object.values(datosVentasPorPestana).forEach(regs => {
               datosVentasExcel = datosVentasExcel.concat(regs);
             });
 
             mostrarNotificacion(`📥 Excel cargado: ${totalRegistros} registros en ${Object.keys(datosVentasPorPestana).length} pestañas`);
+            
+            // Mostrar estadísticas automáticamente
             mostrarEstadisticasVentas();
             
           } catch (error) {
@@ -2136,6 +2036,7 @@
       function mostrarEstadisticasVentas() {
         const container = document.getElementById('contenidoVentas');
         
+        // Verificar si hay datos
         const totalRegistros = datosVentasExcel.length;
         if (totalRegistros === 0) {
           container.innerHTML = `
@@ -2147,13 +2048,16 @@
           return;
         }
 
+        // Obtener lista de pestañas disponibles
         const pestanas = Object.keys(datosVentasPorPestana);
         
+        // Generar pestañas de navegación
         let pestanasHtml = `
           <div class="pestanas-ventas">
             <button class="pestana-ventas active" data-pestana="Todas">📊 Todas (${totalRegistros})</button>
         `;
         
+        // Ordenar pestañas: primero las que son meses, luego semana en curso
         const mesesOrden = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
         const pestanasOrdenadas = pestanas.sort((a, b) => {
           const aLower = a.toLowerCase();
@@ -2178,12 +2082,14 @@
         
         pestanasHtml += `</div>`;
         
+        // Función para renderizar estadísticas de una pestaña específica
         function renderizarEstadisticas(pestana) {
           const datos = pestana === 'Todas' ? datosVentasExcel : datosVentasPorPestana[pestana] || [];
           if (datos.length === 0) {
             return `<p style="text-align:center; color:var(--text-secondary);">No hay datos en esta pestaña</p>`;
           }
           
+          // Agrupar por base de datos
           const grupos = {};
           let totalQ = 0, totalNQ = 0, totalCT = 0;
           let totalVentasGlobal = 0;
@@ -2218,6 +2124,7 @@
           const maxVentas = Math.max(...Object.values(grupos).map(g => g.totalVentas), 1);
           const totalRegistrosBase = datos.length;
           
+          // Resumen general
           let html = `
             <div class="ventas-resumen-grid">
               <div class="ventas-resumen-card q-card">
@@ -2243,6 +2150,7 @@
             </div>
           `;
           
+          // Tabla por base
           html += `
             <h4 style="color:var(--gold); margin-top:20px;">📋 Detalle por Base de Datos</h4>
             <div style="overflow-x: auto;">
@@ -2285,6 +2193,7 @@
             `;
           });
           
+          // Totales
           const pctQTotal = totalRegistrosBase > 0 ? ((totalQ / totalRegistrosBase) * 100).toFixed(1) : 0;
           const pctNQTotal = totalRegistrosBase > 0 ? ((totalNQ / totalRegistrosBase) * 100).toFixed(1) : 0;
           const pctCTTotal = totalRegistrosBase > 0 ? ((totalCT / totalRegistrosBase) * 100).toFixed(1) : 0;
@@ -2306,6 +2215,7 @@
             </div>
           `;
           
+          // Gráfica de barras - Volumen de ventas
           html += `
             <h4 style="color:var(--gold); margin-top:25px;">📊 Volumen de Ventas por Base</h4>
             <div class="grafica-ventas-barras">
@@ -2328,6 +2238,7 @@
           
           html += `</div>`;
           
+          // Gráfica de barras apiladas - Q, NQ, CT
           html += `
             <h4 style="color:var(--gold); margin-top:25px;">📊 Porcentaje de Q / NQ / CT por Base</h4>
             <div class="grafica-ventas-barras">
@@ -2358,6 +2269,7 @@
           
           html += `</div>`;
           
+          // Leyenda
           html += `
             <div class="leyenda-ventas">
               <div class="leyenda-ventas-item">
@@ -2375,11 +2287,13 @@
           return html;
         }
         
+        // Renderizar todas las pestañas
         let contenidoCompleto = pestanasHtml;
         contenidoCompleto += `<div id="contenidoPestana" class="contenido-pestana">${renderizarEstadisticas('Todas')}</div>`;
         
         container.innerHTML = contenidoCompleto;
         
+        // Eventos para las pestañas
         document.querySelectorAll('.pestana-ventas').forEach(btn => {
           btn.addEventListener('click', function() {
             document.querySelectorAll('.pestana-ventas').forEach(b => b.classList.remove('active'));
@@ -2392,38 +2306,6 @@
         });
         
         document.getElementById('modalVentas').style.display = 'block';
-      }
-
-      // Mostrar notificación
-      function mostrarNotificacion(mensaje, tipo = 'success') {
-        const notificacion = document.createElement('div');
-        notificacion.innerHTML = `<i class="fas fa-${tipo === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${mensaje}`;
-        notificacion.className = `notificacion ${tipo === 'error' ? 'error' : ''}`;
-        document.body.appendChild(notificacion);
-        setTimeout(() => notificacion.remove(), 4000);
-      }
-
-      // Llenar selector de años
-      function llenarSelectorAnios() {
-        const select = document.getElementById('añoDescarga');
-        const actual = new Date().getFullYear();
-        for (let a = 2020; a <= actual + 1; a++) {
-          const opt = document.createElement('option');
-          opt.value = a;
-          opt.textContent = a;
-          if (a === actual) opt.selected = true;
-          select.appendChild(opt);
-        }
-      }
-
-      // Actualizar todo el panel
-      function actualizarTodoElPanel() {
-        actualizarDuplicados();
-        actualizarResumenGeneral();
-        actualizarReporteDias();
-        actualizarReporteBases();
-        actualizarQnqTotales();
-        actualizarGraficoBarras();
       }
 
       // Configurar Firebase
@@ -2446,27 +2328,13 @@
         llenarSelectorAnios();
         configurarFirebase();
         
-        // Eventos del selector de mes
-        document.getElementById('mesDescarga').addEventListener('change', function() {
-          const mes = parseInt(this.value);
-          const año = parseInt(document.getElementById('añoDescarga').value);
-          mostrarVistaPrevia(mes, año);
-        });
-        
-        document.getElementById('añoDescarga').addEventListener('change', function() {
-          const mes = parseInt(document.getElementById('mesDescarga').value);
-          const año = parseInt(this.value);
-          mostrarVistaPrevia(mes, año);
-        });
-        
-        // Botón de descarga con nuevo formato
-        document.getElementById('btnDescargarMesSeleccionado').addEventListener('click', descargarPremanifiestoFormatoImagen);
-        
         document.getElementById('actualizarBtn').addEventListener('click', () => {
           actualizarTodoElPanel();
           if (fechaSeleccionada) mostrarCitasPorFecha(fechaSeleccionada);
           mostrarNotificacion('REPORTE ACTUALIZADO');
         });
+        
+        document.getElementById('btnDescargarMesSeleccionado').addEventListener('click', descargarPremanifiestoPorMes);
         
         document.getElementById('btnBuscarFecha').addEventListener('click', () => {
           if (window.calendarioInput && window.calendarioInput.value) {
@@ -2516,11 +2384,6 @@
             }
           }
         });
-
-        // Mostrar vista previa inicial
-        const mesInicial = parseInt(document.getElementById('mesDescarga').value);
-        const añoInicial = parseInt(document.getElementById('añoDescarga').value);
-        mostrarVistaPrevia(mesInicial, añoInicial);
       }
       
       inicializar();
