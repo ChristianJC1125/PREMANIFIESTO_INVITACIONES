@@ -1,4 +1,4 @@
-<DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -1802,13 +1802,13 @@
           hojaResumen.columns = [{ width: 15 }, { width: 15 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 12 }];
 
           // =====================================================
-          // REGISTROS DETALLADOS DEL MES (NOMBRE, NÚMERO, SUPERVISOR, OPERADOR, FECHA)
+          // REGISTROS DETALLADOS DEL MES (NOMBRE, TELÉFONO, SUPERVISOR, OPERADOR, FECHA)
           // =====================================================
           hojaResumen.addRow([]);
           hojaResumen.addRow(['DETALLE DE REGISTROS DEL MES']);
           
           // Cabeceras de los registros detallados
-          const headersDetalle = ['N°', 'NOMBRE', 'SUPERVISOR', 'OPERADOR', 'FECHA'];
+          const headersDetalle = ['NOMBRE', 'TELÉFONO', 'SUPERVISOR', 'OPERADOR', 'FECHA'];
           const headerRowDetalle = hojaResumen.addRow(headersDetalle);
           headerRowDetalle.eachCell((cell) => {
             cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -1824,11 +1824,10 @@
             return fechaA - fechaB;
           });
 
-          let numeroCita = 1;
           registrosOrdenados.forEach(r => {
             const row = hojaResumen.addRow([
-              numeroCita++,
               r.nombre || 'SIN NOMBRE',
+              r.telefono || 'SIN TELÉFONO',
               r.supervisora || 'SIN SUPERVISOR',
               r.operador || 'SIN OPERADOR',
               r.diaEvento || 'SIN FECHA'
@@ -1840,8 +1839,8 @@
           });
 
           // Ajustar columnas de la tabla de detalle
-          hojaResumen.getColumn(1).width = 8;   // N°
-          hojaResumen.getColumn(2).width = 35;  // NOMBRE
+          hojaResumen.getColumn(1).width = 35;  // NOMBRE
+          hojaResumen.getColumn(2).width = 18;  // TELÉFONO
           hojaResumen.getColumn(3).width = 20;  // SUPERVISOR
           hojaResumen.getColumn(4).width = 20;  // OPERADOR
           hojaResumen.getColumn(5).width = 18;  // FECHA
