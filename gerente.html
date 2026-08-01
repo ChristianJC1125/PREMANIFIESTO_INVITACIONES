@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -1732,7 +1732,7 @@
           const workbook = new ExcelJS.Workbook();
 
           // =====================================================
-          // HOJA 1: RESUMEN MENSUAL (IMAGEN 1)
+          // HOJA 1: RESUMEN MENSUAL
           // =====================================================
           const hojaResumen = workbook.addWorksheet('RESUMEN MES');
 
@@ -1752,8 +1752,8 @@
 
           hojaResumen.addRow([]);
 
-          // Cabeceras
-          const headersResumen = ['DÍA', 'FECHA', 'TOTAL CITA', 'PERVISOR', 'AL PERSO', 'PERSO'];
+          // Cabeceras del resumen
+          const headersResumen = ['DÍA', 'FECHA', 'TOTAL CITA', 'SUPERVISOR', 'AL PERSO', 'PERSO'];
           const headerRowResumen = hojaResumen.addRow(headersResumen);
           headerRowResumen.eachCell((cell) => {
             cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -1802,7 +1802,52 @@
           hojaResumen.columns = [{ width: 15 }, { width: 15 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 12 }];
 
           // =====================================================
-          // HOJAS POR DÍA (IMAGEN 2 - UN PREMANIFIESTO POR DÍA)
+          // REGISTROS DETALLADOS DEL MES (NOMBRE, NÚMERO, SUPERVISOR, OPERADOR, FECHA)
+          // =====================================================
+          hojaResumen.addRow([]);
+          hojaResumen.addRow(['DETALLE DE REGISTROS DEL MES']);
+          
+          // Cabeceras de los registros detallados
+          const headersDetalle = ['N°', 'NOMBRE', 'SUPERVISOR', 'OPERADOR', 'FECHA'];
+          const headerRowDetalle = hojaResumen.addRow(headersDetalle);
+          headerRowDetalle.eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0A2540' } };
+            cell.alignment = { horizontal: 'center' };
+            cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+          });
+
+          // Agregar todos los registros del mes ordenados por fecha
+          const registrosOrdenados = [...registrosMes].sort((a, b) => {
+            const fechaA = new Date(a.diaEvento);
+            const fechaB = new Date(b.diaEvento);
+            return fechaA - fechaB;
+          });
+
+          let numeroCita = 1;
+          registrosOrdenados.forEach(r => {
+            const row = hojaResumen.addRow([
+              numeroCita++,
+              r.nombre || 'SIN NOMBRE',
+              r.supervisora || 'SIN SUPERVISOR',
+              r.operador || 'SIN OPERADOR',
+              r.diaEvento || 'SIN FECHA'
+            ]);
+            row.eachCell(cell => {
+              cell.alignment = { horizontal: 'center' };
+              cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+            });
+          });
+
+          // Ajustar columnas de la tabla de detalle
+          hojaResumen.getColumn(1).width = 8;   // N°
+          hojaResumen.getColumn(2).width = 35;  // NOMBRE
+          hojaResumen.getColumn(3).width = 20;  // SUPERVISOR
+          hojaResumen.getColumn(4).width = 20;  // OPERADOR
+          hojaResumen.getColumn(5).width = 18;  // FECHA
+
+          // =====================================================
+          // HOJAS POR DÍA (PREMANIFIESTO POR DÍA)
           // =====================================================
           diasOrdenados.forEach(fechaStr => {
             const dia = dias[fechaStr];
@@ -1828,7 +1873,7 @@
 
             hojaDia.addRow([]);
 
-            // Cabeceras detalladas - EXACTAMENTE como en la imagen
+            // Cabeceras detalladas
             const headersDia = [
               'NUM DE CITA', 'FECHA', 'PAX', 'NOMBRES FAMILIA', 'EDAD',
               'ESTADO CIVIL', 'TARJETAS', 'ID', 'INGRESOS',
@@ -1866,7 +1911,7 @@
               });
             });
 
-            // ===== RESUMEN DEL DÍA (como en la imagen) =====
+            // Resumen del día
             hojaDia.addRow([]);
             hojaDia.addRow(['RESUMEN DE']);
 
@@ -1879,33 +1924,27 @@
             });
             const promedioPersonas = totalCitasDia > 0 ? (totalPersonasDia / totalCitasDia) : 0;
 
-            // Tabla de resumen del día
             const resumenDiaHeaders = ['TOTAL CITAS:', 'TOTAL PERSO:', 'SUPERVISORA', 'PROMEDIO PE'];
             const resumenDiaValues = [totalCitasDia, totalPersonasDia, supervisorasDia.size, promedioPersonas.toFixed(1)];
             
-            // Fila con los títulos (bold)
             const titulosRow = hojaDia.addRow(resumenDiaHeaders);
             titulosRow.eachCell(cell => {
               cell.font = { bold: true };
               cell.alignment = { horizontal: 'center' };
             });
             
-            // Fila con los valores (negrita también)
             const valoresRow = hojaDia.addRow(resumenDiaValues);
             valoresRow.eachCell(cell => {
               cell.alignment = { horizontal: 'center' };
               cell.font = { bold: true };
             });
 
-            // ===== PREMANIFIESTO XX MES (como en la imagen) =====
+            // PREMANIFIESTO XX MES (repetido)
             hojaDia.addRow([]);
-            // Obtener el número del día en el mes (1, 2, 3...)
             const diaNum = fechaObj.getDate();
             const diaNumStr = String(diaNum).padStart(2, '0');
             const abrevMes = nombreMes.substring(0, 3);
             
-            // Agregar múltiples líneas de "PREMANIFIESTO XX MES" (como en la imagen)
-            // En la imagen se repite varias veces, así que lo replicamos
             for (let i = 0; i < 3; i++) {
               hojaDia.addRow([`PREMANIFIESTO ${diaNumStr} ${abrevMes}`]);
             }
