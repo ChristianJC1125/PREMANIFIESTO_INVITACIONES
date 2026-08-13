@@ -1784,6 +1784,73 @@
     let firebaseUpdateTimeout = null;
     
     const PASSWORD_GERENTE = "admin123";
+    
+    // ============================================================
+    // FUNCIÓN CRÍTICA: FORZAR ACTUALIZACIÓN DE TABLA EN IOS
+    // ============================================================
+    function forceTableRefresh() {
+        // Método más agresivo para iOS
+        const tabla = document.getElementById('tablaPremafiesto');
+        if (!tabla) return;
+        
+        const tbody = tabla.querySelector('tbody');
+        if (!tbody) return;
+        
+        // Guardar el contenido actual
+        const contenido = tbody.innerHTML;
+        
+        // Limpiar completamente
+        tbody.innerHTML = '';
+        
+        // Forzar reflow
+        void tbody.offsetHeight;
+        
+        // Restaurar con un pequeño delay para iOS
+        setTimeout(() => {
+            tbody.innerHTML = contenido;
+            // Forzar otro reflow
+            void tbody.offsetHeight;
+        }, 10);
+        
+        // También forzar en el contenedor
+        const container = document.getElementById('tablaPremanifiestoScroll');
+        if (container) {
+            const scrollLeft = container.scrollLeft;
+            container.style.overflow = 'hidden';
+            void container.offsetHeight;
+            container.style.overflow = '';
+            container.scrollLeft = scrollLeft;
+        }
+    }
+    
+    // ============================================================
+    // FUNCIÓN PARA ACTUALIZAR TABLA CON DATOS FRESCOS
+    // ============================================================
+    function refreshTableWithCurrentData() {
+        if (!premanifiestoVisible) return;
+        
+        // Obtener datos actuales
+        let datos = window.registrosPremanifiesto;
+        
+        // Aplicar filtros si existen
+        if (filtroSupervisorActivo && fechaInicioFiltro && fechaFinFiltro && supervisoraFiltroActual) {
+            datos = obtenerRegistrosPorFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
+        } else if (busquedaActiva && terminoBusquedaActual) {
+            const termino = terminoBusquedaActual.toLowerCase();
+            datos = datos.filter(r => (r.nombre || '').toLowerCase().includes(termino) || (r.telefono || '').includes(terminoBusquedaActual));
+        } else if (ultimaFechaFiltro) {
+            let fechaN = ultimaFechaFiltro;
+            try { fechaN = new Date(ultimaFechaFiltro).toISOString().split('T')[0]; } catch {}
+            datos = datos.filter(r => {
+                let fechaR = r.diaEvento;
+                try { fechaR = new Date(r.diaEvento).toISOString().split('T')[0]; } catch {}
+                return fechaR === fechaN;
+            });
+        }
+        
+        // Ordenar y mostrar
+        mostrarRegistrosEnTabla(ordenarRegistrosPorCita(datos));
+    }
 
     // ============================================================
     // FUNCIONES DE SUPERVISORAS
@@ -1966,27 +2033,6 @@
     }
 
     // ============================================================
-    // FUNCIÓN PARA FORZAR RENDERIZADO EN IOS
-    // ============================================================
-    function forceTableRender() {
-        const tabla = document.getElementById('tablaPremafiesto');
-        if (tabla) {
-            // Forzar reflow en iOS/Safari
-            tabla.style.display = 'none';
-            // Esto fuerza un reflow en el navegador
-            void tabla.offsetHeight;
-            tabla.style.display = '';
-        }
-        // También forzar en el contenedor
-        const container = document.getElementById('tablaPremanifiestoScroll');
-        if (container) {
-            container.style.overflow = 'hidden';
-            void container.offsetHeight;
-            container.style.overflow = '';
-        }
-    }
-
-    // ============================================================
     // FUNCIONES DE LA TABLA PREMANIFIESTO
     // ============================================================
     function ordenarRegistrosPorCita(registros) {
@@ -2049,13 +2095,6 @@
         
         aplicarEstilosEncabezado();
         actualizarPaginacion(registros.length);
-        
-        // Forzar renderizado en iOS
-        if (isIOS) {
-            requestAnimationFrame(() => {
-                forceTableRender();
-            });
-        }
     }
 
     function actualizarPaginacion(totalRegistros) {
@@ -2233,7 +2272,7 @@
     function guardarRegistrosEnFirebaseOptimizado() {
         if (firebaseUpdateTimeout) clearTimeout(firebaseUpdateTimeout);
         // Para iOS usamos un timeout más corto para que la actualización sea más rápida
-        const debounceMs = isIOS ? 100 : 900;
+        const debounceMs = isIOS ? 50 : 900;
         firebaseUpdateTimeout = setTimeout(() => {
             if (firebaseUpdateQueue.length === 0) return;
             (async () => {
@@ -2261,6 +2300,13 @@
                     if (promesas.length > 0) await Promise.all(promesas);
                     firebaseUpdateQueue = firebaseUpdateQueue.filter(function (r) { return !idsGuardados.has(r.id); });
                     actualizarEstadoSincronizacion(true);
+                    
+                    // Para iOS: forzar actualización después de guardar
+                    if (isIOS && premanifiestoVisible) {
+                        setTimeout(() => {
+                            refreshTableWithCurrentData();
+                        }, 100);
+                    }
                 } catch (e) {
                     console.error('Error al guardar premanifiesto en Firebase:', e);
                     manejarErrorFirebase(e);
@@ -2294,7 +2340,7 @@
                         } else {
                             actualizarTablaPremanifiesto(ultimaFechaFiltro);
                         }
-                    }, isIOS ? 50 : 150);
+                    }, isIOS ? 100 : 150);
                 }
                 actualizarEstadoSincronizacion(true);
             } else {
@@ -2302,6 +2348,9 @@
                 if (registrosPaintDebounceTimer) {
                     clearTimeout(registrosPaintDebounceTimer);
                     registrosPaintDebounceTimer = null;
+                }
+                if (premanifiestoVisible) {
+                    actualizarTablaPremanifiesto(ultimaFechaFiltro);
                 }
             }
         }, manejarErrorFirebase);
@@ -2355,7 +2404,7 @@
     }
 
     // ============================================================
-    // FUNCIÓN PARA AGREGAR AL PREMANIFIESTO (CON ACTUALIZACIÓN FORZADA PARA IOS)
+    // FUNCIÓN PARA AGREGAR AL PREMANIFIESTO (CON ACTUALIZACIÓN INMEDIATA PARA IOS)
     // ============================================================
     function agregarAlPremanifiesto(esReagendados = false) {
         const nombre = document.getElementById("nombre").value.trim();
@@ -2416,25 +2465,20 @@
         guardarRegistrosEnFirebaseOptimizado();
         
         // ============================================================
-        // ACTUALIZACIÓN FORZADA PARA IOS - EL REGISTRO APARECE INMEDIATAMENTE
+        // ACTUALIZACIÓN INMEDIATA PARA IOS - EL REGISTRO APARECE AL INSTANTE
         // ============================================================
         if (premanifiestoVisible) {
-            // Para iOS: actualizar inmediatamente sin esperar el listener de Firebase
+            // Actualizar inmediatamente con los datos locales
             setTimeout(() => {
-                if (filtroSupervisorActivo) {
-                    aplicarFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
-                } else if (busquedaActiva) {
-                    buscarPersonaEnTabla(terminoBusquedaActual);
-                } else {
-                    actualizarTablaPremanifiesto(ultimaFechaFiltro);
-                }
-                // Forzar renderizado extra para iOS
+                refreshTableWithCurrentData();
+                
+                // Para iOS: forzar un refresco visual adicional
                 if (isIOS) {
-                    requestAnimationFrame(() => {
-                        forceTableRender();
-                    });
+                    setTimeout(() => {
+                        forceTableRefresh();
+                    }, 50);
                 }
-            }, isIOS ? 50 : 300);
+            }, isIOS ? 10 : 300);
         }
         
         return true;
