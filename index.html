@@ -1372,6 +1372,10 @@
             <input type="tel" id="editarTelefono" required maxlength="10" inputmode="numeric" autocomplete="tel" pattern="[0-9]{10}">
           </div>
           <div>
+            <label for="editarCodigoAcceso">Código de Acceso:</label>
+            <input type="text" id="editarCodigoAcceso" placeholder="Ej: SF">
+          </div>
+          <div>
             <label for="editarDiaEvento">Día del Evento:</label>
             <input type="date" id="editarDiaEvento" required>
           </div>
@@ -2421,6 +2425,7 @@
         const vendedor = document.getElementById("vendedor").value;
         const calificacion = document.getElementById("calificacionOrigen").value;
         const telefono = document.getElementById("celular").value;
+        const codigoAcceso = document.getElementById("codigo").value || "SF";
         let diaEvento = document.getElementById("diaEvento").value;
         
         if (!nombre || !hotel || !supervisora || !telefono || !diaEvento) {
@@ -2453,6 +2458,7 @@
             gerente: document.getElementById("gerente").value,
             calificacionOrigen: calificacion,
             telefono: telefono,
+            codigoAcceso: codigoAcceso,
             fechaRegistro: new Date().toISOString().split('T')[0],
             timestamp: Date.now(),
             id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
@@ -2501,18 +2507,25 @@
     // ============================================================
     function editarRegistro(id) {
         registroEditando = window.registrosPremanifiesto.find(r => r.id === id);
-        if (!registroEditando) { alert("Error"); return; }
+        if (!registroEditando) { alert("Error: Registro no encontrado"); return; }
+        
+        // Cargar datos en el formulario de edición
         document.getElementById('editarNombre').value = registroEditando.nombre.replace(/\[REAGENDADO\] /g, '');
-        document.getElementById('editarEstadoCivil').value = registroEditando.estadoCivil;
+        document.getElementById('editarEstadoCivil').value = registroEditando.estadoCivil || '';
         document.getElementById('editarHora').value = registroEditando.hora?.replace(/ [AP]M$/, '') || '';
-        document.getElementById('editarHotel').value = registroEditando.hotel;
-        document.getElementById('editarEdad').value = registroEditando.edad;
-        document.getElementById('editarTarjeta').value = registroEditando.tarjeta;
-        document.getElementById('editarCalificacion').value = registroEditando.calificacionOrigen;
-        document.getElementById('editarSupervisora').value = registroEditando.supervisora;
-        document.getElementById('editarTelefono').value = registroEditando.telefono;
+        document.getElementById('editarHotel').value = registroEditando.hotel || '';
+        document.getElementById('editarEdad').value = registroEditando.edad || '';
+        document.getElementById('editarTarjeta').value = registroEditando.tarjeta || '';
+        document.getElementById('editarCalificacion').value = registroEditando.calificacionOrigen || '';
+        document.getElementById('editarSupervisora').value = registroEditando.supervisora || '';
+        document.getElementById('editarTelefono').value = registroEditando.telefono || '';
+        document.getElementById('editarCodigoAcceso').value = registroEditando.codigoAcceso || 'SF';
         document.getElementById('editarDiaEvento').value = registroEditando.diaEvento || '';
-        edicionSnapshot = { diaEvento: registroEditando.diaEvento || '', hora: registroEditando.hora || '' };
+        
+        edicionSnapshot = { 
+            diaEvento: registroEditando.diaEvento || '', 
+            hora: registroEditando.hora || '' 
+        };
         modalEdicion.style.display = 'block';
     }
 
@@ -3185,7 +3198,7 @@
             hora = document.getElementById('editarHora').value;
             fechaInput = registroEditando.diaEvento;
             celular = registroEditando.telefono || '';
-            codigo = (document.getElementById('codigo') && document.getElementById('codigo').value) ? document.getElementById('codigo').value : 'SF';
+            codigo = document.getElementById('editarCodigoAcceso').value || 'SF';
             hotelSeleccionado = registroEditando.hotel;
         } else {
             nombre = document.getElementById("nombre").value.trim();
@@ -3814,7 +3827,9 @@
         // ============================================================
         formEdicion.addEventListener('submit', (e) => {
             e.preventDefault();
-            if (!registroEditando) { alert("Error"); return; }
+            if (!registroEditando) { alert("Error: No hay registro seleccionado"); return; }
+            
+            // Actualizar el registro con los valores del formulario
             registroEditando.nombre = document.getElementById('editarNombre').value;
             registroEditando.estadoCivil = document.getElementById('editarEstadoCivil').value;
             registroEditando.hora = convertirHoraAMPM(document.getElementById('editarHora').value);
@@ -3824,13 +3839,22 @@
             registroEditando.calificacionOrigen = document.getElementById('editarCalificacion').value;
             registroEditando.supervisora = document.getElementById('editarSupervisora').value;
             registroEditando.telefono = document.getElementById('editarTelefono').value;
+            registroEditando.codigoAcceso = document.getElementById('editarCodigoAcceso').value || 'SF';
             registroEditando.diaEvento = document.getElementById('editarDiaEvento').value;
+            
+            // Recalcular el número de cita para el nuevo día
             registroEditando.citaPorDia = obtenerProximoNumeroCita(registroEditando.diaEvento);
+            
+            // Guardar en Firebase
             firebaseUpdateQueue.push(registroEditando);
             guardarRegistrosEnFirebaseOptimizado();
+            
+            // Actualizar la tabla
             if (filtroSupervisorActivo) aplicarFiltroSupervisor(fechaInicioFiltro, fechaFinFiltro, supervisoraFiltroActual);
             else if (busquedaActiva) buscarPersonaEnTabla(terminoBusquedaActual);
             else actualizarTablaPremanifiesto(ultimaFechaFiltro);
+            
+            // Preguntar si desea descargar nueva invitación
             if (edicionSnapshot) {
                 const cambioFechaHora = registroEditando.diaEvento !== edicionSnapshot.diaEvento || registroEditando.hora !== edicionSnapshot.hora;
                 if (cambioFechaHora && confirm('Se ha modificado la fecha u hora del evento. ¿Desea descargar una nueva invitación?')) {
@@ -3838,7 +3862,7 @@
                 }
             }
             modalEdicion.style.display = 'none';
-            mostrarNotificacion("Registro actualizado");
+            mostrarNotificacion("Registro actualizado correctamente");
         });
 
         // ============================================================
