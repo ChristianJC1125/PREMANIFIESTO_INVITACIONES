@@ -3241,20 +3241,26 @@
 
         const horaFormateada = convertirHoraAMPM(hora);
 
-        // ============================================================
-        // LÓGICA CONDICIONAL PARA FAUNNA ROOFTOP
-        // ============================================================
-        if (hotelSeleccionado === "FAUNNA Rooftop") {
+                if (hotelSeleccionado === "FAUNNA Rooftop") {
             // --- INVITACIÓN VIP ESPECIAL PARA FAUNNA ---
-            doc.setFont("times", "bold");
+            // Texto en BLANCO para que contraste con fondos oscuros
             doc.setTextColor(255, 255, 255); 
+            
+            // 1. Encabezado "ESTIMADO/A:"
+            doc.setFont("times", "bold");
             doc.setFontSize(14);
             doc.text("ESTIMADO/A:", 15, 90);
 
+            // 2. NOMBRE DEL CLIENTE (Justo debajo, más grande y en cursiva)
+            doc.setFont("times", "bolditalic");
+            doc.setFontSize(18); // Letra más grande para que resalte
+            doc.text(nombreYSaludo, 15, 100); // Lo ponemos en Y=100 para que quede pegado
+
+            // 3. CUERPO DEL TEXTO (Un poco más abajo para que no choque con el nombre)
             doc.setFont("times", "normal");
             doc.setFontSize(11);
-            let yFaunna = 100;
-            const margen = 10;
+            let yFaunna = 115; // Empezamos en Y=115, dejando solo 15 puntos de espacio
+            const margen = 15;
             const anchoTexto = 180;
             const lineHeight = 7;
 
